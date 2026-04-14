@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Check, Star, Crown, Trash2, ExternalLink, Download } from 'lucide-react';
+import { Search, X, Check, Star, Crown, Trash2, ExternalLink, Download, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 
 const PAGE_SIZE = 20;
 
@@ -20,6 +21,7 @@ export default function AdminEstablishments() {
   const [total, setTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<Establishment | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -177,6 +179,7 @@ export default function AdminEstablishments() {
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{new Date(e.created_at).toLocaleDateString('fr-FR')}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-1">
+                        <button onClick={() => setEditId(e.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
                         {!e.is_verified && (
                           <button onClick={() => doAction(e.id, { is_verified: true }, 'Verifie !')} title="Verifier" className="p-1.5 text-gray-500 hover:text-success transition-colors"><Check size={15} /></button>
                         )}
@@ -209,6 +212,7 @@ export default function AdminEstablishments() {
                 <div className="flex items-center justify-between">
                   {statusBadges(e)}
                   <div className="flex items-center gap-1">
+                    <button onClick={() => setEditId(e.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
                     {!e.is_verified && <button onClick={() => doAction(e.id, { is_verified: true }, 'Verifie !')} className="p-1.5 text-gray-500 hover:text-success"><Check size={15} /></button>}
                     <button onClick={() => doAction(e.id, { is_sponsor: !e.is_sponsor }, e.is_sponsor ? 'Sponsor retire' : 'Sponsor active !')} className="p-1.5 text-gray-500 hover:text-sponsor"><Star size={15} /></button>
                     {!e.is_pro && <button onClick={() => doAction(e.id, { is_pro: true, pro_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }, 'Pro active !')} className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
@@ -244,6 +248,12 @@ export default function AdminEstablishments() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         loading={deleting}
+      />
+
+      <EstablishmentEditSidebar
+        establishmentId={editId}
+        onClose={() => setEditId(null)}
+        onRefresh={load}
       />
     </div>
   );

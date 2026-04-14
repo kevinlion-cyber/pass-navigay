@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Eye } from 'lucide-react';
+import { Search, X, Eye, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Profile } from '../../lib/types';
 import MemberSidebar from './MemberSidebar';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 export default function AdminMembers() {
   const [members, setMembers] = useState<Profile[]>([]);
@@ -12,6 +14,8 @@ export default function AdminMembers() {
   const [totalCount, setTotalCount] = useState(0);
   const [premiumCount, setPremiumCount] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -33,6 +37,22 @@ export default function AdminMembers() {
 
   useEffect(() => { load(); }, [premiumFilter, search]);
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      toast.error(`Compte de ${deleteTarget.username} supprimé.`);
+      setDeleteTarget(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    }
+    setDeleting(false);
+  };
+
+  const truncateId = (id: string) => id.substring(0, 8) + '...';
   const pct = totalCount > 0 ? Math.round((premiumCount / totalCount) * 100) : 0;
 
   return (
@@ -62,7 +82,7 @@ export default function AdminMembers() {
       {loading ? (
         <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
       ) : members.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun membre trouvé.</p>
+        <p className="text-center text-gray-500 py-12">Aucun membre trouve.</p>
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
@@ -71,6 +91,7 @@ export default function AdminMembers() {
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-dark-border">
                   <th className="py-3 px-3">Avatar</th>
                   <th className="py-3 px-3">Username</th>
+                  <th className="py-3 px-3">Email</th>
                   <th className="py-3 px-3">Premium</th>
                   <th className="py-3 px-3">Inscrit le</th>
                   <th className="py-3 px-3">Actions</th>
@@ -85,12 +106,18 @@ export default function AdminMembers() {
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-white font-medium">{m.username}</td>
+                    <td className="py-2.5 px-3 text-[13px] text-[#a0a0b0] max-w-[180px] truncate">{truncateId(m.id)}</td>
                     <td className="py-2.5 px-3">{m.is_premium ? <span className="badge-sponsor text-xs">Premium</span> : <span className="text-gray-500 text-xs">Gratuit</span>}</td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{new Date(m.created_at).toLocaleDateString('fr-FR')}</td>
                     <td className="py-2.5 px-3">
-                      <button onClick={() => setSelectedId(m.id)} title="Voir le profil" className="p-1.5 text-gray-500 hover:text-white transition-colors">
-                        <Eye size={16} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => setSelectedId(m.id)} title="Voir le profil" className="p-1.5 text-gray-500 hover:text-white transition-colors">
+                          <Eye size={16} />
+                        </button>
+                        <button onClick={() => setDeleteTarget(m)} title="Supprimer" className="p-1.5 text-gray-500 hover:text-alert transition-colors">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -113,6 +140,9 @@ export default function AdminMembers() {
                   <button onClick={() => setSelectedId(m.id)} className="p-1.5 text-gray-500 hover:text-white transition-colors shrink-0">
                     <Eye size={16} />
                   </button>
+                  <button onClick={() => setDeleteTarget(m)} className="p-1.5 text-gray-500 hover:text-alert transition-colors shrink-0">
+                    <Trash2 size={15} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -124,6 +154,16 @@ export default function AdminMembers() {
         memberId={selectedId}
         onClose={() => setSelectedId(null)}
         onRefresh={load}
+      />
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={`Supprimer le compte de ${deleteTarget?.username} ?`}
+        message="Cette action est irreversible. Toutes les donnees de ce membre seront definitivement supprimees."
+        confirmLabel="Supprimer definitivement"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        loading={deleting}
       />
     </div>
   );

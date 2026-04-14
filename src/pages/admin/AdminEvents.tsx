@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, X, ExternalLink, Trash2 } from 'lucide-react';
+import { Search, X, ExternalLink, Trash2, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Event } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import EventEditSidebar from './EventEditSidebar';
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -14,6 +15,7 @@ export default function AdminEvents() {
   const [priceFilter, setPriceFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<Event | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -134,6 +136,7 @@ export default function AdminEvents() {
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
+                          <button onClick={() => setEditId(ev.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
                           <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
                           <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                         </div>
@@ -170,6 +173,7 @@ export default function AdminEvents() {
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
+                      <button onClick={() => setEditId(ev.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
                       <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
                       <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                     </div>
@@ -189,6 +193,12 @@ export default function AdminEvents() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         loading={deleting}
+      />
+
+      <EventEditSidebar
+        eventId={editId}
+        onClose={() => setEditId(null)}
+        onRefresh={load}
       />
     </div>
   );

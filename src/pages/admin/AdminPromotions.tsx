@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Trash2 } from 'lucide-react';
+import { Search, X, Trash2, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Promotion } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import PromotionEditSidebar from './PromotionEditSidebar';
 
 export default function AdminPromotions() {
   const [promos, setPromos] = useState<Promotion[]>([]);
@@ -14,6 +15,7 @@ export default function AdminPromotions() {
   const [estFilter, setEstFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -119,7 +121,10 @@ export default function AdminPromotions() {
                       <td className="py-2.5 px-3 text-gray-400 text-xs">{p.current_uses} / {p.max_uses ?? '∞'}</td>
                       <td className="py-2.5 px-3 text-gray-400 text-xs">{p.is_recurring ? 'Oui' : 'Non'}</td>
                       <td className="py-2.5 px-3">
-                        <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setEditId(p.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
+                          <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -140,7 +145,10 @@ export default function AdminPromotions() {
                   <p className="text-xs text-gray-500">{est?.name} · {formatDate(p.valid_from)} → {formatDate(p.valid_until)}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">{p.current_uses} / {p.max_uses ?? '∞'} utilisations</span>
-                    <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setEditId(p.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
+                      <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                    </div>
                   </div>
                 </div>
               );
@@ -157,6 +165,12 @@ export default function AdminPromotions() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         loading={deleting}
+      />
+
+      <PromotionEditSidebar
+        promoId={editId}
+        onClose={() => setEditId(null)}
+        onRefresh={load}
       />
     </div>
   );
