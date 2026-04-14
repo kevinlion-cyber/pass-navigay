@@ -1,85 +1,156 @@
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Check, Image, CalendarDays, Tag, TrendingUp, Palette } from 'lucide-react';
+import { Check, Lock, Image, CalendarDays, Tag, TrendingUp, Palette, Headphones } from 'lucide-react';
 import type { Establishment } from '../../lib/types';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 interface PartnerContext {
   establishment: Establishment;
 }
 
 const PRO_FEATURES = [
-  { icon: Palette, label: 'Banniere personnalisee dans l\'annuaire' },
-  { icon: Image, label: 'Galerie photos illimitee' },
-  { icon: CalendarDays, label: 'Creation d\'evenements' },
-  { icon: Tag, label: 'Systeme de promotions / couponing' },
-  { icon: TrendingUp, label: 'Visibilite renforcee dans les resultats' },
+  { icon: Palette, label: 'Bannière personnalisée dans l\'annuaire' },
+  { icon: Image, label: 'Galerie photos illimitée' },
+  { icon: CalendarDays, label: 'Création d\'événements' },
+  { icon: Tag, label: 'Système de promotions / couponing' },
+  { icon: TrendingUp, label: 'Visibilité renforcée dans les résultats' },
+  { icon: Headphones, label: 'Support prioritaire' },
 ];
 
 export default function PartnerSubscription() {
   const { establishment } = useOutletContext<PartnerContext>();
+  const [cancelOpen, setCancelOpen] = useState(false);
+
+  const expiresAt = establishment.pro_expires_at ? new Date(establishment.pro_expires_at) : null;
+  const createdAt = new Date(establishment.created_at);
+
+  const daysRemaining = expiresAt
+    ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const progressPercent = expiresAt
+    ? Math.min(100, Math.max(0, Math.round(((Date.now() - createdAt.getTime()) / (expiresAt.getTime() - createdAt.getTime())) * 100)))
+    : 0;
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  if (!establishment.is_pro) {
+    return <FreeView />;
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-xl font-bold text-white">Abonnement</h1>
+      <h1 className="text-2xl font-bold text-white">Abonnement</h1>
 
-      <div className="bg-dark-surface border border-dark-border rounded-card p-6">
-        <h2 className="text-sm font-semibold text-white mb-2">Statut actuel</h2>
-        {establishment.is_pro ? (
-          <div>
-            <p className="text-sm text-gray-400">
-              Profil Pro actif — expire le{' '}
-              <span className="text-white font-medium">{new Date(establishment.pro_expires_at || '').toLocaleDateString('fr-FR')}</span>.
-              Renouvellement automatique.
-            </p>
+      {/* Status card */}
+      <div className="rounded-card p-6" style={{ background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.4)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: '#7B2D8B' }}>
+            <Check size={16} /> Profil Pro actif
+          </span>
+          {expiresAt && (
+            <span className="text-xs text-gray-400">Renouvellement le {formatDate(expiresAt)}</span>
+          )}
+        </div>
+        <p className="text-sm text-white mb-4">
+          Ton profil Pro est actif. Toutes les fonctionnalités sont débloquées.
+        </p>
+
+        {expiresAt && (
+          <div className="mb-2">
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(123,45,139,0.2)' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${progressPercent}%`, background: '#7B2D8B' }} />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">{daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''} sur ta période en cours.</p>
           </div>
-        ) : (
-          <p className="text-sm text-gray-400">
-            Ton profil est actuellement gratuit. Tu apparais dans l'annuaire mais sans galerie, evenements ni promotions.
-          </p>
         )}
       </div>
 
-      {!establishment.is_pro && (
-        <div className="bg-dark-surface border border-primary/20 rounded-card p-6 space-y-5">
-          <div>
-            <h2 className="text-lg font-bold text-white">Profil Pro</h2>
-            <p className="text-sm text-gray-400 mt-1">Debloquez tout le potentiel de ta fiche etablissement.</p>
-          </div>
+      {/* Manage button */}
+      <button className="w-full py-3.5 rounded-input text-sm font-semibold transition-colors hover:opacity-90"
+        style={{ background: 'transparent', border: '1px solid #7B2D8B', color: '#7B2D8B' }}>
+        Gérer mon abonnement
+      </button>
 
-          <div className="space-y-3">
-            {PRO_FEATURES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-input bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon size={16} className="text-primary" />
-                </div>
-                <span className="text-sm text-gray-300">{label}</span>
-                <Check size={16} className="text-success ml-auto shrink-0" />
+      {/* Features unlocked */}
+      <div className="rounded-card p-6" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+        <h2 className="text-sm font-semibold text-white mb-4">Ce que tu as débloqué</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {PRO_FEATURES.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-input flex items-center justify-center shrink-0"
+                style={{ background: 'rgba(26,122,58,0.1)' }}>
+                <Icon size={15} style={{ color: '#1a7a3a' }} />
               </div>
-            ))}
-          </div>
-
-          <div className="border-t border-dark-border pt-4">
-            <p className="text-3xl font-bold text-white">69 EUR<span className="text-sm font-normal text-gray-500">/mois</span></p>
-          </div>
-
-          <button className="btn-primary w-full">
-            Souscrire au profil Pro
-          </button>
-          <p className="text-xs text-gray-600 text-center">
-            Paiement securise via Stripe. Annulable a tout moment.
-          </p>
+              <span className="text-sm text-gray-300">{label}</span>
+              <Check size={14} className="ml-auto shrink-0" style={{ color: '#1a7a3a' }} />
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
-      {establishment.is_pro && (
-        <div className="space-y-3">
-          <button className="btn-secondary w-full">
-            Gerer mon abonnement
-          </button>
-          <p className="text-xs text-gray-500 text-center">
-            Prochain renouvellement : {new Date(establishment.pro_expires_at || '').toLocaleDateString('fr-FR')}
-          </p>
+      {/* Cancel section */}
+      <div className="rounded-input p-5" style={{ background: 'rgba(192,57,43,0.05)', border: '1px solid rgba(192,57,43,0.2)' }}>
+        <h3 className="text-sm font-medium mb-2" style={{ color: '#c0392b' }}>Résilier mon abonnement</h3>
+        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+          Si tu résilies, ton profil repassera en Gratuit à la fin de ta période en cours.
+          Tu perdras l'accès à la galerie, aux événements et aux promotions.
+        </p>
+        <button onClick={() => setCancelOpen(true)}
+          className="py-2.5 px-5 rounded-input text-sm font-medium transition-colors hover:opacity-90"
+          style={{ background: 'transparent', border: '1px solid rgba(192,57,43,0.4)', color: '#c0392b' }}>
+          Résilier mon abonnement
+        </button>
+      </div>
+
+      <ConfirmModal
+        open={cancelOpen}
+        title="Confirmer la résiliation"
+        message={`Es-tu sûr de vouloir résilier ? Tu perdras tes avantages Pro le ${expiresAt ? formatDate(expiresAt) : ''}.`}
+        confirmLabel="Confirmer la résiliation"
+        onCancel={() => setCancelOpen(false)}
+        onConfirm={() => setCancelOpen(false)}
+      />
+    </div>
+  );
+}
+
+function FreeView() {
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* Hero */}
+      <div className="rounded-card text-center py-12 px-8 mb-6"
+        style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
+        <h1 className="text-[28px] font-bold text-white mb-2">Passe au profil Pro</h1>
+        <p className="text-sm text-gray-400 mb-8">Débloque toutes les fonctionnalités pour développer ta visibilité.</p>
+
+        <div className="mb-8">
+          <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>69€</span>
+          <span className="text-xl text-gray-500">/mois</span>
+          <p className="text-xs text-gray-600 mt-2">Sans engagement · Résiliation à tout moment</p>
         </div>
-      )}
+
+        <button className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4"
+          style={{ background: '#fff', color: '#7B2D8B' }}>
+          Souscrire au profil Pro →
+        </button>
+
+        <p className="text-xs text-gray-600 flex items-center justify-center gap-1.5">
+          <Lock size={12} /> Paiement sécurisé par Stripe · SSL · Données protégées
+        </p>
+      </div>
+
+      {/* Features grid */}
+      <div className="grid grid-cols-2 gap-3 max-w-[500px] mx-auto">
+        {PRO_FEATURES.map(({ icon: Icon, label }) => (
+          <div key={label} className="flex items-center gap-2.5 p-3 rounded-input"
+            style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+            <Check size={14} style={{ color: '#7B2D8B' }} className="shrink-0" />
+            <span className="text-sm text-white">{label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

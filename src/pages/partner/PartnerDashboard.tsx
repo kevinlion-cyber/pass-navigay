@@ -1,93 +1,367 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { CalendarDays, Tag, Eye, CreditCard } from 'lucide-react';
+import {
+  CalendarDays, Tag, Eye, CreditCard, TrendingUp,
+  ArrowRight, ChevronRight,
+} from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import type { Establishment } from '../../lib/types';
+import type { Establishment, Event, Promotion } from '../../lib/types';
 
 interface PartnerContext {
   establishment: Establishment;
   reload: () => void;
 }
 
+interface DashboardData {
+  activeEvents: number;
+  pastEventsThisMonth: number;
+  activePromos: number;
+  expiredPromos: number;
+  views: number;
+  recentEvents: Event[];
+  recentPromos: Promotion[];
+}
+
 export default function PartnerDashboard() {
   const { establishment } = useOutletContext<PartnerContext>();
   const navigate = useNavigate();
-  const [activeEvents, setActiveEvents] = useState(0);
-  const [activePromos, setActivePromos] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData>({
+    activeEvents: 0,
+    pastEventsThisMonth: 0,
+    activePromos: 0,
+    expiredPromos: 0,
+    views: 0,
+    recentEvents: [],
+    recentPromos: [],
+  });
 
   useEffect(() => {
     const load = async () => {
       try {
         const now = new Date().toISOString();
-        const [evRes, prRes] = await Promise.all([
-          supabase.from('events').select('*', { count: 'exact', head: true }).eq('establishment_id', establishment.id).gte('event_date', now),
-          supabase.from('promotions').select('*', { count: 'exact', head: true }).eq('establishment_id', establishment.id).gte('valid_until', now),
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+        const [evActiveRes, evPastRes, prActiveRes, prExpiredRes, evRecentRes, prRecentRes] = await Promise.all([
+          supabase.from('events').select('*', { count: 'exact', head: true })
+            .eq('establishment_id', establishment.id).gte('event_date', now),
+          supabase.from('events').select('*', { count: 'exact', head: true })
+            .eq('establishment_id', establishment.id).lt('event_date', now).gte('event_date', monthStart),
+          supabase.from('promotions').select('*', { count: 'exact', head: true })
+            .eq('establishment_id', establishment.id).gte('valid_until', now),
+          supabase.from('promotions').select('*', { count: 'exact', head: true })
+            .eq('establishment_id', establishment.id).lt('valid_until', now),
+          supabase.from('events').select('*')
+            .eq('establishment_id', establishment.id).gte('event_date', now)
+            .order('event_date', { ascending: true }).limit(3),
+          supabase.from('promotions').select('*')
+            .eq('establishment_id', establishment.id).gte('valid_until', now)
+            .order('valid_until', { ascending: true }).limit(3),
         ]);
-        setActiveEvents(evRes.count ?? 0);
-        setActivePromos(prRes.count ?? 0);
-      } catch { /* handled */ }
+
+        setData({
+          activeEvents: evActiveRes.count ?? 0,
+          pastEventsThisMonth: evPastRes.count ?? 0,
+          activePromos: prActiveRes.count ?? 0,
+          expiredPromos: prExpiredRes.count ?? 0,
+          views: 0,
+          recentEvents: (evRecentRes.data as Event[]) || [],
+          recentPromos: (prRecentRes.data as Promotion[]) || [],
+        });
+      } catch {
+        // handled
+      }
       setLoading(false);
     };
     load();
   }, [establishment.id]);
 
-  const subscriptionLabel = establishment.is_pro
-    ? `Pro — expire le ${new Date(establishment.pro_expires_at || '').toLocaleDateString('fr-FR')}`
-    : 'Gratuit';
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+
+  const formatExpiry = (d: string | null) => {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const promoLabel = (p: Promotion) => {
+    if (p.promo_type === 'percentage' && p.value) return `-${p.value}%`;
+    if (p.promo_type === 'fixed' && p.value) return `-${p.value} \u20ac`;
+    return 'Offre';
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-bold text-white">Bonjour !</h1>
-        <p className="text-sm text-gray-400 mt-1">{establishment.name}</p>
-        <div className="mt-2">
+        <h1 className="text-2xl font-bold text-white">
+          Bonjour {establishment.name} <span role="img" aria-label="wave">👋</span>
+        </h1>
+        <p className="text-sm text-gray-400 mt-1">Bienvenue dans ton espace partenaire Pass Navigay.</p>
+        <div className="flex items-center gap-3 mt-2">
+          <span className="text-sm text-gray-500">{establishment.name}</span>
           {establishment.is_pro ? (
-            <span className="badge-pro text-xs">Pro</span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-semibold"
+              style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>
+              Pro
+            </span>
           ) : (
-            <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium bg-gray-700 text-gray-400">
+              Gratuit
+            </span>
           )}
         </div>
       </div>
 
-      {!establishment.is_pro && (
-        <div className="bg-primary/10 border border-primary/20 rounded-card p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-white">Passe au profil Pro pour debloquer la galerie, les evenements et les promotions</p>
-            <p className="text-xs text-gray-400 mt-1">69 EUR/mois</p>
-          </div>
-          <button onClick={() => navigate('/pros/subscription')} className="btn-primary text-sm py-2 px-4 shrink-0">
-            Passer Pro
-          </button>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-32 rounded-card" />)}
         </div>
-      )}
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Abonnement */}
+            <div className="rounded-card p-5"
+              style={establishment.is_pro
+                ? { background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.3)' }
+                : { background: '#16161f', border: '1px solid #2a2a35' }
+              }>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-input flex items-center justify-center"
+                  style={{ background: 'rgba(123,45,139,0.15)' }}>
+                  <CreditCard size={18} style={{ color: '#7B2D8B' }} />
+                </div>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Abonnement</span>
+              </div>
+              {establishment.is_pro ? (
+                <>
+                  <p className="text-lg font-bold" style={{ color: '#7B2D8B' }}>Pro ✓</p>
+                  <p className="text-xs text-gray-500 mt-1">Expire le {formatExpiry(establishment.pro_expires_at)}</p>
+                  <button onClick={() => navigate('/pros/subscription')}
+                    className="text-xs mt-2 font-medium hover:underline"
+                    style={{ color: '#7B2D8B' }}>
+                    Gérer <ArrowRight size={12} className="inline ml-0.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold text-gray-400">Gratuit</p>
+                  <button onClick={() => navigate('/pros/subscription')}
+                    className="text-xs mt-2 font-semibold px-3 py-1.5 rounded-input transition-colors hover:opacity-90"
+                    style={{ background: '#7B2D8B', color: '#fff' }}>
+                    Passer Pro
+                  </button>
+                </>
+              )}
+            </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
-          [1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-24 rounded-card" />)
-        ) : (
-          <>
-            <MetricCard icon={CreditCard} label="Abonnement" value={subscriptionLabel} />
-            <MetricCard icon={Eye} label="Vues de la fiche" value="0" />
-            <MetricCard icon={CalendarDays} label="Evenements actifs" value={String(activeEvents)} />
-            <MetricCard icon={Tag} label="Promos actives" value={String(activePromos)} />
-          </>
-        )}
-      </div>
+            {/* Vues */}
+            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-input flex items-center justify-center"
+                  style={{ background: 'rgba(123,45,139,0.15)' }}>
+                  <Eye size={18} style={{ color: '#7B2D8B' }} />
+                </div>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Vues de la fiche</span>
+              </div>
+              <p className="text-lg font-bold text-white">{data.views}</p>
+              <p className="text-xs text-gray-500 mt-1">ce mois-ci</p>
+              {data.views > 0 ? (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#1a7a3a' }}>
+                  <TrendingUp size={12} /> en hausse
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Pas encore de vues</p>
+              )}
+            </div>
+
+            {/* Événements */}
+            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-input flex items-center justify-center"
+                  style={{ background: 'rgba(123,45,139,0.15)' }}>
+                  <CalendarDays size={18} style={{ color: '#7B2D8B' }} />
+                </div>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Événements à venir</span>
+              </div>
+              <p className="text-lg font-bold text-white">{data.activeEvents}</p>
+              <p className="text-xs text-gray-500 mt-1">{data.pastEventsThisMonth} passé{data.pastEventsThisMonth > 1 ? 's' : ''} ce mois</p>
+              {data.activeEvents === 0 && (
+                <button onClick={() => navigate('/pros/events')}
+                  className="text-xs mt-2 font-medium hover:underline"
+                  style={{ color: '#7B2D8B' }}>
+                  + Créer un événement <ArrowRight size={12} className="inline ml-0.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Promos */}
+            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-input flex items-center justify-center"
+                  style={{ background: 'rgba(123,45,139,0.15)' }}>
+                  <Tag size={18} style={{ color: '#7B2D8B' }} />
+                </div>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos actives</span>
+              </div>
+              <p className="text-lg font-bold text-white">{data.activePromos}</p>
+              <p className="text-xs text-gray-500 mt-1">{data.expiredPromos} expirée{data.expiredPromos > 1 ? 's' : ''}</p>
+              {data.activePromos === 0 && (
+                <button onClick={() => navigate('/pros/promotions')}
+                  className="text-xs mt-2 font-medium hover:underline"
+                  style={{ color: '#7B2D8B' }}>
+                  + Créer une promo <ArrowRight size={12} className="inline ml-0.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Actions rapides */}
+          <div>
+            <h2 className="text-lg font-semibold text-white mb-4">Par où commencer ?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <QuickActionCard
+                emoji="🏪"
+                title="Compléter ma fiche"
+                text="Ajoute ta description, tes photos et tes coordonnées pour attirer plus de visiteurs."
+                buttonLabel="Modifier ma fiche"
+                onClick={() => navigate('/pros/establishment')}
+                showBadge={!establishment.description}
+              />
+              <QuickActionCard
+                emoji="📅"
+                title="Publier un événement"
+                text="Touche des milliers de membres en publiant tes prochaines soirées, brunchs ou concerts."
+                buttonLabel="Créer un événement"
+                onClick={() => navigate('/pros/events')}
+              />
+              <QuickActionCard
+                emoji="🏷"
+                title="Lancer une promotion"
+                text="Attire de nouveaux clients avec une offre exclusive réservée aux membres Pass Navigay."
+                buttonLabel="Créer une promo"
+                onClick={() => navigate('/pros/promotions')}
+              />
+            </div>
+          </div>
+
+          {/* Derniers événements */}
+          {data.recentEvents.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Mes derniers événements</h2>
+                <button onClick={() => navigate('/pros/events')}
+                  className="text-xs font-medium hover:underline flex items-center gap-1"
+                  style={{ color: '#7B2D8B' }}>
+                  Voir tous mes événements <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {data.recentEvents.map((ev) => (
+                  <div key={ev.id} className="flex items-center gap-4 p-3 rounded-card"
+                    style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+                    <div className="w-12 h-12 rounded-input overflow-hidden shrink-0 bg-dark-border">
+                      {ev.image_url ? (
+                        <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <CalendarDays size={18} className="text-gray-600" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{ev.title}</p>
+                      <p className="text-xs text-gray-500 capitalize">{formatDate(ev.event_date)}</p>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium shrink-0"
+                      style={{ background: 'rgba(26,122,58,0.1)', color: '#1a7a3a' }}>
+                      À venir
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Dernières promos */}
+          {data.recentPromos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Mes dernières promos</h2>
+                <button onClick={() => navigate('/pros/promotions')}
+                  className="text-xs font-medium hover:underline flex items-center gap-1"
+                  style={{ color: '#7B2D8B' }}>
+                  Voir toutes mes promos <ChevronRight size={14} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {data.recentPromos.map((p) => (
+                  <div key={p.id} className="flex items-center gap-4 p-3 rounded-card"
+                    style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white truncate">{p.title}</p>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-pill text-xs font-semibold shrink-0"
+                          style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>
+                          {promoLabel(p)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Jusqu'au {new Date(p.valid_until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium shrink-0"
+                      style={{ background: 'rgba(26,122,58,0.1)', color: '#1a7a3a' }}>
+                      Active
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-function MetricCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function QuickActionCard({
+  emoji, title, text, buttonLabel, onClick, showBadge,
+}: {
+  emoji: string;
+  title: string;
+  text: string;
+  buttonLabel: string;
+  onClick: () => void;
+  showBadge?: boolean;
+}) {
   return (
-    <div className="bg-dark-surface border border-dark-border rounded-card p-5">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-9 h-9 rounded-input bg-primary/10 flex items-center justify-center">
-          <Icon size={18} className="text-primary" />
-        </div>
-        <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</span>
+    <button onClick={onClick} className="relative text-left p-6 rounded-card transition-all duration-200 group"
+      style={{ background: '#14141e', border: '1px solid #1e1e2e' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = '#7B2D8B';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = '#1e1e2e';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}>
+      {showBadge && (
+        <span className="absolute top-3 right-3 text-xs font-medium px-2 py-0.5 rounded-pill"
+          style={{ background: 'rgba(234,148,40,0.15)', color: '#ea9428' }}>
+          À compléter
+        </span>
+      )}
+      <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-4"
+        style={{ background: 'rgba(123,45,139,0.15)' }}>
+        {emoji}
       </div>
-      <p className="text-lg font-bold text-white">{value}</p>
-    </div>
+      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+      <p className="text-xs text-gray-500 leading-relaxed mb-4">{text}</p>
+      <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#7B2D8B' }}>
+        {buttonLabel} <ArrowRight size={12} />
+      </span>
+    </button>
   );
 }
