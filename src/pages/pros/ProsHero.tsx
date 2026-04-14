@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 
 const PILLS = [
@@ -10,7 +9,12 @@ const PILLS = [
   { emoji: '\uD83C\uDFAD', label: 'Culture' },
 ];
 
-export default function ProsHero() {
+interface ProsHeroProps {
+  onRegister: () => void;
+  onLogin: () => void;
+}
+
+export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
   return (
     <section className="pros-hero relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <div
@@ -50,19 +54,19 @@ export default function ProsHero() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-          <Link
-            to="/pros/register"
+          <button
+            onClick={onRegister}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#7B2D8B] text-white rounded-xl text-base font-semibold transition-all duration-200 hover:bg-[#9b3dab] hover:-translate-y-0.5"
           >
             Créer mon profil gratuit <ArrowRight size={18} />
-          </Link>
-          <Link
-            to="/pros/login"
+          </button>
+          <button
+            onClick={onLogin}
             className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl text-base font-semibold text-white transition-all duration-200 hover:border-white"
             style={{ border: '1px solid rgba(255,255,255,0.3)' }}
           >
             Déjà partenaire ? Se connecter
-          </Link>
+          </button>
         </div>
       </div>
 

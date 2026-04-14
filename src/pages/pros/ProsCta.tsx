@@ -1,7 +1,10 @@
-import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
-export default function ProsCta() {
+interface ProsCtaProps {
+  onRegister: () => void;
+}
+
+export default function ProsCta({ onRegister }: ProsCtaProps) {
   return (
     <section
       className="relative py-[120px] px-6 text-center overflow-hidden"
@@ -22,12 +25,12 @@ export default function ProsCta() {
         <p className="text-[16px] text-[#a0a0b0] mt-4">
           Inscription gratuite &middot; Aucun engagement &middot; Passe Pro quand tu veux
         </p>
-        <Link
-          to="/pros/register"
+        <button
+          onClick={onRegister}
           className="mt-8 inline-flex items-center gap-2 px-10 py-[18px] bg-white text-[#7B2D8B] rounded-xl text-[17px] font-bold transition-all duration-200 hover:bg-[#f0e8ff] hover:-translate-y-0.5"
         >
           Créer mon profil maintenant <ArrowRight size={18} />
-        </Link>
+        </button>
         <p className="text-[12px] text-[#606070] mt-5">
           &#128274; Paiement sécurisé par Stripe &middot; SSL &middot; Données protégées
         </p>

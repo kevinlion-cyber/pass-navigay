@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -39,8 +39,6 @@ import LegalConfidentialite from './pages/legal/LegalConfidentialite';
 import LegalContact from './pages/legal/LegalContact';
 import AdminLegal from './pages/admin/AdminLegal';
 import PartnerLayout from './components/partner/PartnerLayout';
-import PartnerRegister from './pages/partner/PartnerRegister';
-import PartnerLogin from './pages/partner/PartnerLogin';
 import PartnerDashboard from './pages/partner/PartnerDashboard';
 import PartnerEstablishment from './pages/partner/PartnerEstablishment';
 import PartnerEvents from './pages/partner/PartnerEvents';
@@ -108,8 +106,8 @@ export default function App() {
             </Route>
 
             <Route path="/pros" element={<ProsLanding />} />
-            <Route path="/pros/register" element={<PartnerRegister />} />
-            <Route path="/pros/login" element={<PartnerLogin />} />
+            <Route path="/pros/register" element={<Navigate to="/pros" replace />} />
+            <Route path="/pros/login" element={<Navigate to="/pros" replace />} />
             <Route element={<PartnerLayout />}>
               <Route path="/pros/dashboard" element={<PartnerDashboard />} />
               <Route path="/pros/establishment" element={<PartnerEstablishment />} />

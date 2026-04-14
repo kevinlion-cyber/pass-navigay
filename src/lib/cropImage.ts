@@ -18,12 +18,14 @@ function createImage(url: string): Promise<HTMLImageElement> {
 export default async function cropImage(
   imageSrc: string,
   pixelCrop: Area,
-  outputSize = 400
+  outputWidth = 400,
+  outputHeight?: number
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
-  canvas.width = outputSize;
-  canvas.height = outputSize;
+  const h = outputHeight ?? outputWidth;
+  canvas.width = outputWidth;
+  canvas.height = h;
   const ctx = canvas.getContext('2d')!;
 
   ctx.drawImage(
@@ -34,8 +36,8 @@ export default async function cropImage(
     pixelCrop.height,
     0,
     0,
-    outputSize,
-    outputSize
+    outputWidth,
+    h
   );
 
   return new Promise((resolve, reject) => {

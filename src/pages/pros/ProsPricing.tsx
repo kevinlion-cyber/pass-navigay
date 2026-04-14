@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 
 const FREE_FEATURES = [
@@ -23,7 +22,11 @@ const PRO_FEATURES = [
   'Support prioritaire',
 ];
 
-export default function ProsPricing() {
+interface ProsPricingProps {
+  onRegister: () => void;
+}
+
+export default function ProsPricing({ onRegister }: ProsPricingProps) {
   return (
     <section className="py-[100px] px-6" style={{ background: '#0f0f17' }}>
       <div className="max-w-[900px] mx-auto">
@@ -58,13 +61,13 @@ export default function ProsPricing() {
               ))}
             </ul>
 
-            <Link
-              to="/pros/register"
+            <button
+              onClick={onRegister}
               className="mt-8 block w-full text-center py-3.5 rounded-[10px] text-[14px] font-medium text-white transition-colors hover:border-[#7B2D8B]"
               style={{ border: '1px solid rgba(255,255,255,0.3)' }}
             >
               Commencer gratuitement
-            </Link>
+            </button>
           </div>
 
           <div
@@ -94,12 +97,12 @@ export default function ProsPricing() {
               ))}
             </ul>
 
-            <Link
-              to="/pros/register"
+            <button
+              onClick={onRegister}
               className="mt-8 block w-full text-center py-3.5 rounded-[10px] bg-[#7B2D8B] text-white text-[14px] font-semibold transition-all hover:bg-[#9b3dab]"
             >
               Démarrer avec le Pro
-            </Link>
+            </button>
           </div>
         </div>
 
