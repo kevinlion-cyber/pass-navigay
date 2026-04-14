@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import AdminEditSidebar, {
@@ -8,6 +9,7 @@ import AdminEditSidebar, {
   SidebarSelect,
   SidebarToggle,
 } from '../../components/admin/AdminEditSidebar';
+import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 
 interface Props {
   eventId: string | null;
@@ -49,15 +51,19 @@ function toLocalDatetime(iso: string | null): string {
 
 export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props) {
   const [form, setForm] = useState<FormData>(initialForm);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
   const [establishments, setEstablishments] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
   const loadData = useCallback(async () => {
     if (!eventId) return;
     setLoading(true);
     setErrors({});
+    setCroppedImage(null);
     try {
       const [eventRes, estRes] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
@@ -76,6 +82,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         price: ev.price || 0,
         is_featured: ev.is_featured ?? false,
       });
+      setImageUrl(ev.image_url || null);
       setEstablishments(
         (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
       );
@@ -106,6 +113,19 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
     if (!validate() || !eventId) return;
     setSaving(true);
     try {
+      let newImageUrl = imageUrl;
+
+      if (croppedImage) {
+        setUploadProgress('Upload image...');
+        const filename = `${Date.now()}.jpg`;
+        const { error: upErr } = await supabase.storage.from('event-images').upload(`${eventId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from('event-images').getPublicUrl(`${eventId}/${filename}`);
+        newImageUrl = urlData.publicUrl;
+      }
+
+      setUploadProgress(null);
+
       const { error } = await supabase
         .from('events')
         .update({
@@ -118,6 +138,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
           is_free: form.is_free,
           price: form.is_free ? 0 : form.price,
           is_featured: form.is_featured,
+          image_url: newImageUrl,
         })
         .eq('id', eventId);
       if (error) throw error;
@@ -125,7 +146,8 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       onClose();
       onRefresh();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+      setUploadProgress(null);
+      toast.error(err.message || "Erreur lors de l'upload de l'image.");
     }
     setSaving(false);
   };
@@ -139,6 +161,21 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       onClose={onClose}
       onSave={handleSave}
     >
+      {uploadProgress && (
+        <div className="mb-4 flex items-center gap-2 text-[13px] text-[#a0a0b0]">
+          <Loader2 size={14} className="animate-spin" />
+          {uploadProgress}
+        </div>
+      )}
+
+      <ImageUploadWithCrop
+        currentImageUrl={imageUrl}
+        onImageCropped={(blob) => setCroppedImage(blob)}
+        aspectRatio={3 / 2}
+        label="PHOTO DE L'EVENEMENT (format 3:2)"
+        hint="Image principale affichee dans les listes et sur la fiche evenement."
+      />
+
       <SidebarField label="Titre" error={errors.title}>
         <SidebarInput value={form.title} onChange={(v) => set('title', v)} required error={!!errors.title} />
       </SidebarField>
