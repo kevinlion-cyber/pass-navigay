@@ -15,11 +15,11 @@ interface NavBadges {
 }
 
 const NAV_ITEMS = [
-  { to: '/pros/dashboard', label: 'Dashboard', icon: BarChart3, group: 'main' },
-  { to: '/pros/establishment', label: 'Mon établissement', icon: Store, group: 'main' },
-  { to: '/pros/events', label: 'Événements', icon: CalendarDays, group: 'main' },
+  { to: '/pros/tableau-de-bord', label: 'Dashboard', icon: BarChart3, group: 'main' },
+  { to: '/pros/mon-etablissement', label: 'Mon établissement', icon: Store, group: 'main' },
+  { to: '/pros/evenements', label: 'Événements', icon: CalendarDays, group: 'main' },
   { to: '/pros/promotions', label: 'Promotions', icon: Tag, group: 'main' },
-  { to: '/pros/subscription', label: 'Abonnement', icon: CreditCard, group: 'sub' },
+  { to: '/pros/abonnement', label: 'Abonnement', icon: CreditCard, group: 'sub' },
 ];
 
 export default function PartnerLayout() {
@@ -36,7 +36,7 @@ export default function PartnerLayout() {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate('/pros/login', { replace: true });
+        navigate('/pros/connexion', { replace: true });
         return;
       }
 
@@ -47,7 +47,7 @@ export default function PartnerLayout() {
         .maybeSingle();
 
       if (!data) {
-        navigate('/pros/register', { replace: true });
+        navigate('/pros/inscription', { replace: true });
         return;
       }
       setEstablishment(data as Establishment);
@@ -108,7 +108,7 @@ export default function PartnerLayout() {
   const initials = est.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const getBadge = (to: string): { value: string; color: string } | null => {
-    if (to === '/pros/events' && badges.events > 0) {
+    if (to === '/pros/evenements' && badges.events > 0) {
       return { value: badges.events > 9 ? '9+' : String(badges.events), color: '#7B2D8B' };
     }
     if (to === '/pros/promotions' && badges.promos > 0) {

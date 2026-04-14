@@ -138,7 +138,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       await new Promise((r) => setTimeout(r, 800));
       toast.success('Bienvenue ! Ton établissement est en cours de validation.');
       onClose();
-      navigate('/pros/dashboard');
+      navigate('/pros/tableau-de-bord');
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de la création.');
       setSubmitting(false);

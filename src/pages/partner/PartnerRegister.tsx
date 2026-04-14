@@ -33,7 +33,7 @@ export default function PartnerRegister() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         supabase.from('establishments').select('id').eq('owner_id', session.user.id).maybeSingle().then(({ data }) => {
-          if (data) navigate('/pros/dashboard', { replace: true });
+          if (data) navigate('/pros/tableau-de-bord', { replace: true });
           else setStep(2);
         });
       }
@@ -142,7 +142,7 @@ export default function PartnerRegister() {
       }
 
       toast.success('Bienvenue ! Ton etablissement est en cours de verification par notre equipe.');
-      navigate('/pros/dashboard');
+      navigate('/pros/tableau-de-bord');
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de la creation');
     }
@@ -189,7 +189,7 @@ export default function PartnerRegister() {
             </button>
             <p className="text-center text-sm text-gray-500">
               Tu as deja un compte ?{' '}
-              <Link to="/pros/login" className="text-primary hover:underline">Connecte-toi</Link>
+              <Link to="/pros/connexion" className="text-primary hover:underline">Connecte-toi</Link>
             </p>
           </form>
         ) : (

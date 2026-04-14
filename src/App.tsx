@@ -105,14 +105,14 @@ export default function App() {
             </Route>
 
             <Route path="/pros" element={<ProsLanding />} />
-            <Route path="/pros/register" element={<Navigate to="/pros" replace />} />
-            <Route path="/pros/login" element={<Navigate to="/pros" replace />} />
+            <Route path="/pros/inscription" element={<Navigate to="/pros" replace />} />
+            <Route path="/pros/connexion" element={<Navigate to="/pros" replace />} />
             <Route element={<PartnerLayout />}>
-              <Route path="/pros/dashboard" element={<PartnerDashboard />} />
-              <Route path="/pros/establishment" element={<PartnerEstablishment />} />
-              <Route path="/pros/events" element={<PartnerEvents />} />
+              <Route path="/pros/tableau-de-bord" element={<PartnerDashboard />} />
+              <Route path="/pros/mon-etablissement" element={<PartnerEstablishment />} />
+              <Route path="/pros/evenements" element={<PartnerEvents />} />
               <Route path="/pros/promotions" element={<PartnerPromotions />} />
-              <Route path="/pros/subscription" element={<PartnerSubscription />} />
+              <Route path="/pros/abonnement" element={<PartnerSubscription />} />
             </Route>
           </Routes>
         </ThemeProvider>

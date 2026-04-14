@@ -138,7 +138,7 @@ export default function PartnerDashboard() {
                 <>
                   <p className="text-lg font-bold" style={{ color: '#7B2D8B' }}>Pro ✓</p>
                   <p className="text-xs text-gray-500 mt-1">Expire le {formatExpiry(establishment.pro_expires_at)}</p>
-                  <button onClick={() => navigate('/pros/subscription')}
+                  <button onClick={() => navigate('/pros/abonnement')}
                     className="text-xs mt-2 font-medium hover:underline"
                     style={{ color: '#7B2D8B' }}>
                     Gérer <ArrowRight size={12} className="inline ml-0.5" />
@@ -147,7 +147,7 @@ export default function PartnerDashboard() {
               ) : (
                 <>
                   <p className="text-lg font-bold text-gray-400">Gratuit</p>
-                  <button onClick={() => navigate('/pros/subscription')}
+                  <button onClick={() => navigate('/pros/abonnement')}
                     className="text-xs mt-2 font-semibold px-3 py-1.5 rounded-input transition-colors hover:opacity-90"
                     style={{ background: '#7B2D8B', color: '#fff' }}>
                     Passer Pro
@@ -188,7 +188,7 @@ export default function PartnerDashboard() {
               <p className="text-lg font-bold text-white">{data.activeEvents}</p>
               <p className="text-xs text-gray-500 mt-1">{data.pastEventsThisMonth} passé{data.pastEventsThisMonth > 1 ? 's' : ''} ce mois</p>
               {data.activeEvents === 0 && (
-                <button onClick={() => navigate('/pros/events')}
+                <button onClick={() => navigate('/pros/evenements')}
                   className="text-xs mt-2 font-medium hover:underline"
                   style={{ color: '#7B2D8B' }}>
                   + Créer un événement <ArrowRight size={12} className="inline ml-0.5" />
@@ -226,7 +226,7 @@ export default function PartnerDashboard() {
                 title="Compléter ma fiche"
                 text="Ajoute ta description, tes photos et tes coordonnées pour attirer plus de visiteurs."
                 buttonLabel="Modifier ma fiche"
-                onClick={() => navigate('/pros/establishment')}
+                onClick={() => navigate('/pros/mon-etablissement')}
                 showBadge={!establishment.description}
               />
               <QuickActionCard
@@ -234,7 +234,7 @@ export default function PartnerDashboard() {
                 title="Publier un événement"
                 text="Touche des milliers de membres en publiant tes prochaines soirées, brunchs ou concerts."
                 buttonLabel="Créer un événement"
-                onClick={() => navigate('/pros/events')}
+                onClick={() => navigate('/pros/evenements')}
               />
               <QuickActionCard
                 emoji="🏷"
@@ -251,7 +251,7 @@ export default function PartnerDashboard() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-white">Mes derniers événements</h2>
-                <button onClick={() => navigate('/pros/events')}
+                <button onClick={() => navigate('/pros/evenements')}
                   className="text-xs font-medium hover:underline flex items-center gap-1"
                   style={{ color: '#7B2D8B' }}>
                   Voir tous mes événements <ChevronRight size={14} />

@@ -36,7 +36,7 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
     }
     toast.success('Connexion réussie !');
     onClose();
-    navigate('/pros/dashboard');
+    navigate('/pros/tableau-de-bord');
   };
 
   return (

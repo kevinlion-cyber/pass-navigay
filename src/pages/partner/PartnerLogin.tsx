@@ -24,9 +24,9 @@ export default function PartnerLogin() {
         .maybeSingle();
 
       if (est) {
-        navigate('/pros/dashboard');
+        navigate('/pros/tableau-de-bord');
       } else {
-        navigate('/pros/register');
+        navigate('/pros/inscription');
       }
     } catch (err: any) {
       toast.error(err.message || 'Email ou mot de passe incorrect');
@@ -62,7 +62,7 @@ export default function PartnerLogin() {
 
         <p className="text-center text-sm text-gray-500">
           Pas encore partenaire ?{' '}
-          <Link to="/pros/register" className="text-primary hover:underline">Inscris-toi</Link>
+          <Link to="/pros/inscription" className="text-primary hover:underline">Inscris-toi</Link>
         </p>
       </div>
     </div>
