@@ -1,0 +1,175 @@
+import { useEffect, useState } from 'react';
+import { ExternalLink, Crown, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+import ConfirmModal from '../../components/admin/ConfirmModal';
+
+interface PartnerRow {
+  id: string;
+  name: string;
+  is_pro: boolean;
+  pro_expires_at: string | null;
+  owner_id: string;
+  owner_username: string;
+}
+
+export default function AdminPartners() {
+  const [partners, setPartners] = useState<PartnerRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<PartnerRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase
+        .from('establishments')
+        .select('id, name, is_pro, pro_expires_at, owner_id, owner:profiles!establishments_owner_id_fkey(username)')
+        .not('owner_id', 'is', null)
+        .order('created_at', { ascending: false });
+
+      const rows: PartnerRow[] = (data || []).map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        is_pro: d.is_pro,
+        pro_expires_at: d.pro_expires_at,
+        owner_id: d.owner_id,
+        owner_username: d.owner?.username || 'Inconnu',
+      }));
+      setPartners(rows);
+    } catch { /* handled */ }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const proCount = partners.filter((p) => p.is_pro).length;
+  const estimatedRevenue = proCount * 69;
+
+  const activatePro = async (id: string) => {
+    try {
+      const { error } = await supabase.from('establishments').update({
+        is_pro: true,
+        pro_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      }).eq('id', id);
+      if (error) throw error;
+      toast.success('Pro active !');
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('establishments').delete().eq('id', deleteTarget.id);
+      if (error) throw error;
+      toast.success('Etablissement supprime');
+      setDeleteTarget(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    }
+    setDeleting(false);
+  };
+
+  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('fr-FR') : '-';
+
+  const proStart = (expiresAt: string | null) => {
+    if (!expiresAt) return '-';
+    const start = new Date(new Date(expiresAt).getTime() - 365 * 24 * 60 * 60 * 1000);
+    return start.toLocaleDateString('fr-FR');
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="skeleton h-20 rounded-card" />
+        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-white">Partenaires</h1>
+
+      <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu mensuel estime</p>
+        <p className="text-2xl font-bold text-white">{estimatedRevenue} EUR</p>
+        <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 69 EUR/mois</p>
+      </div>
+
+      {partners.length === 0 ? (
+        <p className="text-center text-gray-500 py-12">Aucun partenaire.</p>
+      ) : (
+        <>
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-dark-border">
+                  <th className="py-3 px-3">Etablissement</th>
+                  <th className="py-3 px-3">Proprietaire</th>
+                  <th className="py-3 px-3">Statut</th>
+                  <th className="py-3 px-3">Pro depuis</th>
+                  <th className="py-3 px-3">Expiration</th>
+                  <th className="py-3 px-3">Valeur</th>
+                  <th className="py-3 px-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partners.map((p) => (
+                  <tr key={p.id} className="border-b border-dark-border/50 hover:bg-dark-surface/50">
+                    <td className="py-2.5 px-3 text-white font-medium">{p.name}</td>
+                    <td className="py-2.5 px-3 text-gray-400">{p.owner_username}</td>
+                    <td className="py-2.5 px-3">{p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}</td>
+                    <td className="py-2.5 px-3 text-gray-500 text-xs">{p.is_pro ? proStart(p.pro_expires_at) : '-'}</td>
+                    <td className="py-2.5 px-3 text-gray-500 text-xs">{p.is_pro ? formatDate(p.pro_expires_at) : '-'}</td>
+                    <td className="py-2.5 px-3 text-gray-400">{p.is_pro ? '69 EUR/mois' : '0 EUR'}</td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-1">
+                        <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                        {!p.is_pro && <button onClick={() => activatePro(p.id)} title="Activer Pro" className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
+                        <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="md:hidden space-y-3">
+            {partners.map((p) => (
+              <div key={p.id} className="bg-dark-surface border border-dark-border rounded-card p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-white">{p.name}</p>
+                  {p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}
+                </div>
+                <p className="text-xs text-gray-500">Proprietaire : {p.owner_username}</p>
+                {p.is_pro && <p className="text-xs text-gray-500">Expiration : {formatDate(p.pro_expires_at)}</p>}
+                <div className="flex items-center justify-end gap-1">
+                  <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                  {!p.is_pro && <button onClick={() => activatePro(p.id)} className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
+                  <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Supprimer l'etablissement"
+        message={`Supprimer definitivement "${deleteTarget?.name}" ?`}
+        confirmLabel="Supprimer"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
+    </div>
+  );
+}

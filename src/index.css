@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-light-bg text-gray-900 dark:bg-dark-bg dark:text-gray-100;
+    line-height: 1.5;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #7B2D8B transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #7B2D8B;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-6 py-3 rounded-input font-medium
+           transition-all duration-200 hover:opacity-90 active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+           dark:focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply border border-primary text-primary px-6 py-3 rounded-input font-medium
+           transition-all duration-200 hover:bg-primary hover:text-white
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+           dark:focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 dark:text-gray-400 px-4 py-2 rounded-input font-medium
+           transition-all duration-200 hover:bg-gray-100 dark:hover:bg-dark-surface
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+           dark:focus:ring-offset-dark-bg;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-input border border-light-border dark:border-dark-border
+           bg-light-surface dark:bg-dark-surface text-gray-900 dark:text-gray-100
+           placeholder-gray-400 dark:placeholder-gray-500
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+           transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border
+           rounded-card overflow-hidden transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-lg hover:border-primary/30 cursor-pointer;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-pill text-xs font-medium;
+  }
+
+  .badge-pro {
+    @apply badge bg-primary/10 text-primary dark:bg-primary/20;
+  }
+
+  .badge-sponsor {
+    @apply badge bg-sponsor/10 text-sponsor dark:bg-sponsor/20;
+  }
+
+  .badge-free {
+    @apply badge bg-success/10 text-success dark:bg-success/20;
+  }
+
+  .pill-filter {
+    @apply font-medium whitespace-nowrap shrink-0
+           border border-light-border dark:border-dark-border
+           bg-light-surface dark:bg-dark-surface
+           text-gray-600 dark:text-gray-400
+           transition-all duration-200 cursor-pointer
+           hover:border-primary hover:text-primary;
+    height: 28px;
+    font-size: 12px;
+    padding: 0 10px;
+    border-radius: 20px;
+    line-height: 28px;
+  }
+
+  .pill-filter-active {
+    @apply pill-filter bg-primary border-primary text-white
+           hover:bg-primary hover:text-white hover:border-primary;
+  }
+
+  .pill-filter-sub {
+    @apply font-medium whitespace-nowrap shrink-0
+           border border-light-border dark:border-dark-border
+           bg-transparent
+           text-gray-500 dark:text-gray-400
+           transition-all duration-200 cursor-pointer
+           hover:border-primary hover:text-primary;
+    height: 26px;
+    font-size: 11px;
+    padding: 0 8px;
+    border-radius: 20px;
+    line-height: 26px;
+  }
+
+  .pill-filter-sub-active {
+    @apply pill-filter-sub bg-primary/10 border-primary text-primary;
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-dark-border rounded-input;
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #7B2D8B;
+  border: 2px solid white;
+  cursor: pointer;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: none;
+  pointer-events: auto;
+}
+
+.map-marker:hover {
+}
+
+.rich-popup .mapboxgl-popup-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+.rich-popup .mapboxgl-popup-tip {
+  border-top-color: rgba(0, 0, 0, 0.05);
+}
+
+@keyframes prosFadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes prosBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.pros-fade-in {
+  animation: prosFadeInUp 0.6s ease forwards;
+}
+
+.pros-bounce {
+  animation: prosBounce 2s infinite;
+}
+
+.pros-card-benefit {
+  background: #14141e;
+  border: 1px solid #1e1e2e;
+  animation: prosFadeInUp 0.5s ease forwards;
+}
+
+.legal-placeholder {
+  color: #d4a017;
+  font-weight: 600;
+  background: rgba(212, 160, 23, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
