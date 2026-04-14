@@ -11,6 +11,7 @@ import AdminEditSidebar, {
   SidebarInput,
   SidebarTextarea,
   SidebarSelect,
+  SidebarToggle,
 } from '../../components/admin/AdminEditSidebar';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -72,6 +73,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
   const [form, setForm] = useState<FormData>(initialForm);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [croppedBanner, setCroppedBanner] = useState<Blob | null>(null);
   const [croppedLogo, setCroppedLogo] = useState<Blob | null>(null);
 
@@ -124,6 +126,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       });
       setBannerUrl(d.banner_url || null);
       setLogoUrl(d.logo_url || null);
+      setIsPro(d.is_pro ?? false);
       setGalleryPhotos((photosRes.data || []).map((p: any) => ({ id: p.id, url: p.url, order_index: p.order_index })));
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
@@ -276,6 +279,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           subcategory: form.subcategory,
           banner_url: newBannerUrl,
           logo_url: newLogoUrl,
+          is_pro: isPro,
         })
         .eq('id', establishmentId);
       if (error) throw error;
@@ -437,6 +441,17 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           multiple
           className="hidden"
           onChange={handleGalleryFiles}
+        />
+
+        <div className="mb-2 mt-6">
+          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Statut</p>
+        </div>
+
+        <SidebarToggle
+          checked={isPro}
+          onChange={(v) => setIsPro(v)}
+          label="Profil Pro"
+          description="Active la banniere, la galerie, les evenements et les promotions pour cet etablissement."
         />
       </AdminEditSidebar>
 

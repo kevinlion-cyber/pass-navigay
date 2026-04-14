@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Check, Star, Crown, Trash2, ExternalLink, Download, Pencil } from 'lucide-react';
+import { Search, X, Trash2, ExternalLink, Download, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
@@ -9,7 +9,7 @@ import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 
 const PAGE_SIZE = 20;
 
-type StatusFilter = 'all' | 'free' | 'pro' | 'sponsor' | 'verified' | 'unverified';
+type StatusFilter = 'all' | 'free' | 'pro';
 
 export default function AdminEstablishments() {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
@@ -29,11 +29,8 @@ export default function AdminEstablishments() {
       let query = supabase.from('establishments').select('*', { count: 'exact' });
 
       if (catFilter !== 'all') query = query.eq('category', catFilter);
-      if (statusFilter === 'free') query = query.eq('is_pro', false).eq('is_sponsor', false);
+      if (statusFilter === 'free') query = query.eq('is_pro', false);
       if (statusFilter === 'pro') query = query.eq('is_pro', true);
-      if (statusFilter === 'sponsor') query = query.eq('is_sponsor', true);
-      if (statusFilter === 'verified') query = query.eq('is_verified', true);
-      if (statusFilter === 'unverified') query = query.eq('is_verified', false);
       if (search) query = query.ilike('name', `%${search}%`);
 
       query = query.order('created_at', { ascending: false }).range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -46,17 +43,6 @@ export default function AdminEstablishments() {
   };
 
   useEffect(() => { load(); }, [catFilter, statusFilter, search, page]);
-
-  const doAction = async (id: string, payload: Record<string, any>, msg: string) => {
-    try {
-      const { error } = await supabase.from('establishments').update(payload).eq('id', id);
-      if (error) throw error;
-      toast.success(msg);
-      load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -74,7 +60,7 @@ export default function AdminEstablishments() {
   };
 
   const exportCSV = () => {
-    const headers = ['Nom', 'Categorie', 'Ville', 'Adresse', 'Pro', 'Sponsor', 'Verifie', 'Cree_le'];
+    const headers = ['Nom', 'Categorie', 'Ville', 'Adresse', 'Pro', 'Cree_le'];
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
     const rows = establishments.map((e) => [
       escape(e.name || ''),
@@ -82,8 +68,6 @@ export default function AdminEstablishments() {
       escape(e.city || ''),
       escape(e.address || ''),
       e.is_pro ? 'Oui' : 'Non',
-      e.is_sponsor ? 'Oui' : 'Non',
-      e.is_verified ? 'Oui' : 'Non',
       new Date(e.created_at).toLocaleDateString('fr-FR'),
     ].join(','));
     const csv = [headers.join(','), ...rows].join('\n');
@@ -98,14 +82,22 @@ export default function AdminEstablishments() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const statusBadges = (e: Establishment) => (
-    <div className="flex flex-wrap gap-1">
-      {e.is_sponsor && <span className="badge-sponsor text-xs">Sponsor</span>}
-      {e.is_pro && <span className="badge-pro text-xs">Pro</span>}
-      {e.is_verified && <span className="badge text-xs bg-success/10 text-success">Verifie</span>}
-      {!e.is_pro && !e.is_sponsor && <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}
-    </div>
-  );
+  const statusBadge = (e: Establishment) =>
+    e.is_pro ? (
+      <span
+        className="text-xs font-semibold"
+        style={{ background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#c084f5', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 600 }}
+      >
+        Pro
+      </span>
+    ) : (
+      <span
+        className="text-xs"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a3a', color: '#606070', borderRadius: 6, padding: '3px 10px', fontSize: 12 }}
+      >
+        Gratuit
+      </span>
+    );
 
   return (
     <div className="space-y-4">
@@ -125,9 +117,6 @@ export default function AdminEstablishments() {
           <option value="all">Tous statuts</option>
           <option value="free">Gratuit</option>
           <option value="pro">Pro</option>
-          <option value="sponsor">Sponsor</option>
-          <option value="verified">Verifie</option>
-          <option value="unverified">Non verifie</option>
         </select>
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -175,19 +164,12 @@ export default function AdminEstablishments() {
                     <td className="py-2.5 px-3 text-white font-medium">{e.name}</td>
                     <td className="py-2.5 px-3 text-gray-400">{e.category} · {e.subcategory}</td>
                     <td className="py-2.5 px-3 text-gray-400">{e.city}</td>
-                    <td className="py-2.5 px-3">{statusBadges(e)}</td>
+                    <td className="py-2.5 px-3">{statusBadge(e)}</td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{new Date(e.created_at).toLocaleDateString('fr-FR')}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-1">
                         <button onClick={() => setEditId(e.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
-                        {!e.is_verified && (
-                          <button onClick={() => doAction(e.id, { is_verified: true }, 'Verifie !')} title="Verifier" className="p-1.5 text-gray-500 hover:text-success transition-colors"><Check size={15} /></button>
-                        )}
-                        <button onClick={() => doAction(e.id, { is_sponsor: !e.is_sponsor }, e.is_sponsor ? 'Sponsor retire' : 'Sponsor active !')} title="Sponsor" className="p-1.5 text-gray-500 hover:text-sponsor transition-colors"><Star size={15} /></button>
-                        {!e.is_pro && (
-                          <button onClick={() => doAction(e.id, { is_pro: true, pro_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }, 'Pro active !')} title="Pro" className="p-1.5 text-gray-500 hover:text-primary transition-colors"><Crown size={15} /></button>
-                        )}
-                        <a href={`/establishment/${e.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white transition-colors"><ExternalLink size={15} /></a>
+                        <a href={`/establishment/${e.id}`} target="_blank" rel="noopener noreferrer" title="Voir la fiche" className="p-1.5 text-gray-500 hover:text-white transition-colors"><ExternalLink size={15} /></a>
                         <button onClick={() => setDeleteTarget(e)} title="Supprimer" className="p-1.5 text-gray-500 hover:text-alert transition-colors"><Trash2 size={15} /></button>
                       </div>
                     </td>
@@ -210,12 +192,9 @@ export default function AdminEstablishments() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  {statusBadges(e)}
+                  {statusBadge(e)}
                   <div className="flex items-center gap-1">
                     <button onClick={() => setEditId(e.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
-                    {!e.is_verified && <button onClick={() => doAction(e.id, { is_verified: true }, 'Verifie !')} className="p-1.5 text-gray-500 hover:text-success"><Check size={15} /></button>}
-                    <button onClick={() => doAction(e.id, { is_sponsor: !e.is_sponsor }, e.is_sponsor ? 'Sponsor retire' : 'Sponsor active !')} className="p-1.5 text-gray-500 hover:text-sponsor"><Star size={15} /></button>
-                    {!e.is_pro && <button onClick={() => doAction(e.id, { is_pro: true, pro_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }, 'Pro active !')} className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
                     <a href={`/establishment/${e.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
                     <button onClick={() => setDeleteTarget(e)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                   </div>
