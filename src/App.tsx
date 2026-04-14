@@ -43,7 +43,6 @@ import PartnerDashboard from './pages/partner/PartnerDashboard';
 import PartnerEstablishment from './pages/partner/PartnerEstablishment';
 import PartnerEvents from './pages/partner/PartnerEvents';
 import PartnerPromotions from './pages/partner/PartnerPromotions';
-import PartnerGallery from './pages/partner/PartnerGallery';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
 
 export default function App() {
@@ -113,7 +112,6 @@ export default function App() {
               <Route path="/pros/establishment" element={<PartnerEstablishment />} />
               <Route path="/pros/events" element={<PartnerEvents />} />
               <Route path="/pros/promotions" element={<PartnerPromotions />} />
-              <Route path="/pros/gallery" element={<PartnerGallery />} />
               <Route path="/pros/subscription" element={<PartnerSubscription />} />
             </Route>
           </Routes>

@@ -46,13 +46,13 @@ const EMPTY_FORM: PromoForm = {
 };
 
 const DAYS = [
-  { key: 'lun', label: 'Lun', full: 'MONDAY' },
-  { key: 'mar', label: 'Mar', full: 'TUESDAY' },
-  { key: 'mer', label: 'Mer', full: 'WEDNESDAY' },
-  { key: 'jeu', label: 'Jeu', full: 'THURSDAY' },
-  { key: 'ven', label: 'Ven', full: 'FRIDAY' },
-  { key: 'sam', label: 'Sam', full: 'SATURDAY' },
-  { key: 'dim', label: 'Dim', full: 'SUNDAY' },
+  { key: 'lun', label: 'L', full: 'MONDAY' },
+  { key: 'mar', label: 'M', full: 'TUESDAY' },
+  { key: 'mer', label: 'Me', full: 'WEDNESDAY' },
+  { key: 'jeu', label: 'J', full: 'THURSDAY' },
+  { key: 'ven', label: 'V', full: 'FRIDAY' },
+  { key: 'sam', label: 'S', full: 'SATURDAY' },
+  { key: 'dim', label: 'D', full: 'SUNDAY' },
 ];
 
 export default function PartnerPromotions() {
@@ -96,8 +96,8 @@ export default function PartnerPromotions() {
     const days: string[] = [];
     if (p.recurrence_rule) {
       const parts = p.recurrence_rule.replace('WEEKLY:', '').split(',');
-      parts.forEach((full) => {
-        const d = DAYS.find((d) => d.full === full);
+      parts.forEach(full => {
+        const d = DAYS.find(d => d.full === full);
         if (d) days.push(d.key);
       });
     }
@@ -120,10 +120,10 @@ export default function PartnerPromotions() {
   };
 
   const toggleDay = (key: string) => {
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
       selected_days: prev.selected_days.includes(key)
-        ? prev.selected_days.filter((d) => d !== key)
+        ? prev.selected_days.filter(d => d !== key)
         : [...prev.selected_days, key],
     }));
   };
@@ -153,7 +153,7 @@ export default function PartnerPromotions() {
 
       let recurrence_rule = '';
       if (form.is_recurring && form.selected_days.length > 0) {
-        const fullDays = form.selected_days.map((k) => DAYS.find((d) => d.key === k)!.full);
+        const fullDays = form.selected_days.map(k => DAYS.find(d => d.key === k)!.full);
         recurrence_rule = 'WEEKLY:' + fullDays.join(',');
       }
 
@@ -178,7 +178,7 @@ export default function PartnerPromotions() {
       } else {
         const { error } = await supabase.from('promotions').insert({ ...payload, current_uses: 0 });
         if (error) throw error;
-        toast.success('Promotion lancée ! Elle est maintenant visible dans l\'onglet Promos.');
+        toast.success("Promotion lancée ! Elle est maintenant visible dans l'onglet Promos.");
       }
       setFormOpen(false);
       load();
@@ -203,8 +203,6 @@ export default function PartnerPromotions() {
     setDeleting(false);
   };
 
-  const descCharCount = form.description.length;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -215,12 +213,12 @@ export default function PartnerPromotions() {
       </div>
 
       {loading ? (
-        <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-40 rounded-card" />)}</div>
+        <div className="space-y-4">{[1, 2, 3].map(i => <div key={i} className="skeleton h-40 rounded-card" />)}</div>
       ) : promos.length === 0 ? (
         <EmptyState onAction={openCreate} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {promos.map((p) => (
+          {promos.map(p => (
             <PromoCard key={p.id} promo={p} onEdit={() => openEdit(p)} onDelete={() => setDeleteTarget(p)} />
           ))}
         </div>
@@ -228,7 +226,7 @@ export default function PartnerPromotions() {
 
       {formOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={(e) => e.target === e.currentTarget && setFormOpen(false)}>
+          onClick={e => e.target === e.currentTarget && setFormOpen(false)}>
           <div className="bg-dark-surface border border-dark-border rounded-card w-full max-w-[580px] max-h-[90vh] overflow-y-auto p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">
@@ -241,14 +239,15 @@ export default function PartnerPromotions() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <ImageUploadWithCrop
                 currentImageUrl={form.image_url || null}
-                onImageCropped={(blob) => setCroppedBlob(blob)}
+                onImageCropped={blob => setCroppedBlob(blob)}
                 aspectRatio={4 / 3}
-                label="Visuel (format 4:3)"
+                label="Visuel de la promotion (format 4:3)"
+                hint="Affiché sur la carte de la promotion dans l'app."
               />
 
               <div>
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Titre de la promotion</label>
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                   required placeholder="Happy Hour -50%, Cocktail offert, Entrée gratuite..."
                   className="input-field bg-dark-bg border-dark-border text-white" />
               </div>
@@ -256,10 +255,10 @@ export default function PartnerPromotions() {
               <div>
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Description</label>
                 <textarea value={form.description}
-                  onChange={(e) => { if (e.target.value.length <= 300) setForm({ ...form, description: e.target.value }); }}
-                  rows={3} placeholder="Détaille les conditions de l'offre..."
+                  onChange={e => { if (e.target.value.length <= 300) setForm({ ...form, description: e.target.value }); }}
+                  rows={3} placeholder="Détaille les conditions, les restrictions, comment bénéficier de l'offre..."
                   className="input-field bg-dark-bg border-dark-border text-white resize-none" style={{ minHeight: 80 }} />
-                <p className="text-xs text-gray-600 text-right mt-1">{descCharCount}/300</p>
+                <p className="text-xs text-gray-600 text-right mt-1">{form.description.length}/300</p>
               </div>
 
               <div>
@@ -271,10 +270,10 @@ export default function PartnerPromotions() {
                     { key: 'offer' as PromoType, label: 'Offre spéciale' },
                   ]).map(({ key, label }) => (
                     <button key={key} type="button" onClick={() => setForm({ ...form, promo_type: key })}
-                      className="flex-1 py-2.5 rounded-input text-sm font-medium transition-colors"
+                      className="flex-1 py-2.5 rounded-[8px] text-sm font-medium transition-colors"
                       style={form.promo_type === key
-                        ? { background: '#7B2D8B', color: '#fff' }
-                        : { background: '#1a1a24', border: '1px solid #2a2a35', color: '#a0a0b0' }
+                        ? { background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#7B2D8B' }
+                        : { background: '#1a1a24', border: '1px solid #2a2a3a', color: '#a0a0b0' }
                       }>
                       {label}
                     </button>
@@ -284,23 +283,23 @@ export default function PartnerPromotions() {
                   <div className="mt-3">
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valeur (%)</label>
                     <input type="number" min={1} max={100} value={form.value || ''} placeholder="20"
-                      onChange={(e) => setForm({ ...form, value: parseInt(e.target.value) || 0 })}
+                      onChange={e => setForm({ ...form, value: parseInt(e.target.value) || 0 })}
                       className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
                 )}
                 {form.promo_type === 'fixed' && (
                   <div className="mt-3">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Montant (€)</label>
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Montant (&euro;)</label>
                     <input type="number" min={0.01} step="0.01" value={form.value || ''} placeholder="5"
-                      onChange={(e) => setForm({ ...form, value: parseFloat(e.target.value) || 0 })}
+                      onChange={e => setForm({ ...form, value: parseFloat(e.target.value) || 0 })}
                       className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
                 )}
                 {form.promo_type === 'offer' && (
                   <div className="mt-3">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Description de l'offre</label>
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Décris l'offre</label>
                     <input value={form.offer_text}
-                      onChange={(e) => setForm({ ...form, offer_text: e.target.value })}
+                      onChange={e => setForm({ ...form, offer_text: e.target.value })}
                       placeholder="1 cocktail offert pour 1 acheté"
                       className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
@@ -309,33 +308,32 @@ export default function PartnerPromotions() {
 
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">À partir du</label>
+                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valable à partir du</label>
                   <input type="date" value={form.valid_from}
-                    onChange={(e) => setForm({ ...form, valid_from: e.target.value })}
+                    onChange={e => setForm({ ...form, valid_from: e.target.value })}
                     required className="input-field bg-dark-bg border-dark-border text-white" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Jusqu'au</label>
                   <input type="date" value={form.valid_until}
-                    onChange={(e) => setForm({ ...form, valid_until: e.target.value })}
+                    onChange={e => setForm({ ...form, valid_until: e.target.value })}
                     required className="input-field bg-dark-bg border-dark-border text-white" />
                 </div>
               </div>
 
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <ToggleSwitch checked={form.is_recurring}
-                    onChange={(v) => setForm({ ...form, is_recurring: v })} />
-                  <span className="text-sm text-gray-300">Promotion récurrente (se répète chaque semaine)</span>
+                  <ToggleSwitch checked={form.is_recurring} onChange={v => setForm({ ...form, is_recurring: v })} />
+                  <span className="text-sm text-gray-300">Promotion récurrente (hebdomadaire)</span>
                 </label>
                 {form.is_recurring && (
-                  <div className="flex flex-wrap gap-2 mt-3 ml-12">
+                  <div className="flex flex-wrap gap-2 mt-3 ml-14">
                     {DAYS.map(({ key, label }) => (
                       <button key={key} type="button" onClick={() => toggleDay(key)}
-                        className="w-10 h-10 rounded-input text-xs font-medium transition-colors"
+                        className="w-9 h-9 rounded-[6px] text-xs font-medium transition-colors flex items-center justify-center"
                         style={form.selected_days.includes(key)
-                          ? { background: '#7B2D8B', color: '#fff' }
-                          : { background: '#1a1a24', border: '1px solid #2a2a35', color: '#a0a0b0' }
+                          ? { background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#7B2D8B' }
+                          : { background: '#1a1a24', border: '1px solid #2a2a3a', color: '#a0a0b0' }
                         }>
                         {label}
                       </button>
@@ -346,19 +344,22 @@ export default function PartnerPromotions() {
 
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <ToggleSwitch checked={form.limit_uses}
-                    onChange={(v) => setForm({ ...form, limit_uses: v })} />
+                  <ToggleSwitch checked={form.limit_uses} onChange={v => setForm({ ...form, limit_uses: v })} />
                   <span className="text-sm text-gray-300">Limiter le nombre d'utilisations</span>
                 </label>
                 {form.limit_uses && (
-                  <div className="mt-3 ml-12">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Nombre maximum</label>
+                  <div className="mt-3 ml-14">
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Nombre maximum d'utilisations</label>
                     <input type="number" min={1} value={form.max_uses || ''} placeholder="100"
-                      onChange={(e) => setForm({ ...form, max_uses: parseInt(e.target.value) || 0 })}
+                      onChange={e => setForm({ ...form, max_uses: parseInt(e.target.value) || 0 })}
                       className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
                 )}
               </div>
+
+              {editing && (
+                <p className="text-xs text-gray-600">Utilisations actuelles : {editing.current_uses}</p>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setFormOpen(false)}
@@ -369,7 +370,7 @@ export default function PartnerPromotions() {
                   className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: '#7B2D8B' }}>
                   {saving && <LoadingSpinner size={16} />}
-                  {editing ? 'Enregistrer les modifications' : 'Lancer la promotion'}
+                  {editing ? 'Enregistrer' : 'Lancer la promotion'}
                 </button>
               </div>
             </form>
@@ -377,15 +378,10 @@ export default function PartnerPromotions() {
         </div>
       )}
 
-      <ConfirmModal
-        open={!!deleteTarget}
-        title="Supprimer la promotion"
+      <ConfirmModal open={!!deleteTarget} title="Supprimer la promotion"
         message={`Supprimer "${deleteTarget?.title}" ? Cette action est irréversible.`}
-        confirmLabel="Supprimer"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        loading={deleting}
-      />
+        confirmLabel="Supprimer" onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleDelete} loading={deleting} />
     </div>
   );
 }

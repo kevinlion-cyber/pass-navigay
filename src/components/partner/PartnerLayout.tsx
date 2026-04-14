@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, LogOut, BarChart3, Store, CalendarDays, Tag,
-  Image, CreditCard, User,
+  CreditCard, User,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Establishment } from '../../lib/types';
@@ -15,12 +15,11 @@ interface NavBadges {
 }
 
 const NAV_ITEMS = [
-  { to: '/pros/dashboard', label: 'Dashboard', icon: BarChart3, emoji: '📊', group: 'main' },
-  { to: '/pros/establishment', label: 'Mon établissement', icon: Store, emoji: '🏪', group: 'main' },
-  { to: '/pros/events', label: 'Événements', icon: CalendarDays, emoji: '📅', group: 'main' },
-  { to: '/pros/promotions', label: 'Promotions', icon: Tag, emoji: '🏷', group: 'main' },
-  { to: '/pros/gallery', label: 'Galerie', icon: Image, emoji: '🖼', group: 'main' },
-  { to: '/pros/subscription', label: 'Abonnement', icon: CreditCard, emoji: '💳', group: 'sub' },
+  { to: '/pros/dashboard', label: 'Dashboard', icon: BarChart3, group: 'main' },
+  { to: '/pros/establishment', label: 'Mon établissement', icon: Store, group: 'main' },
+  { to: '/pros/events', label: 'Événements', icon: CalendarDays, group: 'main' },
+  { to: '/pros/promotions', label: 'Promotions', icon: Tag, group: 'main' },
+  { to: '/pros/subscription', label: 'Abonnement', icon: CreditCard, group: 'sub' },
 ];
 
 export default function PartnerLayout() {
@@ -114,9 +113,6 @@ export default function PartnerLayout() {
     }
     if (to === '/pros/promotions' && badges.promos > 0) {
       return { value: badges.promos > 9 ? '9+' : String(badges.promos), color: '#7B2D8B' };
-    }
-    if (to === '/pros/gallery') {
-      return { value: `${badges.photos}/20`, color: '#555' };
     }
     return null;
   };
