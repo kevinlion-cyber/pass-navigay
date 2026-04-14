@@ -6,7 +6,6 @@ import { supabase } from '../../lib/supabase';
 import RegisterStep1, { type Step1Data } from './RegisterStep1';
 import RegisterStep2, { type Step2Data } from './RegisterStep2';
 import RegisterStep3, { type Step3Data } from './RegisterStep3';
-import type { CategoryKey } from '../../lib/types';
 
 interface ProsRegisterModalProps {
   onClose: () => void;
@@ -105,7 +104,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         postal_code: step2.postal_code,
         latitude: step2.latitude || 0,
         longitude: step2.longitude || 0,
-        category: step2.category as CategoryKey,
+        category: step2.category,
         subcategory: step2.subcategory,
         phone: step2.phone,
         website: step2.website,

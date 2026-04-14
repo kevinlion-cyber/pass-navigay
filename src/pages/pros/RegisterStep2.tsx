@@ -1,10 +1,26 @@
 import { useState } from 'react';
-import type { CategoryKey } from '../../lib/types';
-import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
+
+const SUBCATEGORIES: Record<string, string[]> = {
+  se_loger: ['Maison d\'h\u00f4tes', 'H\u00f4tel', 'Location particuli\u00e8re'],
+  shopping: ['V\u00eatements', 'D\u00e9co', 'Art', 'Chaussures', 'Sex-shop', 'Jeux'],
+  manger: ['Restaurant', 'Fast-food', 'Brunch', 'Salon de th\u00e9', 'Bar \u00e0 vins'],
+  soiree: ['Bar tranquille', 'Bar musical', 'Bo\u00eete de nuit'],
+  bien_etre: ['Sauna', 'Massage', 'Esth\u00e9tique'],
+  culture: ['Mus\u00e9e', 'Visite guid\u00e9e', 'Concert', 'Cin\u00e9ma', 'Autres'],
+};
+
+const CATEGORY_OPTIONS = [
+  { value: 'se_loger', label: 'Se loger' },
+  { value: 'shopping', label: 'Shopping' },
+  { value: 'manger', label: 'Manger' },
+  { value: 'soiree', label: 'Soir\u00e9e' },
+  { value: 'bien_etre', label: 'Bien-\u00eatre' },
+  { value: 'culture', label: 'Culture' },
+];
 
 export interface Step2Data {
   name: string;
-  category: CategoryKey | '';
+  category: string;
   subcategory: string;
   address: string;
   city: string;
@@ -76,12 +92,22 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     return Object.keys(errs).length === 0;
   };
 
+  const handleCategoryChange = (value: string) => {
+    onChange({ ...data, category: value, subcategory: '' });
+    setErrors((prev) => ({ ...prev, category: '', subcategory: '' }));
+  };
+
+  const handleSubcategoryChange = (value: string) => {
+    onChange({ ...data, subcategory: value });
+    setErrors((prev) => ({ ...prev, subcategory: '' }));
+  };
+
   const inputStyle = (field: string) => ({
     background: '#0a0a0f',
     border: `1px solid ${errors[field] ? '#ef4444' : '#2a2a3a'}`,
   });
 
-  const subcategories = data.category ? CATEGORIES[data.category as CategoryKey]?.subcategories || [] : [];
+  const subcategories = data.category ? SUBCATEGORIES[data.category] || [] : [];
 
   return (
     <div className="space-y-5">
@@ -108,29 +134,51 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
         <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Catégorie principale</label>
         <select
           value={data.category}
-          onChange={(e) => { set('category', e.target.value as CategoryKey); set('subcategory', ''); }}
-          className="w-full px-4 py-3 rounded-[10px] text-[14px] text-white outline-none transition-colors focus:border-[#7B2D8B]"
-          style={inputStyle('category')}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="w-full px-4 py-3 rounded-[10px] text-[14px] outline-none transition-colors focus:border-[#7B2D8B]"
+          style={{
+            background: '#1a1a24',
+            border: `1px solid ${errors.category ? '#ef4444' : data.category ? '#7B2D8B' : '#2a2a3a'}`,
+            color: data.category ? '#ffffff' : '#606070',
+          }}
         >
           <option value="" disabled>Choisir une catégorie</option>
-          {CATEGORY_KEYS.map((k) => <option key={k} value={k}>{CATEGORIES[k].label}</option>)}
+          {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         {errors.category && <p className="text-[12px] text-red-500 mt-1">{errors.category}</p>}
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Type d'établissement</label>
+        <label
+          className="block text-[13px] font-medium mb-1.5"
+          style={{ color: data.category ? '#c0c0d0' : '#3a3a4a' }}
+        >
+          Type d'établissement
+        </label>
         <select
           value={data.subcategory}
-          onChange={(e) => set('subcategory', e.target.value)}
+          onChange={(e) => handleSubcategoryChange(e.target.value)}
           disabled={!data.category}
-          className="w-full px-4 py-3 rounded-[10px] text-[14px] text-white outline-none transition-colors focus:border-[#7B2D8B] disabled:opacity-40"
-          style={inputStyle('subcategory')}
+          className="w-full px-4 py-3 rounded-[10px] text-[14px] outline-none transition-colors focus:border-[#7B2D8B]"
+          style={{
+            background: data.category ? '#1a1a24' : '#111118',
+            border: `1px solid ${errors.subcategory ? '#ef4444' : !data.category ? '#1e1e2e' : data.subcategory ? '#7B2D8B' : '#2a2a3a'}`,
+            color: !data.category ? '#3a3a4a' : data.subcategory ? '#ffffff' : '#606070',
+            cursor: data.category ? 'pointer' : 'not-allowed',
+            opacity: data.category ? 1 : 0.5,
+          }}
         >
-          <option value="" disabled>Choisir</option>
+          <option value="" disabled>
+            {data.category ? 'Choisir un type' : 'Choisis d\'abord une catégorie'}
+          </option>
           {subcategories.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         {errors.subcategory && <p className="text-[12px] text-red-500 mt-1">{errors.subcategory}</p>}
+        {!data.category && (
+          <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
+            Sélectionne d'abord une catégorie ci-dessus.
+          </p>
+        )}
       </div>
 
       <div className="relative">
