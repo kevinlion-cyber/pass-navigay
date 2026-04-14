@@ -44,7 +44,6 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
   const [loading, setLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [acting, setActing] = useState(false);
   const [showAllFavs, setShowAllFavs] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -79,29 +78,6 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
-
-  const togglePremium = async () => {
-    if (!profile) return;
-    setActing(true);
-    try {
-      const newPremium = !profile.is_premium;
-      const payload = newPremium
-        ? { is_premium: true, premium_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() }
-        : { is_premium: false, premium_expires_at: null };
-      const { error } = await supabase.from('profiles').update(payload).eq('id', profile.id);
-      if (error) throw error;
-      toast.success(
-        newPremium
-          ? `Premium activé pour ${profile.username} !`
-          : `Premium révoqué pour ${profile.username}.`
-      );
-      await loadData();
-      onRefresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
-    }
-    setActing(false);
-  };
 
   const handleDelete = async () => {
     if (!profile) return;
@@ -284,26 +260,6 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
 
             <div className="shrink-0 px-6 py-5" style={{ background: '#14141e', borderTop: '1px solid #1e1e2e' }}>
               <p className="text-[12px] uppercase tracking-[1px] text-[#606070] mb-4 font-medium">Actions</p>
-              {profile.is_premium ? (
-                <button
-                  onClick={togglePremium}
-                  disabled={acting}
-                  className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90 disabled:opacity-50"
-                  style={{ background: 'transparent', border: '1px solid #d4a017', color: '#d4a017' }}
-                >
-                  Révoquer le Premium
-                </button>
-              ) : (
-                <button
-                  onClick={togglePremium}
-                  disabled={acting}
-                  className="w-full py-3 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50"
-                  style={{ background: '#7B2D8B' }}
-                >
-                  Premium
-                </button>
-              )}
-              <div className="my-3" style={{ borderTop: '1px solid #1e1e2e' }} />
               <button
                 onClick={() => setDeleteOpen(true)}
                 className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90"
