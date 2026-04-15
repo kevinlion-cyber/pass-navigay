@@ -32,13 +32,13 @@ export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
         </div>
 
         <h1 className="text-[36px] md:text-[56px] font-black text-white leading-[1.15]">
-          Rejoins le réseau des lieux{'\n'}
+          Rejoignez le réseau des lieux{'\n'}
           <br className="hidden md:block" />
           LGBT-friendly de <span className="text-[#c084f5]">France</span>
         </h1>
 
         <p className="mt-5 text-[16px] md:text-[18px] text-[#a0a0b0] max-w-[600px] mx-auto leading-relaxed">
-          Référence ton établissement, publie tes événements et touche des milliers d'utilisateurs qui cherchent des lieux sûrs et bienveillants près de chez eux.
+          Référencez votre établissement, publiez vos événements et touchez des milliers d'utilisateurs qui cherchent des lieux sûrs et bienveillants près de chez eux.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-[10px] mt-8">

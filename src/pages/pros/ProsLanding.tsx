@@ -37,7 +37,7 @@ export default function ProsLanding() {
               onClick={openRegister}
               className="inline-flex items-center px-5 py-2 rounded-lg bg-[#7B2D8B] text-white text-[14px] font-medium transition-colors hover:bg-[#9b3dab]"
             >
-              Créer mon profil
+              Créer mon profil pro
             </button>
           </div>
         </div>

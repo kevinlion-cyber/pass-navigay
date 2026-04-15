@@ -12,12 +12,12 @@ interface ProsRegisterModalProps {
   onSwitchToLogin: () => void;
 }
 
-const STEP_LABELS = ['Tes infos', 'Ton établissement', 'Tes photos'];
+const STEP_LABELS = ['Vos infos', 'Votre établissement', 'Vos photos'];
 
 const LOADER_MESSAGES = [
-  'Création de ton compte...',
-  'Enregistrement de ton établissement...',
-  'Upload de tes photos...',
+  'Création de votre compte...',
+  'Enregistrement de votre établissement...',
+  'Upload de vos photos...',
   'Tout est prêt !',
 ];
 
@@ -44,7 +44,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
   const handleClose = useCallback(() => {
     if (submitting) return;
     if (hasData) {
-      if (window.confirm('Tu vas perdre tes informations, continuer ?')) onClose();
+      if (window.confirm('Vous allez perdre vos informations, continuer ?')) onClose();
     } else {
       onClose();
     }
@@ -136,7 +136,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
 
       setLoaderStep(3);
       await new Promise((r) => setTimeout(r, 800));
-      toast.success('Bienvenue ! Ton établissement est en cours de validation.');
+      toast.success('Bienvenue ! Votre établissement est en cours de validation.');
       onClose();
       navigate('/pros/tableau-de-bord');
     } catch (err: any) {
@@ -253,7 +253,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
                 className="font-medium transition-colors hover:underline"
                 style={{ color: '#7B2D8B' }}
               >
-                Connecte-toi &rarr;
+                Connectez-vous &rarr;
               </button>
             </p>
           )}

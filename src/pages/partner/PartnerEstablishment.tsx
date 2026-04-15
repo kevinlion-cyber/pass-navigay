@@ -230,10 +230,10 @@ export default function PartnerEstablishment() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Description de ton établissement</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Description de votre établissement</label>
             <textarea value={description}
               onChange={e => { if (e.target.value.length <= 500) setDescription(e.target.value); }}
-              placeholder="Présente ton établissement, son ambiance, ce qui le rend unique et inclusif..."
+              placeholder="Présentez votre établissement, son ambiance, ce qui le rend unique et inclusif..."
               className="input-field bg-dark-bg border-dark-border text-white resize-y"
               style={{ minHeight: 140 }} />
             <p className="text-xs text-gray-600 text-right mt-1">{description.length} / 500</p>
@@ -312,7 +312,7 @@ export default function PartnerEstablishment() {
                 <label className="flex flex-col items-center justify-center gap-2 rounded-[10px] cursor-pointer transition-colors hover:border-[#3a3a4a]"
                   style={{ border: '2px dashed #2a2a3a', height: 120 }}>
                   <StoreIcon size={24} className="text-gray-600" />
-                  <span className="text-[13px] text-gray-500">Clique pour ajouter ton logo</span>
+                  <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre logo</span>
                   <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 5MB</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoSelect} className="hidden" />
                 </label>
@@ -322,7 +322,7 @@ export default function PartnerEstablishment() {
             {/* Banner */}
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-500 mb-0.5">Bannière (format 16:9)</p>
-              <p className="text-[11px] text-gray-600 mb-3">Image principale affichée en haut de ta fiche établissement.</p>
+              <p className="text-[11px] text-gray-600 mb-3">Image principale affichée en haut de votre fiche établissement.</p>
               {bannerDisplay ? (
                 <div>
                   <img src={bannerDisplay} alt="" className="w-full rounded-[8px] object-cover mb-2" style={{ aspectRatio: '16/9' }} />
@@ -336,7 +336,7 @@ export default function PartnerEstablishment() {
                 <label className="flex flex-col items-center justify-center gap-2 rounded-[10px] cursor-pointer transition-colors hover:border-[#3a3a4a]"
                   style={{ border: '2px dashed #2a2a3a', height: 160 }}>
                   <Camera size={24} className="text-gray-600" />
-                  <span className="text-[13px] text-gray-500">Clique pour ajouter ta photo principale</span>
+                  <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre photo principale</span>
                   <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 10MB</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerSelect} className="hidden" />
                 </label>

@@ -31,10 +31,10 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
     <section className="py-[100px] px-6" style={{ background: '#0f0f17' }}>
       <div className="max-w-[900px] mx-auto">
         <h2 className="text-[32px] md:text-[40px] font-extrabold text-white text-center">
-          Choisis ta formule
+          Choisissez votre formule
         </h2>
         <p className="text-[18px] text-[#a0a0b0] text-center mt-4">
-          Commence gratuitement. Passe Pro quand tu es prêt.
+          Commencez gratuitement. Passez Pro quand vous êtes prêt.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-[60px]">
@@ -86,7 +86,7 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
               <span className="text-[56px] font-bold text-white leading-none">69&euro;</span>
               <span className="text-[18px] text-[#606070] ml-1">/mois</span>
             </div>
-            <p className="text-[14px] text-[#a0a0b0] mt-2">Tout ce qu&rsquo;il faut pour développer ta visibilité.</p>
+            <p className="text-[14px] text-[#a0a0b0] mt-2">Tout ce qu&rsquo;il faut pour développer votre visibilité.</p>
 
             <ul className="mt-8 space-y-3.5 flex-1">
               {PRO_FEATURES.map((label) => (

@@ -11,10 +11,10 @@ export default function ProGate({ feature }: { feature: string }) {
       </div>
       <h2 className="text-lg font-semibold text-white">Fonctionnalite Pro</h2>
       <p className="text-sm text-gray-400 max-w-sm">
-        Passe au profil Pro pour {feature}.
+        Passez au profil Pro pour {feature}.
       </p>
       <button onClick={() => navigate('/pros/abonnement')} className="btn-primary">
-        Passer Pro
+        Passez Pro
       </button>
     </div>
   );

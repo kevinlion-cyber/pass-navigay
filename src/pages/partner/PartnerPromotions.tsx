@@ -137,7 +137,7 @@ export default function PartnerPromotions() {
       return;
     }
     if (form.is_recurring && form.selected_days.length === 0) {
-      toast.error('Sélectionne au moins un jour pour la récurrence');
+      toast.error('Sélectionnez au moins un jour pour la récurrence');
       return;
     }
     setSaving(true);
@@ -257,7 +257,7 @@ export default function PartnerPromotions() {
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Description</label>
                 <textarea value={form.description}
                   onChange={e => { if (e.target.value.length <= 300) setForm({ ...form, description: e.target.value }); }}
-                  rows={3} placeholder="Détaille les conditions, les restrictions, comment bénéficier de l'offre..."
+                  rows={3} placeholder="Détaillez les conditions, les restrictions, comment bénéficier de l'offre..."
                   className="input-field bg-dark-bg border-dark-border text-white resize-none" style={{ minHeight: 80 }} />
                 <p className="text-xs text-gray-600 text-right mt-1">{form.description.length}/300</p>
               </div>
@@ -298,7 +298,7 @@ export default function PartnerPromotions() {
                 )}
                 {form.promo_type === 'offer' && (
                   <div className="mt-3">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Décris l'offre</label>
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Décrivez l'offre</label>
                     <input value={form.offer_text}
                       onChange={e => setForm({ ...form, offer_text: e.target.value })}
                       placeholder="1 cocktail offert pour 1 acheté"
@@ -391,21 +391,21 @@ function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <span className="text-5xl mb-6">🏷</span>
-      <h2 className="text-lg font-semibold text-white mb-2">Tu n'as pas encore de promotions</h2>
+      <h2 className="text-lg font-semibold text-white mb-2">Vous n'avez pas encore de promotions</h2>
       <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
-        Lance des offres exclusives pour les membres Pass Navigay :
+        Lancez des offres exclusives pour les membres Pass Navigay :
         happy hours, entrées gratuites, réductions récurrentes.
-        C'est gratuit et ça fidélise une nouvelle clientèle.
+        C'est gratuit et cela fidélise une nouvelle clientèle.
       </p>
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 text-sm text-gray-400">
         <span className="flex items-center gap-1.5">
           <Check size={14} style={{ color: '#1a7a3a' }} /> Visible immédiatement dans l'onglet Promos
         </span>
         <span className="flex items-center gap-1.5">
-          <Check size={14} style={{ color: '#1a7a3a' }} /> Récurrente ou ponctuelle selon toi
+          <Check size={14} style={{ color: '#1a7a3a' }} /> Récurrente ou ponctuelle, selon vos besoins
         </span>
         <span className="flex items-center gap-1.5">
-          <Check size={14} style={{ color: '#1a7a3a' }} /> Inclus dans ton abonnement Pro
+          <Check size={14} style={{ color: '#1a7a3a' }} /> Inclus dans votre abonnement Pro
         </span>
       </div>
       <button onClick={onAction}

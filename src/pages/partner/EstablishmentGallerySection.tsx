@@ -98,7 +98,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     if (!files.length) return;
     const totalAfter = photos.length + pendingPhotos.length + files.length;
     if (totalAfter > MAX_PHOTOS) {
-      toast.error(`Tu dépasses la limite de ${MAX_PHOTOS} photos.`);
+      toast.error(`Vous dépassez la limite de ${MAX_PHOTOS} photos.`);
       return;
     }
     if (files.length > 10) {
@@ -155,7 +155,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
         <span className="text-sm text-gray-500">({totalPhotos}/{MAX_PHOTOS})</span>
       </div>
       <p className="text-[13px] text-gray-500 mb-5">
-        Ces photos apparaissent sur ta fiche établissement. Ajoute des images de l'ambiance, de la déco, de tes espaces.
+        Ces photos apparaissent sur votre fiche établissement. Ajoutez des images de l'ambiance, de la déco, de vos espaces.
       </p>
 
       {loading ? (
@@ -207,14 +207,14 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
 
           {totalPhotos >= MAX_PHOTOS ? (
             <p className="text-sm text-orange-400 py-4">
-              Tu as atteint la limite de {MAX_PHOTOS} photos. Supprime-en pour en ajouter de nouvelles.
+              Vous avez atteint la limite de {MAX_PHOTOS} photos. Supprimez-en pour en ajouter de nouvelles.
             </p>
           ) : photos.length === 0 && pendingPhotos.length === 0 ? (
             <button type="button" onClick={() => fileRef.current?.click()}
               className="w-full flex flex-col items-center justify-center gap-3 rounded-xl py-12 px-6 cursor-pointer transition-colors hover:border-[#3a3a4a]"
               style={{ border: '2px dashed #2a2a3a' }}>
               <ImageIcon size={32} className="text-gray-600" />
-              <span className="text-sm text-gray-400 font-medium">Ajoute tes premières photos</span>
+              <span className="text-sm text-gray-400 font-medium">Ajoutez vos premières photos</span>
               <span className="text-xs text-gray-600">JPG, PNG, WEBP - Jusqu'à 10 photos à la fois - Max 5MB chacune</span>
               <span className="mt-2 text-sm font-semibold text-white px-6 py-2 rounded-[8px]" style={{ background: '#7B2D8B' }}>
                 Choisir des photos
@@ -239,7 +239,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
           <div className="shrink-0 flex items-center justify-between px-5 py-4"
             style={{ background: '#14141e', borderBottom: '1px solid #1e1e2e' }}>
             <span className="text-[15px] font-semibold text-white">
-              Recadre la photo {cropIndex + 1}/{cropQueue.length}
+              Recadrez la photo {cropIndex + 1}/{cropQueue.length}
             </span>
             <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
               className="text-[#606070] hover:text-white transition-colors text-sm">
@@ -274,7 +274,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
       )}
 
       <ConfirmModal open={!!deleteTarget} title="Supprimer cette photo ?"
-        message="Es-tu sûr de vouloir supprimer cette photo ? Cette action est irréversible."
+        message="Êtes-vous sûr de vouloir supprimer cette photo ? Cette action est irréversible."
         confirmLabel="Supprimer" onCancel={() => setDeleteTarget(null)} onConfirm={handleDelete} loading={deleting} />
     </div>
   );

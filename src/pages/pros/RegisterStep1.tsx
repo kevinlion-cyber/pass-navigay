@@ -74,7 +74,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
         .eq('email', data.email)
         .maybeSingle();
       if (existing) {
-        toast.error('Cet email est d\u00e9j\u00e0 utilis\u00e9. Connecte-toi plut\u00f4t.');
+        toast.error('Cet email est d\u00e9j\u00e0 utilis\u00e9. Connectez-vous plut\u00f4t.');
         setChecking(false);
         return;
       }
@@ -93,14 +93,14 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-[20px] font-bold text-white">Parle-nous de toi</h2>
+        <h2 className="text-[20px] font-bold text-white">Parlez-nous de vous</h2>
         <p className="text-[13px] mt-1" style={{ color: '#a0a0b0' }}>
-          Ces informations serviront à créer ton compte Pass Navigay.
+          Ces informations serviront à créer votre compte Pass Navigay.
         </p>
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton prénom</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre prénom</label>
         <input
           value={data.prenom}
           onChange={(e) => set('prenom', e.target.value)}
@@ -112,7 +112,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton nom</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre nom</label>
         <input
           value={data.nom}
           onChange={(e) => set('nom', e.target.value)}
@@ -124,7 +124,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton email professionnel</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre email professionnel</label>
         <input
           type="email"
           value={data.email}
@@ -138,7 +138,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton numéro de téléphone</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre numéro de téléphone</label>
         <input
           type="tel"
           value={data.phone}
@@ -152,7 +152,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Choisis un mot de passe</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Choisissez un mot de passe</label>
         <div className="relative">
           <input
             type={showPw ? 'text' : 'password'}
@@ -192,7 +192,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Confirme ton mot de passe</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Confirmez votre mot de passe</label>
         <div className="relative">
           <input
             type={showConfirm ? 'text' : 'password'}

@@ -54,7 +54,7 @@ export default function PartnerSubscription() {
           )}
         </div>
         <p className="text-sm text-white mb-4">
-          Ton profil Pro est actif. Toutes les fonctionnalités sont débloquées.
+          Votre profil Pro est actif. Toutes les fonctionnalités sont débloquées.
         </p>
 
         {expiresAt && (
@@ -62,7 +62,7 @@ export default function PartnerSubscription() {
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(123,45,139,0.2)' }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${progressPercent}%`, background: '#7B2D8B' }} />
             </div>
-            <p className="text-xs text-gray-500 mt-2">{daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''} sur ta période en cours.</p>
+            <p className="text-xs text-gray-500 mt-2">{daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''} sur votre période en cours.</p>
           </div>
         )}
       </div>
@@ -75,7 +75,7 @@ export default function PartnerSubscription() {
 
       {/* Features unlocked */}
       <div className="rounded-card p-6" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
-        <h2 className="text-sm font-semibold text-white mb-4">Ce que tu as débloqué</h2>
+        <h2 className="text-sm font-semibold text-white mb-4">Ce que vous avez débloqué</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {PRO_FEATURES.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-3">
@@ -94,8 +94,8 @@ export default function PartnerSubscription() {
       <div className="rounded-input p-5" style={{ background: 'rgba(192,57,43,0.05)', border: '1px solid rgba(192,57,43,0.2)' }}>
         <h3 className="text-sm font-medium mb-2" style={{ color: '#c0392b' }}>Résilier mon abonnement</h3>
         <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-          Si tu résilies, ton profil repassera en Gratuit à la fin de ta période en cours.
-          Tu perdras l'accès à la galerie, aux événements et aux promotions.
+          Si vous résiliez, votre profil repassera en Gratuit à la fin de votre période en cours.
+          Vous perdrez l'accès à la galerie, aux événements et aux promotions.
         </p>
         <button onClick={() => setCancelOpen(true)}
           className="py-2.5 px-5 rounded-input text-sm font-medium transition-colors hover:opacity-90"
@@ -107,7 +107,7 @@ export default function PartnerSubscription() {
       <ConfirmModal
         open={cancelOpen}
         title="Confirmer la résiliation"
-        message={`Es-tu sûr de vouloir résilier ? Tu perdras tes avantages Pro le ${expiresAt ? formatDate(expiresAt) : ''}.`}
+        message={`Êtes-vous sûr de vouloir résilier ? Vous perdrez vos avantages Pro le ${expiresAt ? formatDate(expiresAt) : ''}.`}
         confirmLabel="Confirmer la résiliation"
         onCancel={() => setCancelOpen(false)}
         onConfirm={() => setCancelOpen(false)}
@@ -122,8 +122,8 @@ function FreeView() {
       {/* Hero */}
       <div className="rounded-card text-center py-12 px-8 mb-6"
         style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
-        <h1 className="text-[28px] font-bold text-white mb-2">Passe au profil Pro</h1>
-        <p className="text-sm text-gray-400 mb-8">Débloque toutes les fonctionnalités pour développer ta visibilité.</p>
+        <h1 className="text-[28px] font-bold text-white mb-2">Passez au profil Pro</h1>
+        <p className="text-sm text-gray-400 mb-8">Débloquez toutes les fonctionnalités pour développer votre visibilité.</p>
 
         <div className="mb-8">
           <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>69€</span>

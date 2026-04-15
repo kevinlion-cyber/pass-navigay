@@ -131,19 +131,19 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
   const cropAspect = cropType === 'logo' ? 1 : cropType === 'banner' ? 16 / 9 : 4 / 3;
   const cropTitle =
     cropType === 'logo'
-      ? 'Recadre ton logo'
+      ? 'Recadrez votre logo'
       : cropType === 'banner'
-        ? 'Recadre ta photo principale'
-        : `Recadre la photo ${galleryIndex + 1}/${galleryQueue.length}`;
+        ? 'Recadrez votre photo principale'
+        : `Recadrez la photo ${galleryIndex + 1}/${galleryQueue.length}`;
   const cropOutputW = cropType === 'logo' ? 400 : cropType === 'banner' ? 1280 : 800;
   const cropOutputH = cropType === 'logo' ? 400 : cropType === 'banner' ? 720 : 600;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-[20px] font-bold text-white">Ajoute tes photos</h2>
+        <h2 className="text-[20px] font-bold text-white">Ajoutez vos photos</h2>
         <p className="text-[13px] mt-1" style={{ color: '#a0a0b0' }}>
-          Un bon visuel, c'est ce qui donne envie de venir. Tu pourras en ajouter d'autres plus tard.
+          Un bon visuel, c'est ce qui donne envie de venir. Vous pourrez en ajouter d'autres plus tard.
         </p>
       </div>
 
@@ -173,7 +173,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
             style={{ border: '2px dashed #2a2a3a', height: 140 }}
           >
             <Store size={28} style={{ color: '#606070' }} />
-            <span className="text-[13px] text-[#c0c0d0]">Clique pour ajouter ton logo</span>
+            <span className="text-[13px] text-[#c0c0d0]">Cliquez pour ajouter votre logo</span>
             <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 5MB</span>
           </button>
         )}
@@ -185,7 +185,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
           PHOTO PRINCIPALE (format 16:9)
         </p>
         <p className="text-[12px] mb-3" style={{ color: '#606070' }}>
-          Image mise en avant sur ta fiche. Montre l'ambiance de ton établissement.
+          Image mise en avant sur votre fiche. Montrez l'ambiance de votre établissement.
         </p>
 
         {data.bannerPreview ? (
@@ -206,7 +206,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
             style={{ border: '2px dashed #2a2a3a', height: 160 }}
           >
             <Camera size={28} style={{ color: '#606070' }} />
-            <span className="text-[13px] text-[#c0c0d0]">Clique pour ajouter ta photo principale</span>
+            <span className="text-[13px] text-[#c0c0d0]">Cliquez pour ajouter votre photo principale</span>
             <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 10MB</span>
           </button>
         )}
@@ -218,7 +218,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
           GALERIE DE PHOTOS (optionnel)
         </p>
         <p className="text-[12px] mb-3" style={{ color: '#606070' }}>
-          Ajoute jusqu'à 5 photos pour donner envie. Tu pourras en ajouter d'autres depuis ton dashboard.
+          Ajoutez jusqu'à 5 photos pour donner envie. Vous pourrez en ajouter d'autres depuis votre dashboard.
         </p>
 
         {data.galleryPreviews.length > 0 && (
@@ -245,7 +245,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
             style={{ border: '2px dashed #2a2a3a' }}
           >
             <ImageIcon size={28} style={{ color: '#606070' }} />
-            <span className="text-[13px] text-[#c0c0d0]">Clique ou glisse tes photos ici</span>
+            <span className="text-[13px] text-[#c0c0d0]">Cliquez ou glissez vos photos ici</span>
             <span className="text-[11px]" style={{ color: '#606070' }}>
               Jusqu'à {5 - data.galleryBlobs.length} photo{5 - data.galleryBlobs.length > 1 ? 's' : ''} · JPG, PNG, WEBP · Max 5MB chacune
             </span>

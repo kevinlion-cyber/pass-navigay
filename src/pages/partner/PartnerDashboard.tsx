@@ -98,7 +98,7 @@ export default function PartnerDashboard() {
         <h1 className="text-2xl font-bold text-white">
           Bonjour {establishment.name} <span role="img" aria-label="wave">👋</span>
         </h1>
-        <p className="text-sm text-gray-400 mt-1">Bienvenue dans ton espace partenaire Pass Navigay.</p>
+        <p className="text-sm text-gray-400 mt-1">Bienvenue dans votre espace partenaire Pass Navigay.</p>
         <div className="flex items-center gap-3 mt-2">
           <span className="text-sm text-gray-500">{establishment.name}</span>
           {establishment.is_pro ? (
@@ -150,7 +150,7 @@ export default function PartnerDashboard() {
                   <button onClick={() => navigate('/pros/abonnement')}
                     className="text-xs mt-2 font-semibold px-3 py-1.5 rounded-input transition-colors hover:opacity-90"
                     style={{ background: '#7B2D8B', color: '#fff' }}>
-                    Passer Pro
+                    Passez Pro
                   </button>
                 </>
               )}
@@ -224,7 +224,7 @@ export default function PartnerDashboard() {
               <QuickActionCard
                 emoji="🏪"
                 title="Compléter ma fiche"
-                text="Ajoute ta description, tes photos et tes coordonnées pour attirer plus de visiteurs."
+                text="Ajoutez votre description, vos photos et vos coordonnées pour attirer plus de visiteurs."
                 buttonLabel="Modifier ma fiche"
                 onClick={() => navigate('/pros/mon-etablissement')}
                 showBadge={!establishment.description}
@@ -232,14 +232,14 @@ export default function PartnerDashboard() {
               <QuickActionCard
                 emoji="📅"
                 title="Publier un événement"
-                text="Touche des milliers de membres en publiant tes prochaines soirées, brunchs ou concerts."
+                text="Touchez des milliers de membres en publiant vos prochaines soirées, brunchs ou concerts."
                 buttonLabel="Créer un événement"
                 onClick={() => navigate('/pros/evenements')}
               />
               <QuickActionCard
                 emoji="🏷"
                 title="Lancer une promotion"
-                text="Attire de nouveaux clients avec une offre exclusive réservée aux membres Pass Navigay."
+                text="Attirez de nouveaux clients avec une offre exclusive réservée aux membres Pass Navigay."
                 buttonLabel="Créer une promo"
                 onClick={() => navigate('/pros/promotions')}
               />

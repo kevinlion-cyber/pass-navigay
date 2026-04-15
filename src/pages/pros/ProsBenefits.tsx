@@ -2,19 +2,19 @@ const BENEFITS = [
   {
     emoji: '\uD83C\uDFAF',
     title: 'Visibilité auprès d\u2019une communauté ciblée',
-    text: 'Tes établissements apparaissent directement auprès d\u2019utilisateurs LGBT+ et alliés qui cherchent activement des lieux inclusifs partout en France.',
+    text: 'Vos établissements apparaissent directement auprès d\u2019utilisateurs LGBT+ et alliés qui cherchent activement des lieux inclusifs partout en France.',
     delay: '0s',
   },
   {
     emoji: '\uD83D\uDCC5',
-    title: 'Publie tes événements en quelques clics',
-    text: 'Soirées, brunchs, concerts, expos\u2026 Crée tes événements depuis ton dashboard et touche immédiatement des milliers de membres qui cherchent quoi faire ce week-end.',
+    title: 'Publiez vos événements en quelques clics',
+    text: 'Soirées, brunchs, concerts, expos\u2026 Créez vos événements depuis votre dashboard et touchez immédiatement des milliers de membres qui cherchent quoi faire ce week-end.',
     delay: '0.1s',
   },
   {
     emoji: '\uD83C\uDFF7',
-    title: 'Booste ton activité avec les promos',
-    text: 'Lance des offres exclusives pour les membres Pass Navigay\u00A0: happy hours, entrées gratuites, réductions récurrentes. Tu choisis les règles, l\u2019app fait le reste.',
+    title: 'Boostez votre activité avec les promos',
+    text: 'Lancez des offres exclusives pour les membres Pass Navigay\u00A0: happy hours, entrées gratuites, réductions récurrentes. Vous choisissez les règles, l\u2019app fait le reste.',
     delay: '0.2s',
   },
 ];

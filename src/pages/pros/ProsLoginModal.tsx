@@ -72,12 +72,12 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
         <form onSubmit={handleSubmit} className="px-8 py-7 md:px-8 md:py-7 flex-1" style={{ padding: '28px 32px' }}>
           <h2 className="text-[22px] font-bold text-white text-center">Bon retour !</h2>
           <p className="text-[14px] text-center mt-2 mb-7" style={{ color: '#a0a0b0' }}>
-            Connecte-toi à ton espace partenaire.
+            Connectez-vous à votre espace partenaire.
           </p>
 
           <div className="space-y-5">
             <div>
-              <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton email</label>
+              <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre email</label>
               <input
                 type="email"
                 value={email}
@@ -89,7 +89,7 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Ton mot de passe</label>
+              <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Votre mot de passe</label>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
@@ -139,7 +139,7 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
               className="font-medium transition-colors hover:underline"
               style={{ color: '#7B2D8B' }}
             >
-              Crée ton profil gratuitement &rarr;
+              Créez votre profil gratuitement &rarr;
             </button>
           </p>
         </form>

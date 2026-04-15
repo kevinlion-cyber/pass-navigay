@@ -83,7 +83,7 @@ export default function PartnerRegister() {
     try {
       const { data: existingUsers } = await supabase.rpc('check_email_exists', { email_input: email }).maybeSingle();
       if (existingUsers) {
-        toast.error('Cet email est deja utilise, connecte-toi plutot.');
+        toast.error('Cet email est deja utilise, connectez-vous plutot.');
         setSaving(false);
         return;
       }
@@ -141,7 +141,7 @@ export default function PartnerRegister() {
         await supabase.from('establishments').update({ logo_url: urlData.publicUrl }).eq('id', estData.id);
       }
 
-      toast.success('Bienvenue ! Ton etablissement est en cours de verification par notre equipe.');
+      toast.success('Bienvenue ! Votre etablissement est en cours de verification par notre equipe.');
       navigate('/pros/tableau-de-bord');
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de la creation');
@@ -158,9 +158,9 @@ export default function PartnerRegister() {
             <span style={{ color: '#7B2D8B' }}> Navigay</span>
             <span className="text-gray-500 font-normal"> · Espace Partenaire</span>
           </h1>
-          <h2 className="text-lg font-semibold text-white mt-4">Reference ton etablissement</h2>
+          <h2 className="text-lg font-semibold text-white mt-4">Referencez votre etablissement</h2>
           <p className="text-sm text-gray-400 mt-1">
-            Rejoins la communaute Pass Navigay et gagne en visibilite aupres de milliers d'utilisateurs LGBT-friendly.
+            Rejoignez la communaute Pass Navigay et gagnez en visibilite aupres de milliers d'utilisateurs LGBT-friendly.
           </p>
         </div>
 
@@ -188,8 +188,8 @@ export default function PartnerRegister() {
               {saving && <LoadingSpinner size={16} />} Continuer
             </button>
             <p className="text-center text-sm text-gray-500">
-              Tu as deja un compte ?{' '}
-              <Link to="/pros/connexion" className="text-primary hover:underline">Connecte-toi</Link>
+              Vous avez deja un compte ?{' '}
+              <Link to="/pros/connexion" className="text-primary hover:underline">Connectez-vous</Link>
             </p>
           </form>
         ) : (

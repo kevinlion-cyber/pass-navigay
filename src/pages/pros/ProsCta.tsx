@@ -23,7 +23,7 @@ export default function ProsCta({ onRegister }: ProsCtaProps) {
           Prêt à rejoindre la communauté ?
         </h2>
         <p className="text-[16px] text-[#a0a0b0] mt-4">
-          Inscription gratuite &middot; Aucun engagement &middot; Passe Pro quand tu veux
+          Inscription gratuite &middot; Aucun engagement &middot; Passez Pro quand vous voulez
         </p>
         <button
           onClick={onRegister}

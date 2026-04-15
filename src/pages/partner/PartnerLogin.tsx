@@ -62,7 +62,7 @@ export default function PartnerLogin() {
 
         <p className="text-center text-sm text-gray-500">
           Pas encore partenaire ?{' '}
-          <Link to="/pros/inscription" className="text-primary hover:underline">Inscris-toi</Link>
+          <Link to="/pros/inscription" className="text-primary hover:underline">Inscrivez-vous</Link>
         </p>
       </div>
     </div>

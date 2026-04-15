@@ -258,7 +258,7 @@ export default function PartnerEvents() {
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Description</label>
                 <textarea value={form.description}
                   onChange={e => { if (e.target.value.length <= 500) setForm({ ...form, description: e.target.value }); }}
-                  rows={3} placeholder="Décris l'ambiance, le programme, ce qui rend cet événement unique..."
+                  rows={3} placeholder="Décrivez l'ambiance, le programme, ce qui rend cet événement unique..."
                   className="input-field bg-dark-bg border-dark-border text-white resize-none" style={{ minHeight: 100 }} />
                 <p className="text-xs text-gray-600 text-right mt-1">{form.description.length}/500</p>
               </div>
@@ -338,7 +338,7 @@ export default function PartnerEvents() {
                   onChange={e => setForm({ ...form, max_capacity: e.target.value })}
                   placeholder="50"
                   className="input-field bg-dark-bg border-dark-border text-white" />
-                <p className="text-xs text-gray-600 mt-1">Laisse vide si illimité.</p>
+                <p className="text-xs text-gray-600 mt-1">Laissez vide si illimité.</p>
               </div>
 
               <div>
@@ -346,7 +346,7 @@ export default function PartnerEvents() {
                   <ToggleSwitch checked={form.request_featured} onChange={v => setForm({ ...form, request_featured: v })} />
                   <span className="text-sm text-gray-300">Demander la mise en avant sur l'app</span>
                 </label>
-                <p className="text-xs text-gray-600 mt-1 ml-14">Notre équipe examinera ta demande et te contactera si l'événement est sélectionné.</p>
+                <p className="text-xs text-gray-600 mt-1 ml-14">Notre équipe examinera votre demande et vous contactera si l'événement est sélectionné.</p>
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -378,9 +378,9 @@ function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <span className="text-5xl mb-6">📅</span>
-      <h2 className="text-lg font-semibold text-white mb-2">Tu n'as pas encore d'événements</h2>
+      <h2 className="text-lg font-semibold text-white mb-2">Vous n'avez pas encore d'événements</h2>
       <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
-        Publie tes soirées, brunchs, concerts et expositions pour toucher
+        Publiez vos soirées, brunchs, concerts et expositions pour toucher
         des milliers de membres Pass Navigay qui cherchent quoi faire.
       </p>
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 text-sm text-gray-400">
@@ -391,7 +391,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
           <Check size={14} style={{ color: '#1a7a3a' }} /> Partageable sur les réseaux sociaux
         </span>
         <span className="flex items-center gap-1.5">
-          <Check size={14} style={{ color: '#1a7a3a' }} /> Gratuit avec ton abonnement Pro
+          <Check size={14} style={{ color: '#1a7a3a' }} /> Gratuit avec votre abonnement Pro
         </span>
       </div>
       <button onClick={onAction}

@@ -112,9 +112,9 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-[20px] font-bold text-white">Présente ton établissement</h2>
+        <h2 className="text-[20px] font-bold text-white">Présentez votre établissement</h2>
         <p className="text-[13px] mt-1" style={{ color: '#a0a0b0' }}>
-          Ces informations apparaîtront sur ta fiche dans l'annuaire.
+          Ces informations apparaîtront sur votre fiche dans l'annuaire.
         </p>
       </div>
 
@@ -169,14 +169,14 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
           }}
         >
           <option value="" disabled>
-            {data.category ? 'Choisir un type' : 'Choisis d\'abord une catégorie'}
+            {data.category ? 'Choisir un type' : 'Choisissez d\'abord une catégorie'}
           </option>
           {subcategories.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         {errors.subcategory && <p className="text-[12px] text-red-500 mt-1">{errors.subcategory}</p>}
         {!data.category && (
           <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
-            Sélectionne d'abord une catégorie ci-dessus.
+            Sélectionnez d'abord une catégorie ci-dessus.
           </p>
         )}
       </div>
@@ -244,7 +244,7 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
           className="w-full px-4 py-3 rounded-[10px] text-[14px] text-white outline-none transition-colors focus:border-[#7B2D8B]"
           style={{ background: '#0a0a0f', border: '1px solid #2a2a3a' }}
         />
-        <p className="text-[12px] mt-1" style={{ color: '#606070' }}>Différent de ton téléphone personnel si nécessaire.</p>
+        <p className="text-[12px] mt-1" style={{ color: '#606070' }}>Différent de votre téléphone personnel si nécessaire.</p>
       </div>
 
       <div>
@@ -260,11 +260,11 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Décris ton établissement</label>
+        <label className="block text-[13px] font-medium text-[#c0c0d0] mb-1.5">Décrivez votre établissement</label>
         <textarea
           value={data.description}
           onChange={(e) => { if (e.target.value.length <= 500) set('description', e.target.value); }}
-          placeholder="Présente ton établissement, son ambiance, ce qui le rend unique et inclusif..."
+          placeholder="Présentez votre établissement, son ambiance, ce qui le rend unique et inclusif..."
           className="w-full px-4 py-3 rounded-[10px] text-[14px] text-white outline-none transition-colors focus:border-[#7B2D8B] resize-y"
           style={{ ...inputStyle('description'), minHeight: 120 }}
         />
