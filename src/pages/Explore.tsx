@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Establishment, CategoryKey } from '../lib/types';
 import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
 import CategoryFilters from '../components/explore/CategoryFilters';
@@ -11,12 +12,15 @@ import FeaturedEvents from '../components/explore/FeaturedEvents';
 import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
 
 type Bounds = { north: number; south: number; east: number; west: number };
 
 export default function Explore() {
   const navigate = useNavigate();
+  const { profile, refreshProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -48,6 +52,11 @@ export default function Explore() {
       toast.success('Bienvenue dans Pass Navigay Premium !');
       searchParams.delete('premium');
       setSearchParams(searchParams, { replace: true });
+      refreshProfile().then(() => {
+        if (!profile?.questionnaire_completed) {
+          setQuestionnaireOpen(true);
+        }
+      });
     } else if (premiumParam === 'cancelled') {
       toast('Paiement annule. Tu peux passer Premium a tout moment depuis ton profil.', { icon: '!' });
       searchParams.delete('premium');
@@ -294,6 +303,15 @@ export default function Explore() {
           {establishmentList}
         </div>
       </div>
+
+      {questionnaireOpen && profile?.is_premium && (
+        <PremiumQuestionnaireModal
+          onClose={() => {
+            setQuestionnaireOpen(false);
+            refreshProfile();
+          }}
+        />
+      )}
     </div>
   );
 }

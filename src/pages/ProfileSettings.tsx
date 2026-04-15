@@ -6,14 +6,16 @@ import AuthGateModal from '../components/ui/AuthGateModal';
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileFavorites from './profile/ProfileFavorites';
 import ProfileEvents from './profile/ProfileEvents';
-import ProfilePromos from './profile/ProfilePromos';
 import ProfileAccountSettings from './profile/ProfileAccountSettings';
+import PremiumBanner from './profile/PremiumBanner';
+import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
 
 export default function ProfileSettings() {
   const { user, profile, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [authGateOpen, setAuthGateOpen] = useState(!user);
   const [profileTimeout, setProfileTimeout] = useState(false);
+  const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
 
   useEffect(() => {
     if (user && !profile && !loading) {
@@ -67,10 +69,41 @@ export default function ProfileSettings() {
   return (
     <div className="max-w-2xl mx-auto p-4 pb-24 space-y-8">
       <ProfileHeader profile={profile} />
+
+      {!profile.is_premium && <PremiumBanner />}
+
+      {profile.is_premium && !profile.questionnaire_completed && (
+        <button
+          onClick={() => setQuestionnaireOpen(true)}
+          className="w-full py-3 rounded-xl text-[14px] font-semibold text-white transition-all hover:opacity-90"
+          style={{ background: '#7B2D8B' }}
+        >
+          Completer mon profil
+        </button>
+      )}
+
+      {profile.is_premium && profile.questionnaire_completed && (
+        <button
+          onClick={() => setQuestionnaireOpen(true)}
+          className="w-full py-3 rounded-xl text-[14px] font-medium transition-all"
+          style={{ border: '1px solid #7B2D8B', color: '#c084f5' }}
+        >
+          Modifier mon questionnaire
+        </button>
+      )}
+
       <ProfileFavorites userId={user.id} />
       <ProfileEvents userId={user.id} />
-      <ProfilePromos userId={user.id} />
       <ProfileAccountSettings profile={profile} />
+
+      {questionnaireOpen && profile.is_premium && (
+        <PremiumQuestionnaireModal
+          onClose={() => {
+            setQuestionnaireOpen(false);
+            refreshProfile();
+          }}
+        />
+      )}
     </div>
   );
 }

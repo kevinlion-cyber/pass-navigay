@@ -1,3 +1,11 @@
+export interface ProfileVisibility {
+  gender_identity?: boolean;
+  pronouns?: boolean;
+  orientation?: boolean;
+  looking_for?: boolean;
+  vibe?: boolean;
+}
+
 export interface Profile {
   id: string;
   username: string;
@@ -13,6 +21,30 @@ export interface Profile {
   favorite_categories: string[];
   last_active_at: string;
   created_at: string;
+  prenom: string | null;
+  nom: string | null;
+  phone: string | null;
+  gender_identity: string | null;
+  pronouns: string | null;
+  attracted_to: string[] | null;
+  orientation: string | null;
+  looking_for: string[] | null;
+  relationship_intensity: string | null;
+  vibe: string | null;
+  evening_energy: string | null;
+  green_flags: string[] | null;
+  red_flags: string[] | null;
+  community_involvement: string | null;
+  community_goals: string[] | null;
+  ideal_type: string | null;
+  deal_breaker: string | null;
+  what_i_bring: string | null;
+  if_i_were_vibe: string | null;
+  if_i_were_music: string | null;
+  if_i_were_energy: string | null;
+  late_truth: string | null;
+  questionnaire_completed: boolean;
+  profile_visibility: ProfileVisibility;
 }
 
 export interface Establishment {

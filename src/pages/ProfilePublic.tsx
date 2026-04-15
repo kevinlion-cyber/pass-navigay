@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Crown, Clock, Heart, Calendar, MapPin, Users } from 'lucide-react';
+import { MessageCircle, Crown, Clock, Heart, Calendar, MapPin, Users, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { CATEGORIES } from '../lib/constants';
-import type { Profile, Establishment, Event, CategoryKey } from '../lib/types';
+import type { Profile, Establishment, Event, CategoryKey, ProfileVisibility } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
@@ -20,6 +20,17 @@ function timeAgo(dateStr: string): string {
   if (days < 7) return `Actif il y a ${days}j`;
   const weeks = Math.floor(days / 7);
   return `Actif il y a ${weeks} sem`;
+}
+
+function Pill({ children, color = '#7B2D8B' }: { children: React.ReactNode; color?: string }) {
+  return (
+    <span
+      className="inline-block px-2.5 py-0.5 rounded-full text-[12px] font-medium"
+      style={{ background: `${color}20`, color }}
+    >
+      {children}
+    </span>
+  );
 }
 
 export default function ProfilePublic() {
@@ -117,7 +128,9 @@ export default function ProfilePublic() {
     );
   }
 
-  const firstName = profile.username;
+  const firstName = profile.prenom || profile.username;
+  const vis = (profile.profile_visibility || {}) as ProfileVisibility;
+  const isPremiumProfile = profile.is_premium && profile.questionnaire_completed;
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
@@ -152,6 +165,12 @@ export default function ProfilePublic() {
                 </span>
               )}
             </div>
+
+            {vis.pronouns && profile.pronouns && (
+              <div className="mt-1.5">
+                <Pill>{profile.pronouns}</Pill>
+              </div>
+            )}
 
             {profile.bio && (
               <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed">
@@ -204,6 +223,107 @@ export default function ProfilePublic() {
             <MessageCircle size={18} />
             Envoyer un message a {firstName}
           </button>
+        )}
+
+        {isPremiumProfile && (
+          <>
+            <div className="border-t border-light-border dark:border-dark-border" />
+
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Sparkles size={16} style={{ color: '#7B2D8B' }} />
+                Qui je suis
+              </h2>
+
+              <div className="flex flex-wrap gap-2">
+                {vis.gender_identity && profile.gender_identity && (
+                  <Pill>{profile.gender_identity}</Pill>
+                )}
+                {vis.orientation && profile.orientation && (
+                  <Pill color="#c084f5">{profile.orientation}</Pill>
+                )}
+              </div>
+
+              {vis.looking_for && profile.looking_for && profile.looking_for.length > 0 && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Ce que je cherche</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.looking_for.map((item) => (
+                      <Pill key={item} color="#c084f5">{item}</Pill>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {vis.vibe && profile.vibe && (
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Mon vibe : <span className="font-medium text-gray-900 dark:text-white">{profile.vibe}</span>
+                </p>
+              )}
+            </section>
+
+            {(profile.green_flags?.length || profile.evening_energy || profile.what_i_bring) && (
+              <>
+                <div className="border-t border-light-border dark:border-dark-border" />
+                <section className="space-y-3">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Sparkles size={16} style={{ color: '#22c55e' }} />
+                    Mon energie
+                  </h2>
+
+                  {profile.green_flags && profile.green_flags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {profile.green_flags.map((flag) => (
+                        <Pill key={flag} color="#22c55e">{flag}</Pill>
+                      ))}
+                    </div>
+                  )}
+
+                  {profile.evening_energy && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      En soiree : <span className="font-medium text-gray-900 dark:text-white">{profile.evening_energy}</span>
+                    </p>
+                  )}
+
+                  {profile.what_i_bring && (
+                    <p className="text-sm italic text-gray-500 dark:text-gray-400">
+                      "{profile.what_i_bring}"
+                    </p>
+                  )}
+                </section>
+              </>
+            )}
+
+            {(profile.if_i_were_vibe || profile.if_i_were_music || profile.late_truth) && (
+              <>
+                <div className="border-t border-light-border dark:border-dark-border" />
+                <section className="space-y-3">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Sparkles size={16} style={{ color: '#f59e0b' }} />
+                    Fun facts
+                  </h2>
+
+                  {profile.if_i_were_vibe && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Si j'etais une vibe : <span className="font-medium text-gray-900 dark:text-white">{profile.if_i_were_vibe}</span>
+                    </p>
+                  )}
+
+                  {profile.if_i_were_music && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Si j'etais une musique : <span className="font-medium text-gray-900 dark:text-white">{profile.if_i_were_music}</span>
+                    </p>
+                  )}
+
+                  {profile.late_truth && (
+                    <p className="text-sm italic text-gray-500 dark:text-gray-400">
+                      "{profile.late_truth}"
+                    </p>
+                  )}
+                </section>
+              </>
+            )}
+          </>
         )}
 
         <div className="border-t border-light-border dark:border-dark-border" />

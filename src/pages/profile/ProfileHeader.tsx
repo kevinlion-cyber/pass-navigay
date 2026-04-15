@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Check, X, Crown } from 'lucide-react';
+import { Camera, Check, X, Crown, Save, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,12 +16,18 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState(profile.bio || '');
+  const [prenom, setPrenom] = useState(profile.prenom || '');
+  const [nom, setNom] = useState(profile.nom || '');
+  const [phone, setPhone] = useState(profile.phone || '');
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const initials = profile.username
-    ? profile.username.charAt(0).toUpperCase()
-    : '?';
+  const initials = profile.prenom
+    ? profile.prenom.charAt(0).toUpperCase()
+    : profile.username
+      ? profile.username.charAt(0).toUpperCase()
+      : '?';
 
   const memberSince = profile.created_at
     ? new Date(profile.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
@@ -42,8 +48,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     setCropSrc(null);
     const path = `${user.id}/avatar.jpg`;
 
-    const { error: removeErr } = await supabase.storage.from('avatars').remove([path]);
-    if (removeErr) { /* ignore, file may not exist */ }
+    await supabase.storage.from('avatars').remove([path]);
 
     const { error } = await supabase.storage.from('avatars').upload(path, blob, {
       contentType: 'image/jpeg',
@@ -75,6 +80,27 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     setEditingBio(false);
     toast.success('Bio mise a jour');
   };
+
+  const saveInfos = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ prenom: prenom || null, nom: nom || null, phone: phone || null })
+      .eq('id', user.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await refreshProfile();
+    toast.success('Informations mises a jour');
+  };
+
+  const hasInfoChanges =
+    (prenom || '') !== (profile.prenom || '') ||
+    (nom || '') !== (profile.nom || '') ||
+    (phone || '') !== (profile.phone || '');
 
   return (
     <>
@@ -112,7 +138,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
 
         <div className="flex items-center gap-2 mb-1">
           <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
-            {profile.username}
+            {profile.prenom || profile.username}
           </h1>
           {profile.is_premium && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -124,14 +150,18 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
 
         {editingBio ? (
           <div className="w-full max-w-sm mt-1 space-y-2">
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={2}
-              className="input-field text-sm resize-none text-center"
-              placeholder="Ajoute une bio..."
-              autoFocus
-            />
+            <div className="relative">
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, 150))}
+                rows={2}
+                maxLength={150}
+                className="input-field text-sm resize-none text-center"
+                placeholder="Ajoute une bio..."
+                autoFocus
+              />
+              <span className="absolute bottom-2 right-3 text-[10px] text-gray-400">{bio.length}/150</span>
+            </div>
             <div className="flex justify-center gap-2">
               <button onClick={saveBio} className="text-success hover:opacity-80 p-1">
                 <Check size={18} />
@@ -154,6 +184,61 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
           <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
             Membre depuis {memberSince}
           </p>
+        )}
+      </div>
+
+      <div className="card p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Mes informations</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Prenom</label>
+            <input
+              type="text"
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Ton prenom"
+              className="input-field text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nom</label>
+            <input
+              type="text"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              placeholder="Ton nom"
+              className="input-field text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</label>
+            <input
+              type="email"
+              value={user?.email || ''}
+              disabled
+              className="input-field text-sm opacity-60 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Telephone</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="06 12 34 56 78"
+              className="input-field text-sm"
+            />
+          </div>
+        </div>
+        {hasInfoChanges && (
+          <button
+            onClick={saveInfos}
+            disabled={saving}
+            className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Enregistrer
+          </button>
         )}
       </div>
 
