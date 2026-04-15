@@ -31,7 +31,7 @@ export default function AuthGateModal({ open, onClose, message }: AuthGateModalP
             Rejoins la communaute
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            {message || "Cree ton compte gratuitement pour profiter de toutes les fonctionnalites."}
+            {message || "Cree ton compte pour profiter de toutes les fonctionnalites."}
           </p>
         </div>
 

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Clock, Search, X } from 'lucide-react';
+import { Tag, Clock, Search, X, Lock, Crown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Promotion } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 type PromoTypeFilter = 'all' | 'percentage' | 'fixed' | 'offer' | 'recurring';
 
@@ -21,7 +23,11 @@ export default function Promos() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<PromoTypeFilter>('all');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  const isPremium = profile?.is_premium === true;
 
   useEffect(() => {
     const load = async () => {
@@ -78,6 +84,8 @@ export default function Promos() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Promotions</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -113,12 +121,70 @@ export default function Promos() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {!isPremium && filtered.length > 0 && (
+        <div className="relative">
+          <div className="space-y-3" style={{ filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
+            {filtered.slice(0, 4).map((promo) => {
+              const est = promo.establishment as any;
+              return (
+                <div key={promo.id} className="card p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Tag size={24} className="text-primary/50" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                        {est?.name || 'Promotion'}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Promotion exclusive reservee aux membres
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center space-y-3">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
+                style={{ background: 'rgba(123,45,139,0.15)' }}
+              >
+                <Lock size={24} style={{ color: '#7B2D8B' }} />
+              </div>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                Reserve aux membres Premium
+              </p>
+              <button
+                onClick={() => setUpgradeOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#7B2D8B' }}
+              >
+                <Crown size={16} />
+                Passer Premium &mdash; 6,69&euro;/mois
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isPremium && filtered.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvee</p>
         </div>
-      ) : (
+      )}
+
+      {isPremium && filtered.length === 0 && (
+        <div className="text-center py-16 space-y-3">
+          <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
+          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvee</p>
+        </div>
+      )}
+
+      {isPremium && filtered.length > 0 && (
         <div className="space-y-3">
           {filtered.map((promo) => {
             const est = promo.establishment as any;

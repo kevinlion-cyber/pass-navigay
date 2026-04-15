@@ -6,10 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Message, Profile } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 export default function Conversation() {
   const { userId } = useParams<{ userId: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,6 +19,7 @@ export default function Conversation() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [premiumGateOpen, setPremiumGateOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,6 +86,12 @@ export default function Conversation() {
 
   const sendMessage = async () => {
     if (!newMessage.trim() || sending) return;
+
+    if (!profile?.is_premium) {
+      setPremiumGateOpen(true);
+      return;
+    }
+
     setSending(true);
 
     await supabase.from('messages').insert({
@@ -123,6 +131,7 @@ export default function Conversation() {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-7.5rem)] md:h-[calc(100vh-3.5rem)]">
+      <PremiumUpgradeModal open={premiumGateOpen} onClose={() => setPremiumGateOpen(false)} />
       <div className="p-4 border-b border-light-border dark:border-dark-border flex items-center gap-3">
         <button onClick={() => navigate('/messages')} aria-label="Retour" className="btn-ghost p-2">
           <ChevronLeft size={20} />

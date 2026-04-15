@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import type { Establishment, CategoryKey } from '../lib/types';
 import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
@@ -15,6 +16,7 @@ type Bounds = { north: number; south: number; east: number; west: number };
 
 export default function Explore() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -38,6 +40,19 @@ export default function Explore() {
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setUserLocation(DEFAULT_CENTER)
     );
+  }, []);
+
+  useEffect(() => {
+    const premiumParam = searchParams.get('premium');
+    if (premiumParam === 'success') {
+      toast.success('Bienvenue dans Pass Navigay Premium !');
+      searchParams.delete('premium');
+      setSearchParams(searchParams, { replace: true });
+    } else if (premiumParam === 'cancelled') {
+      toast('Paiement annule. Tu peux passer Premium a tout moment depuis ton profil.', { icon: '!' });
+      searchParams.delete('premium');
+      setSearchParams(searchParams, { replace: true });
+    }
   }, []);
 
   useEffect(() => {

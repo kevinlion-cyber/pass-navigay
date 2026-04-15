@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Crown, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { ConversationPreview } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 export default function Messages() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -102,6 +104,48 @@ export default function Messages() {
           <button onClick={() => setAuthGateOpen(true)} className="btn-primary mt-4">
             Creer un compte
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && !profile?.is_premium) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+        <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <MessageCircle size={20} className="text-primary" />
+          Messages
+        </h1>
+        <div className="text-center py-16 space-y-4">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(123,45,139,0.15)' }}
+          >
+            <Lock size={28} style={{ color: '#7B2D8B' }} />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            La messagerie est reservee aux membres Premium
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+            Passe Premium pour envoyer des messages a la communaute.
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#7B2D8B' }}
+            >
+              <Crown size={16} />
+              Passer Premium &mdash; 6,69&euro;/mois
+            </button>
+            <button
+              onClick={() => navigate('/explore')}
+              className="px-5 py-2.5 rounded-[10px] text-[14px] font-medium text-gray-400 hover:text-gray-300 transition-colors"
+            >
+              Peut-etre plus tard
+            </button>
+          </div>
         </div>
       </div>
     );

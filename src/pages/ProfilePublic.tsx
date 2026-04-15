@@ -7,6 +7,7 @@ import { CATEGORIES } from '../lib/constants';
 import type { Profile, Establishment, Event, CategoryKey } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -23,7 +24,7 @@ function timeAgo(dateStr: string): string {
 
 export default function ProfilePublic() {
   const { userId } = useParams<{ userId: string }>();
-  const { user } = useAuth();
+  const { user, profile: myProfile } = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -32,6 +33,7 @@ export default function ProfilePublic() {
   const [commonFavorites, setCommonFavorites] = useState<Establishment[]>([]);
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [premiumGateOpen, setPremiumGateOpen] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -193,6 +195,7 @@ export default function ProfilePublic() {
           <button
             onClick={() => {
               if (!user) { setAuthGateOpen(true); return; }
+              if (!myProfile?.is_premium) { setPremiumGateOpen(true); return; }
               navigate(`/messages/${userId}`);
             }}
             className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl shadow-lg text-white transition-opacity hover:opacity-90"
@@ -392,12 +395,15 @@ export default function ProfilePublic() {
         message="Cree ton compte pour envoyer un message."
       />
 
+      <PremiumUpgradeModal open={premiumGateOpen} onClose={() => setPremiumGateOpen(false)} />
+
       {(!user || user.id !== userId) && (
         <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-light-bg dark:from-dark-bg via-light-bg/95 dark:via-dark-bg/95 to-transparent">
           <div className="max-w-2xl mx-auto">
             <button
               onClick={() => {
                 if (!user) { setAuthGateOpen(true); return; }
+                if (!myProfile?.is_premium) { setPremiumGateOpen(true); return; }
                 navigate(`/messages/${userId}`);
               }}
               className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold rounded-xl shadow-lg text-white"
