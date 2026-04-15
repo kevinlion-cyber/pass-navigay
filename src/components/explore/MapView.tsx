@@ -10,6 +10,7 @@ interface MapViewProps {
   onBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
   onEstablishmentClick: (id: string) => void;
   onPinSelect?: (id: string | null) => void;
+  flyTo?: { lng: number; lat: number } | null;
 }
 
 interface PopupData {
@@ -145,7 +146,7 @@ function escapeHtml(str: string): string {
   return div.innerHTML;
 }
 
-export default function MapView({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect }: MapViewProps) {
+export default function MapView({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -198,6 +199,22 @@ export default function MapView({ establishments, userLocation, onBoundsChange, 
       mapRef.current = null;
     };
   }, [userLocation, emitBounds, onPinSelect]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const timer = setTimeout(() => map.resize(), 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!flyTo || !mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [flyTo.lng, flyTo.lat],
+      zoom: 13,
+      duration: 1000,
+    });
+  }, [flyTo]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -258,6 +275,10 @@ export default function MapView({ establishments, userLocation, onBoundsChange, 
   }, [establishments, onEstablishmentClick, onPinSelect]);
 
   return (
-    <div ref={mapContainerRef} className="w-full h-full min-h-[300px] rounded-card overflow-hidden" />
+    <div
+      ref={mapContainerRef}
+      className="rounded-card overflow-hidden"
+      style={{ width: '100%', height: '100%', minHeight: 300 }}
+    />
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Establishment, CategoryKey } from '../lib/types';
 import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
@@ -17,7 +17,9 @@ export default function Explore() {
   const navigate = useNavigate();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -25,9 +27,11 @@ export default function Explore() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(null);
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -35,6 +39,17 @@ export default function Explore() {
       () => setUserLocation(DEFAULT_CENTER)
     );
   }, []);
+
+  useEffect(() => {
+    if (search.trim()) {
+      setSearchLoading(true);
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
   const fetchEstablishments = useCallback(async (reset = false) => {
     setLoading(true);
@@ -53,10 +68,12 @@ export default function Explore() {
     if (selectedSubcategories.length > 0) {
       query = query.in('subcategory', selectedSubcategories);
     }
-    if (search.trim()) {
-      query = query.or(`name.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%,address.ilike.%${search.trim()}%`);
+    if (debouncedSearch.trim()) {
+      query = query.or(
+        `name.ilike.%${debouncedSearch.trim()}%,city.ilike.%${debouncedSearch.trim()}%,address.ilike.%${debouncedSearch.trim()}%,description.ilike.%${debouncedSearch.trim()}%`
+      );
     }
-    if (bounds) {
+    if (bounds && !debouncedSearch.trim()) {
       query = query
         .gte('latitude', bounds.south)
         .lte('latitude', bounds.north)
@@ -90,20 +107,25 @@ export default function Explore() {
         setEstablishments((prev) => [...prev, ...withRatings]);
       }
       setHasMore(data.length === PAGE_SIZE);
+
+      if (debouncedSearch.trim() && data.length > 0) {
+        setMapFlyTo({ lng: data[0].longitude, lat: data[0].latitude });
+      }
     }
     setLoading(false);
-  }, [page, selectedCategory, selectedSubcategories, search, bounds]);
+    setSearchLoading(false);
+  }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds]);
 
   useEffect(() => {
     fetchEstablishments(true);
-  }, [selectedCategory, selectedSubcategories, search]);
+  }, [selectedCategory, selectedSubcategories, debouncedSearch]);
 
   const handleBoundsChange = useCallback((newBounds: Bounds) => {
     setBounds(newBounds);
   }, []);
 
   useEffect(() => {
-    if (bounds) {
+    if (bounds && !debouncedSearch.trim()) {
       fetchEstablishments(true);
     }
   }, [bounds]);
@@ -142,8 +164,16 @@ export default function Explore() {
     }
   }, []);
 
+  const activeSearch = debouncedSearch.trim();
+
   const establishmentList = (
     <div className="space-y-3">
+      {activeSearch && !loading && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
+          {establishments.length} resultat{establishments.length !== 1 ? 's' : ''} pour &laquo;&nbsp;{activeSearch}&nbsp;&raquo;
+        </p>
+      )}
+
       {establishments.map((est) => (
         <div
           key={est.id}
@@ -180,19 +210,24 @@ export default function Explore() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 3.5rem - 4rem)' }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 3.5rem - 4rem)' }}>
       <DisclaimerModal />
 
-      <div className="shrink-0 px-4 pt-3 pb-2">
+      <FeaturedEvents />
+
+      <div className="shrink-0 px-4 pt-2 pb-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            {searchLoading && (
+              <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
+            )}
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un lieu, une ville..."
-              className="input-field pl-9 text-xs w-full"
+              className="input-field pl-9 pr-9 text-xs w-full"
               style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
             />
           </div>
@@ -205,26 +240,30 @@ export default function Explore() {
         </div>
       </div>
 
-      {/* Desktop: side-by-side */}
-      <div className="hidden md:flex gap-4 px-4 pb-4 flex-1 min-h-0">
-        <div className="w-[60%] h-full min-h-0">
-          <MapView
-            establishments={establishments}
-            userLocation={userLocation}
-            onBoundsChange={handleBoundsChange}
-            onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
-            onPinSelect={handlePinSelect}
-          />
+      <div className="hidden lg:flex flex-1 min-h-0 gap-0">
+        <div className="shrink-0 h-full" style={{ width: '55%' }}>
+          <div className="h-full px-2 pb-2">
+            <MapView
+              establishments={establishments}
+              userLocation={userLocation}
+              onBoundsChange={handleBoundsChange}
+              onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
+              onPinSelect={handlePinSelect}
+              flyTo={mapFlyTo}
+            />
+          </div>
         </div>
 
-        <div className="w-[40%] h-full overflow-y-auto min-h-0 space-y-4" ref={listContainerRef}>
-          <FeaturedEvents />
+        <div
+          className="h-full overflow-y-auto px-4 pb-4 space-y-4"
+          style={{ width: '45%' }}
+          ref={listContainerRef}
+        >
           {establishmentList}
         </div>
       </div>
 
-      {/* Mobile: map on top, list below */}
-      <div className="md:hidden flex flex-col flex-1 min-h-0">
+      <div className="lg:hidden flex flex-col flex-1 min-h-0">
         <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '40dvh' }}>
           <MapView
             establishments={establishments}
@@ -232,11 +271,11 @@ export default function Explore() {
             onBoundsChange={handleBoundsChange}
             onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
             onPinSelect={handlePinSelect}
+            flyTo={mapFlyTo}
           />
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4 p-4" style={{ minHeight: '200px' }}>
-          <FeaturedEvents />
           {establishmentList}
         </div>
       </div>

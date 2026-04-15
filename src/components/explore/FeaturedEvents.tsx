@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar } from 'lucide-react';
+import { Calendar, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Event } from '../../lib/types';
 
@@ -25,39 +25,58 @@ export default function FeaturedEvents() {
   if (events.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto pb-2">
-      <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
+    <div className="shrink-0">
+      <div className="flex items-center gap-1.5 px-4 pt-2 pb-1.5">
+        <Sparkles size={13} className="text-primary" />
+        <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          A ne pas manquer
+        </span>
+      </div>
+      <div
+        className="flex gap-3 px-4 pb-3 overflow-x-auto"
+        style={{ scrollbarWidth: 'none' }}
+      >
         {events.map((event) => (
           <div
             key={event.id}
             onClick={() => navigate(`/establishment/${event.establishment_id}`)}
-            className="card-hover w-56 shrink-0 cursor-pointer"
+            className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group"
+            style={{ width: 200, height: 120 }}
           >
             {event.image_url ? (
-              <img src={event.image_url} alt="" className="w-full h-28 object-cover" />
+              <img
+                src={event.image_url}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
             ) : (
-              <div className="w-full h-28 bg-primary/10 flex items-center justify-center">
-                <Calendar size={32} className="text-primary/50" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
+                <Calendar size={32} className="text-primary/40" />
               </div>
             )}
-            <div className="p-3 space-y-1">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <h4 className="text-[13px] font-semibold text-white leading-tight truncate">
                 {event.title}
               </h4>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <Calendar size={12} />
-                {new Date(event.event_date).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'short',
-                })}
-              </div>
-              {event.is_free ? (
-                <span className="badge-free">Gratuit</span>
-              ) : (
-                <span className="badge text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-border">
-                  {event.price} EUR
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[11px] text-white/70 flex items-center gap-1">
+                  <Calendar size={10} />
+                  {new Date(event.event_date).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
                 </span>
-              )}
+                {event.is_free ? (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                    Gratuit
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white/15 text-white/80">
+                    {event.price}&nbsp;EUR
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
