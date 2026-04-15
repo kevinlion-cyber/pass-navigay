@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { Camera, Trash2, X, Loader2 } from 'lucide-react';
+import { Camera, Trash2, X, Loader2, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
@@ -15,6 +15,7 @@ import AdminEditSidebar, {
 } from '../../components/admin/AdminEditSidebar';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import GiftPeriodModal from '../../components/admin/GiftPeriodModal';
 
 interface Props {
   establishmentId: string | null;
@@ -89,6 +90,8 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
   const [deletePhotoId, setDeletePhotoId] = useState<string | null>(null);
   const [deletePhotoUrl, setDeletePhotoUrl] = useState<string | null>(null);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
+  const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
+  const [giftOpen, setGiftOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -127,6 +130,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       setBannerUrl(d.banner_url || null);
       setLogoUrl(d.logo_url || null);
       setIsPro(d.is_pro ?? false);
+      setProExpiresAt(d.pro_expires_at ?? null);
       setGalleryPhotos((photosRes.data || []).map((p: any) => ({ id: p.id, url: p.url, order_index: p.order_index })));
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
@@ -453,6 +457,20 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           label="Profil Pro"
           description="Active la banniere, la galerie, les evenements et les promotions pour cet etablissement."
         />
+
+        <div className="mb-2 mt-6">
+          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Cadeau Pro</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setGiftOpen(true)}
+          className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2 mb-4"
+          style={{ background: '#7B2D8B', color: '#fff' }}
+        >
+          <Gift size={16} />
+          Offrir une periode Pro
+        </button>
       </AdminEditSidebar>
 
       {galleryCropSrc && (
@@ -502,6 +520,20 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
         onConfirm={confirmDeletePhoto}
         loading={deletingPhoto}
       />
+
+      {establishmentId && (
+        <GiftPeriodModal
+          open={giftOpen}
+          onClose={() => setGiftOpen(false)}
+          onSuccess={() => { loadData(); onRefresh(); }}
+          recipientId={establishmentId}
+          recipientName={form.name || 'cet etablissement'}
+          recipientType="establishment"
+          giftType="pro"
+          currentlyActive={isPro}
+          currentExpiry={proExpiresAt}
+        />
+      )}
     </>
   );
 }

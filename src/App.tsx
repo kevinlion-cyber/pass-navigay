@@ -29,6 +29,7 @@ import AdminEvents from './pages/admin/AdminEvents';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminMembers from './pages/admin/AdminMembers';
 import AdminPartners from './pages/admin/AdminPartners';
+import AdminGifts from './pages/admin/AdminGifts';
 import AdminSettings from './pages/admin/AdminSettings';
 
 import ProsLanding from './pages/pros/ProsLanding';
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="members" element={<AdminMembers />} />
               <Route path="partners" element={<AdminPartners />} />
+              <Route path="gifts" element={<AdminGifts />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="legal" element={<AdminLegal />} />
             </Route>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut,
+  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -11,8 +11,9 @@ const NAV_ITEMS = [
   { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
   { to: '/admin/members', icon: Users, label: 'Membres' },
   { to: '/admin/partners', icon: Handshake, label: 'Partenaires' },
+  { to: '/admin/gifts', icon: Gift, label: 'Cadeaux offerts' },
   { to: '/admin/settings', icon: Settings, label: 'Parametres' },
-  { to: '/admin/legal', icon: FileText, label: 'Contenu légal' },
+  { to: '/admin/legal', icon: FileText, label: 'Contenu legal' },
 ];
 
 export default function AdminLayout() {

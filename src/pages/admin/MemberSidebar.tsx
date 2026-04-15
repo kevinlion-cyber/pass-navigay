@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, Gift, ShieldOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Profile } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import GiftPeriodModal from '../../components/admin/GiftPeriodModal';
 
 interface FavoriteItem {
   id: string;
@@ -45,6 +46,9 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showAllFavs, setShowAllFavs] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!memberId) return;
@@ -93,6 +97,25 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
       toast.error(err.message || 'Erreur');
     }
     setDeleting(false);
+  };
+
+  const handleRevokePremium = async () => {
+    if (!profile) return;
+    setRevoking(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_premium: false, premium_expires_at: null })
+        .eq('id', profile.id);
+      if (error) throw error;
+      toast.success(`Premium revoque pour ${profile.prenom || profile.username}.`);
+      setRevokeOpen(false);
+      loadData();
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    }
+    setRevoking(false);
   };
 
   const open = !!memberId;
@@ -258,8 +281,29 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
               </div>
             </div>
 
-            <div className="shrink-0 px-6 py-5" style={{ background: '#14141e', borderTop: '1px solid #1e1e2e' }}>
+            <div className="shrink-0 px-6 py-5 space-y-3" style={{ background: '#14141e', borderTop: '1px solid #1e1e2e' }}>
               <p className="text-[12px] uppercase tracking-[1px] text-[#606070] mb-4 font-medium">Actions</p>
+
+              <button
+                onClick={() => setGiftOpen(true)}
+                className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2"
+                style={{ background: '#7B2D8B', color: '#fff' }}
+              >
+                <Gift size={16} />
+                Offrir une periode Premium
+              </button>
+
+              {profile.is_premium && (
+                <button
+                  onClick={() => setRevokeOpen(true)}
+                  className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2"
+                  style={{ background: 'transparent', border: '1px solid #e67e22', color: '#e67e22' }}
+                >
+                  <ShieldOff size={16} />
+                  Revoquer le Premium
+                </button>
+              )}
+
               <button
                 onClick={() => setDeleteOpen(true)}
                 className="w-full py-3 rounded-lg text-[14px] font-semibold transition-colors hover:opacity-90"
@@ -281,6 +325,30 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
         onConfirm={handleDelete}
         loading={deleting}
       />
+
+      <ConfirmModal
+        open={revokeOpen}
+        title={`Revoquer le Premium de ${profile?.prenom || profile?.username} ?`}
+        message="Le membre perdra immediatement l'acces aux fonctionnalites Premium (messagerie, promotions, profil enrichi)."
+        confirmLabel="Revoquer le Premium"
+        onCancel={() => setRevokeOpen(false)}
+        onConfirm={handleRevokePremium}
+        loading={revoking}
+      />
+
+      {profile && (
+        <GiftPeriodModal
+          open={giftOpen}
+          onClose={() => setGiftOpen(false)}
+          onSuccess={() => { loadData(); onRefresh(); }}
+          recipientId={profile.id}
+          recipientName={profile.prenom || profile.username}
+          recipientType="user"
+          giftType="premium"
+          currentlyActive={profile.is_premium}
+          currentExpiry={profile.premium_expires_at ?? null}
+        />
+      )}
     </>
   );
 }
