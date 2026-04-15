@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Clock, Search, X, Lock, Crown } from 'lucide-react';
+import { Tag, Clock, Search, X, Lock, Crown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Promotion } from '../lib/types';
@@ -24,8 +24,9 @@ export default function Promos() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<PromoTypeFilter>('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [usedPromoIds, setUsedPromoIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
 
   const isPremium = profile?.is_premium === true;
 
@@ -42,6 +43,22 @@ export default function Promos() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (!user || !isPremium || promos.length === 0) return;
+    const loadUses = async () => {
+      const promoIds = promos.map((p) => p.id);
+      const { data } = await supabase
+        .from('promotion_uses')
+        .select('promotion_id')
+        .eq('user_id', user.id)
+        .in('promotion_id', promoIds);
+      if (data) {
+        setUsedPromoIds(new Set(data.map((d: any) => d.promotion_id)));
+      }
+    };
+    loadUses();
+  }, [user, isPremium, promos]);
 
   const filtered = promos.filter((p) => {
     if (typeFilter !== 'all' && p.promo_type !== typeFilter) return false;
@@ -190,6 +207,7 @@ export default function Promos() {
             const est = promo.establishment as any;
             const remaining = daysLeft(promo.valid_until);
             const urgent = remaining <= 3;
+            const isUsed = usedPromoIds.has(promo.id);
 
             return (
               <div
@@ -245,6 +263,12 @@ export default function Promos() {
                           ? `Plus que ${remaining}j !`
                           : `Jusqu'au ${formatDate(promo.valid_until)}`}
                       </span>
+                      {isUsed && (
+                        <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#27ae60' }}>
+                          <Check size={12} />
+                          Utilisee
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

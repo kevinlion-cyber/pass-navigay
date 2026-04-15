@@ -8,6 +8,7 @@ import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
+import PromoUsesSection from './PromoUsesSection';
 
 interface PartnerContext {
   establishment: Establishment;
@@ -516,6 +517,12 @@ function PromoCard({
             <Trash2 size={13} /> Supprimer
           </button>
         </div>
+
+        <PromoUsesSection
+          promoId={promo.id}
+          maxUses={promo.max_uses}
+          currentUses={promo.current_uses}
+        />
       </div>
     </div>
   );

@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tag, Clock, ChevronLeft, Calendar } from 'lucide-react';
+import { Tag, Clock, ChevronLeft, Calendar, Ticket, Lock, Crown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Promotion } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PromoValidateModal from '../components/ui/PromoValidateModal';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 export default function PromoDetail() {
   const { promoId } = useParams<{ promoId: string }>();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [promo, setPromo] = useState<Promotion | null>(null);
   const [loading, setLoading] = useState(true);
+  const [usedAt, setUsedAt] = useState<string | null>(null);
+  const [checkingUse, setCheckingUse] = useState(true);
+  const [validateOpen, setValidateOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const isPremium = profile?.is_premium === true;
 
   useEffect(() => {
     if (!promoId) return;
@@ -25,6 +35,25 @@ export default function PromoDetail() {
     };
     load();
   }, [promoId]);
+
+  useEffect(() => {
+    if (!promoId || !user) {
+      setCheckingUse(false);
+      return;
+    }
+    const checkUse = async () => {
+      setCheckingUse(true);
+      const { data } = await supabase
+        .from('promotion_uses')
+        .select('id, used_at')
+        .eq('promotion_id', promoId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setUsedAt(data.used_at);
+      setCheckingUse(false);
+    };
+    checkUse();
+  }, [promoId, user]);
 
   if (loading) {
     return (
@@ -74,6 +103,10 @@ export default function PromoDetail() {
 
   const remaining = daysLeft();
   const isExpired = new Date(promo.valid_until) < new Date();
+
+  const handleValidated = () => {
+    setUsedAt(new Date().toISOString());
+  };
 
   return (
     <div className="max-w-3xl mx-auto pb-8">
@@ -134,6 +167,49 @@ export default function PromoDetail() {
           </div>
         )}
 
+        {!checkingUse && !isExpired && (
+          <div>
+            {!user || !isPremium ? (
+              <div
+                className="flex items-center gap-3 rounded-[10px] px-4 py-3.5"
+                style={{ background: 'rgba(123,45,139,0.08)', border: '1px solid rgba(123,45,139,0.2)' }}
+              >
+                <Lock size={18} style={{ color: '#7B2D8B' }} />
+                <div className="flex-1">
+                  <p className="text-[13px] text-gray-300">Reserve aux membres Premium</p>
+                </div>
+                <button
+                  onClick={() => setUpgradeOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[8px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: '#7B2D8B' }}
+                >
+                  <Crown size={14} />
+                  Passer Premium
+                </button>
+              </div>
+            ) : usedAt ? (
+              <div
+                className="flex items-center gap-3 rounded-[10px] px-4 py-3.5"
+                style={{ background: 'rgba(39,174,96,0.08)', border: '1px solid rgba(39,174,96,0.2)' }}
+              >
+                <Check size={18} style={{ color: '#27ae60' }} />
+                <p className="text-[13px]" style={{ color: '#27ae60' }}>
+                  Promotion utilisee le {formatDate(usedAt)}
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={() => setValidateOpen(true)}
+                className="w-full py-3.5 px-6 rounded-[10px] text-[15px] font-semibold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{ background: '#7B2D8B' }}
+              >
+                <Ticket size={18} />
+                Utiliser cette promotion
+              </button>
+            )}
+          </div>
+        )}
+
         {est && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Etablissement</h2>
@@ -166,6 +242,20 @@ export default function PromoDetail() {
           Retour
         </button>
       </div>
+
+      {user && promo && est && (
+        <PromoValidateModal
+          open={validateOpen}
+          onClose={() => setValidateOpen(false)}
+          onValidated={handleValidated}
+          promotionId={promo.id}
+          promotionTitle={promo.title}
+          establishmentName={est.name || ''}
+          userId={user.id}
+        />
+      )}
+
+      <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
   );
 }
