@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Check, X, Crown, Save, Loader2 } from 'lucide-react';
+import { Camera, Check, X, Crown, Save, Loader2, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,12 +16,15 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState(profile.bio || '');
+  const [username, setUsername] = useState(profile.username || '');
   const [prenom, setPrenom] = useState(profile.prenom || '');
   const [nom, setNom] = useState(profile.nom || '');
   const [phone, setPhone] = useState(profile.phone || '');
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [savingUsername, setSavingUsername] = useState(false);
 
   const initials = profile.prenom
     ? profile.prenom.charAt(0).toUpperCase()
@@ -81,6 +84,32 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     toast.success('Bio mise a jour');
   };
 
+  const saveUsername = async () => {
+    if (!user || !username.trim()) return;
+    setSavingUsername(true);
+    const trimmed = username.trim().toLowerCase();
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', trimmed)
+      .neq('id', user.id)
+      .maybeSingle();
+    if (existing) {
+      toast.error('Ce pseudo est deja pris.');
+      setSavingUsername(false);
+      return;
+    }
+    const { error } = await supabase.from('profiles').update({ username: trimmed }).eq('id', user.id);
+    setSavingUsername(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await refreshProfile();
+    setEditingUsername(false);
+    toast.success('Pseudo mis a jour');
+  };
+
   const saveInfos = async () => {
     if (!user) return;
     setSaving(true);
@@ -136,17 +165,49 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
           />
         </div>
 
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
-            {profile.prenom || profile.username}
-          </h1>
-          {profile.is_premium && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-              <Crown size={12} />
-              Premium
-            </span>
-          )}
-        </div>
+        {editingUsername ? (
+          <div className="flex items-center gap-2 mb-1">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/\s/g, '').slice(0, 30))}
+              className="input-field text-center text-lg font-bold w-48"
+              autoFocus
+            />
+            <button
+              onClick={saveUsername}
+              disabled={savingUsername || !username.trim()}
+              className="text-success hover:opacity-80 p-1"
+            >
+              {savingUsername ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+            </button>
+            <button
+              onClick={() => { setEditingUsername(false); setUsername(profile.username || ''); }}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
+              {profile.prenom || profile.username}
+            </h1>
+            {profile.is_premium && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <Crown size={12} />
+                Premium
+              </span>
+            )}
+            <button
+              onClick={() => setEditingUsername(true)}
+              className="text-gray-400 hover:text-primary transition-colors p-1"
+              title="Modifier le pseudo"
+            >
+              <Pencil size={13} />
+            </button>
+          </div>
+        )}
 
         {editingBio ? (
           <div className="w-full max-w-sm mt-1 space-y-2">
@@ -230,16 +291,19 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             />
           </div>
         </div>
-        {hasInfoChanges && (
+        <div
+          className={`transition-all overflow-hidden ${hasInfoChanges ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}
+        >
           <button
             onClick={saveInfos}
             disabled={saving}
-            className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Enregistrer
+            Enregistrer les modifications
           </button>
-        )}
+        </div>
       </div>
 
       {cropSrc && (
