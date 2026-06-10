@@ -71,6 +71,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 }
 
 export default function EstablishmentEditSidebar({ establishmentId, onClose, onRefresh }: Props) {
+  const isNew = establishmentId === 'new';
   const [form, setForm] = useState<FormData>(initialForm);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -109,6 +110,18 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
     setPendingPhotos([]);
     setGalleryCropQueue([]);
     setGalleryCropSrc(null);
+
+    if (isNew) {
+      setForm(initialForm);
+      setBannerUrl(null);
+      setLogoUrl(null);
+      setIsPro(false);
+      setProExpiresAt(null);
+      setGalleryPhotos([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [estRes, photosRes] = await Promise.all([
         supabase.from('establishments').select('*').eq('id', establishmentId).single(),
@@ -233,45 +246,10 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
     if (!validate() || !establishmentId) return;
     setSaving(true);
     try {
-      let newBannerUrl = bannerUrl;
-      let newLogoUrl = logoUrl;
+      let targetId = establishmentId;
 
-      if (croppedBanner) {
-        setUploadProgress('Upload banniere...');
-        const filename = `${Date.now()}.jpg`;
-        const { error } = await supabase.storage.from('establishment-banners').upload(`${establishmentId}/${filename}`, croppedBanner, { contentType: 'image/jpeg', upsert: true });
-        if (error) throw error;
-        const { data: urlData } = supabase.storage.from('establishment-banners').getPublicUrl(`${establishmentId}/${filename}`);
-        newBannerUrl = urlData.publicUrl;
-      }
-
-      if (croppedLogo) {
-        setUploadProgress('Upload logo...');
-        const filename = `${Date.now()}.jpg`;
-        const { error } = await supabase.storage.from('establishment-logos').upload(`${establishmentId}/${filename}`, croppedLogo, { contentType: 'image/jpeg', upsert: true });
-        if (error) throw error;
-        const { data: urlData } = supabase.storage.from('establishment-logos').getPublicUrl(`${establishmentId}/${filename}`);
-        newLogoUrl = urlData.publicUrl;
-      }
-
-      if (pendingPhotos.length > 0) {
-        for (let i = 0; i < pendingPhotos.length; i++) {
-          setUploadProgress(`Upload galerie... (${i + 1}/${pendingPhotos.length})`);
-          const filename = `${Date.now()}_${i}.jpg`;
-          const { error: upErr } = await supabase.storage.from('establishment-photos').upload(`${establishmentId}/${filename}`, pendingPhotos[i].blob, { contentType: 'image/jpeg', upsert: false });
-          if (upErr) throw upErr;
-          const { data: urlData } = supabase.storage.from('establishment-photos').getPublicUrl(`${establishmentId}/${filename}`);
-          const nextIndex = galleryPhotos.length + i;
-          const { error: insErr } = await supabase.from('establishment_photos').insert({ establishment_id: establishmentId, url: urlData.publicUrl, order_index: nextIndex });
-          if (insErr) throw insErr;
-        }
-      }
-
-      setUploadProgress(null);
-
-      const { error } = await supabase
-        .from('establishments')
-        .update({
+      if (isNew) {
+        const { data: created, error } = await supabase.from('establishments').insert({
           name: form.name,
           description: form.description,
           phone: form.phone,
@@ -281,13 +259,72 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           postal_code: form.postal_code,
           category: form.category,
           subcategory: form.subcategory,
-          banner_url: newBannerUrl,
-          logo_url: newLogoUrl,
           is_pro: isPro,
-        })
-        .eq('id', establishmentId);
-      if (error) throw error;
-      toast.success('Etablissement mis a jour !');
+        }).select('id').single();
+        if (error) throw error;
+        targetId = created.id;
+      }
+
+      let newBannerUrl = bannerUrl;
+      let newLogoUrl = logoUrl;
+
+      if (croppedBanner) {
+        setUploadProgress('Upload banniere...');
+        const filename = `${Date.now()}.jpg`;
+        const { error } = await supabase.storage.from('establishment-banners').upload(`${targetId}/${filename}`, croppedBanner, { contentType: 'image/jpeg', upsert: true });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('establishment-banners').getPublicUrl(`${targetId}/${filename}`);
+        newBannerUrl = urlData.publicUrl;
+      }
+
+      if (croppedLogo) {
+        setUploadProgress('Upload logo...');
+        const filename = `${Date.now()}.jpg`;
+        const { error } = await supabase.storage.from('establishment-logos').upload(`${targetId}/${filename}`, croppedLogo, { contentType: 'image/jpeg', upsert: true });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('establishment-logos').getPublicUrl(`${targetId}/${filename}`);
+        newLogoUrl = urlData.publicUrl;
+      }
+
+      if (pendingPhotos.length > 0) {
+        for (let i = 0; i < pendingPhotos.length; i++) {
+          setUploadProgress(`Upload galerie... (${i + 1}/${pendingPhotos.length})`);
+          const filename = `${Date.now()}_${i}.jpg`;
+          const { error: upErr } = await supabase.storage.from('establishment-photos').upload(`${targetId}/${filename}`, pendingPhotos[i].blob, { contentType: 'image/jpeg', upsert: false });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('establishment-photos').getPublicUrl(`${targetId}/${filename}`);
+          const nextIndex = galleryPhotos.length + i;
+          const { error: insErr } = await supabase.from('establishment_photos').insert({ establishment_id: targetId, url: urlData.publicUrl, order_index: nextIndex });
+          if (insErr) throw insErr;
+        }
+      }
+
+      setUploadProgress(null);
+
+      if (!isNew) {
+        const { error } = await supabase
+          .from('establishments')
+          .update({
+            name: form.name,
+            description: form.description,
+            phone: form.phone,
+            website: form.website,
+            address: form.address,
+            city: form.city,
+            postal_code: form.postal_code,
+            category: form.category,
+            subcategory: form.subcategory,
+            banner_url: newBannerUrl,
+            logo_url: newLogoUrl,
+            is_pro: isPro,
+          })
+          .eq('id', targetId);
+        if (error) throw error;
+      } else if (newBannerUrl || newLogoUrl) {
+        await supabase.from('establishments').update({ banner_url: newBannerUrl, logo_url: newLogoUrl }).eq('id', targetId);
+      }
+
+      toast.success(isNew ? 'Etablissement cree !' : 'Etablissement mis a jour !');
       onClose();
       onRefresh();
     } catch (err: any) {
@@ -301,7 +338,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
     <>
       <AdminEditSidebar
         open={!!establishmentId}
-        title="Modifier l'etablissement"
+        title={isNew ? "Creer un etablissement" : "Modifier l'etablissement"}
         loading={loading}
         saving={saving}
         onClose={onClose}

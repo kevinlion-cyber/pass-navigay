@@ -68,16 +68,27 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
+  const isNew = promoId === 'new';
+
   const loadData = useCallback(async () => {
     if (!promoId) return;
     setLoading(true);
     setErrors({});
     setCroppedImage(null);
     try {
-      const [promoRes, estRes] = await Promise.all([
-        supabase.from('promotions').select('*').eq('id', promoId).single(),
-        supabase.from('establishments').select('id, name').order('name'),
-      ]);
+      const estRes = await supabase.from('establishments').select('id, name').order('name');
+      setEstablishments(
+        (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
+      );
+
+      if (isNew) {
+        setForm(initialForm);
+        setImageUrl(null);
+        setLoading(false);
+        return;
+      }
+
+      const promoRes = await supabase.from('promotions').select('*').eq('id', promoId).single();
       if (promoRes.error) throw promoRes.error;
       const p = promoRes.data;
       setForm({
@@ -95,9 +106,6 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         current_uses: p.current_uses || 0,
       });
       setImageUrl(p.image_url || null);
-      setEstablishments(
-        (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
-      );
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
     }
@@ -131,40 +139,55 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
     try {
       let newImageUrl = imageUrl;
 
-      if (croppedImage) {
-        setUploadProgress('Upload image...');
-        const filename = `${Date.now()}.jpg`;
-        const { error: upErr } = await supabase.storage.from('promo-images').upload(`${promoId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
-        if (upErr) throw upErr;
-        const { data: urlData } = supabase.storage.from('promo-images').getPublicUrl(`${promoId}/${filename}`);
-        newImageUrl = urlData.publicUrl;
+      const payload = {
+        title: form.title,
+        description: form.description,
+        establishment_id: form.establishment_id || null,
+        promo_type: form.promo_type,
+        value: form.promo_type !== 'offer' ? form.value : null,
+        valid_from: new Date(form.valid_from).toISOString(),
+        valid_until: new Date(form.valid_until + 'T23:59:59').toISOString(),
+        is_recurring: form.is_recurring,
+        recurrence_rule: form.is_recurring ? form.recurrence_rule : null,
+        max_uses: form.limit_uses ? form.max_uses : null,
+        image_url: newImageUrl,
+      };
+
+      if (isNew) {
+        const { data: created, error } = await supabase.from('promotions').insert(payload).select('id').single();
+        if (error) throw error;
+
+        if (croppedImage && created) {
+          setUploadProgress('Upload image...');
+          const filename = `${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage.from('promo-images').upload(`${created.id}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('promo-images').getPublicUrl(`${created.id}/${filename}`);
+          await supabase.from('promotions').update({ image_url: urlData.publicUrl }).eq('id', created.id);
+        }
+
+        toast.success('Promotion creee !');
+      } else {
+        if (croppedImage) {
+          setUploadProgress('Upload image...');
+          const filename = `${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage.from('promo-images').upload(`${promoId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('promo-images').getPublicUrl(`${promoId}/${filename}`);
+          newImageUrl = urlData.publicUrl;
+        }
+
+        const { error } = await supabase.from('promotions').update({ ...payload, image_url: newImageUrl }).eq('id', promoId);
+        if (error) throw error;
+        toast.success('Promotion mise a jour !');
       }
 
       setUploadProgress(null);
-
-      const { error } = await supabase
-        .from('promotions')
-        .update({
-          title: form.title,
-          description: form.description,
-          establishment_id: form.establishment_id,
-          promo_type: form.promo_type,
-          value: form.promo_type !== 'offer' ? form.value : null,
-          valid_from: new Date(form.valid_from).toISOString(),
-          valid_until: new Date(form.valid_until + 'T23:59:59').toISOString(),
-          is_recurring: form.is_recurring,
-          recurrence_rule: form.is_recurring ? form.recurrence_rule : null,
-          max_uses: form.limit_uses ? form.max_uses : null,
-          image_url: newImageUrl,
-        })
-        .eq('id', promoId);
-      if (error) throw error;
-      toast.success('Promotion mise a jour !');
       onClose();
       onRefresh();
     } catch (err: any) {
       setUploadProgress(null);
-      toast.error(err.message || "Erreur lors de l'upload de l'image.");
+      toast.error(err.message || 'Erreur');
     }
     setSaving(false);
   };
@@ -172,7 +195,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
   return (
     <AdminEditSidebar
       open={!!promoId}
-      title="Modifier la promotion"
+      title={isNew ? "Creer une promotion" : "Modifier la promotion"}
       loading={loading}
       saving={saving}
       onClose={onClose}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ExternalLink, Crown, Trash2 } from 'lucide-react';
+import { ExternalLink, Crown, Trash2, Download, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -18,6 +18,9 @@ export default function AdminPartners() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<PartnerRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [giftTarget, setGiftTarget] = useState<PartnerRow | null>(null);
+  const [giftMonths, setGiftMonths] = useState(1);
+  const [gifting, setGifting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -44,7 +47,7 @@ export default function AdminPartners() {
   useEffect(() => { load(); }, []);
 
   const proCount = partners.filter((p) => p.is_pro).length;
-  const estimatedRevenue = proCount * 69;
+  const estimatedRevenue = proCount * 690;
 
   const activatePro = async (id: string) => {
     try {
@@ -58,6 +61,29 @@ export default function AdminPartners() {
     } catch (err: any) {
       toast.error(err.message || 'Erreur');
     }
+  };
+
+  const handleGiftMonths = async () => {
+    if (!giftTarget) return;
+    setGifting(true);
+    try {
+      const baseDate = giftTarget.pro_expires_at
+        ? new Date(Math.max(new Date(giftTarget.pro_expires_at).getTime(), Date.now()))
+        : new Date();
+      const newExpiry = new Date(baseDate.getTime() + giftMonths * 30 * 24 * 60 * 60 * 1000);
+
+      const { error } = await supabase.from('establishments').update({
+        is_pro: true,
+        pro_expires_at: newExpiry.toISOString(),
+      }).eq('id', giftTarget.id);
+      if (error) throw error;
+      toast.success(`${giftMonths} mois offert${giftMonths > 1 ? 's' : ''} !`);
+      setGiftTarget(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    }
+    setGifting(false);
   };
 
   const handleDelete = async () => {
@@ -75,13 +101,21 @@ export default function AdminPartners() {
     setDeleting(false);
   };
 
-  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('fr-FR') : '-';
-
-  const proStart = (expiresAt: string | null) => {
-    if (!expiresAt) return '-';
-    const start = new Date(new Date(expiresAt).getTime() - 365 * 24 * 60 * 60 * 1000);
-    return start.toLocaleDateString('fr-FR');
+  const exportCSV = () => {
+    const header = 'Etablissement,Proprietaire,Statut,Expiration Pro\n';
+    const rows = partners.map((p) =>
+      `"${p.name}","${p.owner_username}","${p.is_pro ? 'Pro' : 'Gratuit'}","${p.pro_expires_at || '-'}"`
+    ).join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'partenaires.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
+
+  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('fr-FR') : '-';
 
   if (loading) {
     return (
@@ -94,12 +128,17 @@ export default function AdminPartners() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-white">Partenaires</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Partenaires</h1>
+        <button onClick={exportCSV} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors border border-dark-border rounded-input px-3 py-2">
+          <Download size={15} /> Export CSV
+        </button>
+      </div>
 
       <div className="bg-dark-surface border border-dark-border rounded-card p-5">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu mensuel estime</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu annuel estime</p>
         <p className="text-2xl font-bold text-white">{estimatedRevenue} EUR</p>
-        <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 69 EUR/mois</p>
+        <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 690 EUR/an</p>
       </div>
 
       {partners.length === 0 ? (
@@ -113,7 +152,6 @@ export default function AdminPartners() {
                   <th className="py-3 px-3">Etablissement</th>
                   <th className="py-3 px-3">Proprietaire</th>
                   <th className="py-3 px-3">Statut</th>
-                  <th className="py-3 px-3">Pro depuis</th>
                   <th className="py-3 px-3">Expiration</th>
                   <th className="py-3 px-3">Valeur</th>
                   <th className="py-3 px-3">Actions</th>
@@ -125,13 +163,13 @@ export default function AdminPartners() {
                     <td className="py-2.5 px-3 text-white font-medium">{p.name}</td>
                     <td className="py-2.5 px-3 text-gray-400">{p.owner_username}</td>
                     <td className="py-2.5 px-3">{p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}</td>
-                    <td className="py-2.5 px-3 text-gray-500 text-xs">{p.is_pro ? proStart(p.pro_expires_at) : '-'}</td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{p.is_pro ? formatDate(p.pro_expires_at) : '-'}</td>
-                    <td className="py-2.5 px-3 text-gray-400">{p.is_pro ? '69 EUR/mois' : '0 EUR'}</td>
+                    <td className="py-2.5 px-3 text-gray-400">{p.is_pro ? '690 EUR/an' : '0 EUR'}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-1">
                         <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
                         {!p.is_pro && <button onClick={() => activatePro(p.id)} title="Activer Pro" className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
+                        <button onClick={() => { setGiftTarget(p); setGiftMonths(1); }} title="Offrir des mois" className="p-1.5 text-gray-500 hover:text-amber-400"><Gift size={15} /></button>
                         <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                       </div>
                     </td>
@@ -153,6 +191,7 @@ export default function AdminPartners() {
                 <div className="flex items-center justify-end gap-1">
                   <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
                   {!p.is_pro && <button onClick={() => activatePro(p.id)} className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
+                  <button onClick={() => { setGiftTarget(p); setGiftMonths(1); }} className="p-1.5 text-gray-500 hover:text-amber-400"><Gift size={15} /></button>
                   <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                 </div>
               </div>
@@ -170,6 +209,31 @@ export default function AdminPartners() {
         onConfirm={handleDelete}
         loading={deleting}
       />
+
+      {giftTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setGiftTarget(null)} />
+          <div className="relative bg-dark-surface border border-dark-border rounded-card p-6 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-bold text-white">Offrir des mois Pro</h2>
+            <p className="text-sm text-gray-400">Etablissement : <span className="text-white">{giftTarget.name}</span></p>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Nombre de mois</label>
+              <input
+                type="number"
+                min={1}
+                max={24}
+                value={giftMonths}
+                onChange={(e) => setGiftMonths(Math.max(1, parseInt(e.target.value) || 1))}
+                className="input-field bg-dark-bg border-dark-border text-white w-32"
+              />
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={() => setGiftTarget(null)} className="flex-1 py-2.5 rounded-input border border-dark-border text-gray-400 hover:text-white text-sm font-medium transition-colors">Annuler</button>
+              <button onClick={handleGiftMonths} disabled={gifting} className="flex-1 btn-primary text-sm py-2.5">{gifting ? 'En cours...' : 'Offrir'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

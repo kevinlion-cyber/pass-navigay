@@ -59,16 +59,27 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
+  const isNew = eventId === 'new';
+
   const loadData = useCallback(async () => {
     if (!eventId) return;
     setLoading(true);
     setErrors({});
     setCroppedImage(null);
     try {
-      const [eventRes, estRes] = await Promise.all([
-        supabase.from('events').select('*').eq('id', eventId).single(),
-        supabase.from('establishments').select('id, name').order('name'),
-      ]);
+      const estRes = await supabase.from('establishments').select('id, name').order('name');
+      setEstablishments(
+        (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
+      );
+
+      if (isNew) {
+        setForm(initialForm);
+        setImageUrl(null);
+        setLoading(false);
+        return;
+      }
+
+      const eventRes = await supabase.from('events').select('*').eq('id', eventId).single();
       if (eventRes.error) throw eventRes.error;
       const ev = eventRes.data;
       setForm({
@@ -83,9 +94,6 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         is_featured: ev.is_featured ?? false,
       });
       setImageUrl(ev.image_url || null);
-      setEstablishments(
-        (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
-      );
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
     }
@@ -115,39 +123,54 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
     try {
       let newImageUrl = imageUrl;
 
-      if (croppedImage) {
-        setUploadProgress('Upload image...');
-        const filename = `${Date.now()}.jpg`;
-        const { error: upErr } = await supabase.storage.from('event-images').upload(`${eventId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
-        if (upErr) throw upErr;
-        const { data: urlData } = supabase.storage.from('event-images').getPublicUrl(`${eventId}/${filename}`);
-        newImageUrl = urlData.publicUrl;
+      const payload = {
+        title: form.title,
+        description: form.description,
+        theme: form.theme,
+        establishment_id: form.establishment_id || null,
+        event_date: new Date(form.event_date).toISOString(),
+        end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+        is_free: form.is_free,
+        price: form.is_free ? 0 : form.price,
+        is_featured: form.is_featured,
+        image_url: newImageUrl,
+      };
+
+      if (isNew) {
+        const { data: created, error } = await supabase.from('events').insert(payload).select('id').single();
+        if (error) throw error;
+
+        if (croppedImage && created) {
+          setUploadProgress('Upload image...');
+          const filename = `${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage.from('event-images').upload(`${created.id}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('event-images').getPublicUrl(`${created.id}/${filename}`);
+          await supabase.from('events').update({ image_url: urlData.publicUrl }).eq('id', created.id);
+        }
+
+        toast.success('Evenement cree !');
+      } else {
+        if (croppedImage) {
+          setUploadProgress('Upload image...');
+          const filename = `${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage.from('event-images').upload(`${eventId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('event-images').getPublicUrl(`${eventId}/${filename}`);
+          newImageUrl = urlData.publicUrl;
+        }
+
+        const { error } = await supabase.from('events').update({ ...payload, image_url: newImageUrl }).eq('id', eventId);
+        if (error) throw error;
+        toast.success('Evenement mis a jour !');
       }
 
       setUploadProgress(null);
-
-      const { error } = await supabase
-        .from('events')
-        .update({
-          title: form.title,
-          description: form.description,
-          theme: form.theme,
-          establishment_id: form.establishment_id,
-          event_date: new Date(form.event_date).toISOString(),
-          end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
-          is_free: form.is_free,
-          price: form.is_free ? 0 : form.price,
-          is_featured: form.is_featured,
-          image_url: newImageUrl,
-        })
-        .eq('id', eventId);
-      if (error) throw error;
-      toast.success('Evenement mis a jour !');
       onClose();
       onRefresh();
     } catch (err: any) {
       setUploadProgress(null);
-      toast.error(err.message || "Erreur lors de l'upload de l'image.");
+      toast.error(err.message || 'Erreur');
     }
     setSaving(false);
   };
@@ -155,7 +178,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
   return (
     <AdminEditSidebar
       open={!!eventId}
-      title="Modifier l'evenement"
+      title={isNew ? "Creer un evenement" : "Modifier l'evenement"}
       loading={loading}
       saving={saving}
       onClose={onClose}

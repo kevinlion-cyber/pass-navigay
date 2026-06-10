@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Trash2, ExternalLink, Download, Pencil } from 'lucide-react';
+import { Search, X, Trash2, ExternalLink, Download, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
@@ -103,9 +103,14 @@ export default function AdminEstablishments() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-xl font-bold text-white">Etablissements</h1>
-        <button onClick={exportCSV} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
-          <Download size={16} /> Exporter CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
+            <Plus size={16} /> Creer
+          </button>
+          <button onClick={exportCSV} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+            <Download size={16} /> Exporter CSV
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

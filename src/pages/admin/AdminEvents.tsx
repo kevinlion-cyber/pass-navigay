@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, X, ExternalLink, Trash2, Pencil } from 'lucide-react';
+import { Search, X, ExternalLink, Trash2, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Event } from '../../lib/types';
@@ -40,16 +40,6 @@ export default function AdminEvents() {
 
   useEffect(() => { load(); }, [estFilter, priceFilter, search]);
 
-  const toggleFeatured = async (id: string, current: boolean) => {
-    try {
-      const { error } = await supabase.from('events').update({ is_featured: !current }).eq('id', id);
-      if (error) throw error;
-      toast.success(current ? 'Retire des mises en avant' : 'Mis en avant !');
-      load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -70,7 +60,12 @@ export default function AdminEvents() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-white">Evenements</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Evenements</h1>
+        <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
+          <Plus size={16} /> Creer un evenement
+        </button>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <select value={estFilter} onChange={(e) => setEstFilter(e.target.value)} className="input-field bg-dark-surface border-dark-border text-white text-sm w-auto py-2">
@@ -104,7 +99,6 @@ export default function AdminEvents() {
                   <th className="py-3 px-3">Etablissement</th>
                   <th className="py-3 px-3">Date</th>
                   <th className="py-3 px-3">Prix</th>
-                  <th className="py-3 px-3">Featured</th>
                   <th className="py-3 px-3">Actions</th>
                 </tr>
               </thead>
@@ -126,14 +120,6 @@ export default function AdminEvents() {
                       </td>
                       <td className="py-2.5 px-3 text-gray-400 text-xs">{formatDate(ev.event_date)}</td>
                       <td className="py-2.5 px-3 text-gray-400">{ev.is_free ? <span className="badge-free text-xs">Gratuit</span> : `${ev.price} EUR`}</td>
-                      <td className="py-2.5 px-3">
-                        <button
-                          onClick={() => toggleFeatured(ev.id, ev.is_featured)}
-                          className={`w-10 h-5 rounded-full transition-colors relative ${ev.is_featured ? 'bg-primary' : 'bg-dark-border'}`}
-                        >
-                          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${ev.is_featured ? 'left-5' : 'left-0.5'}`} />
-                        </button>
-                      </td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditId(ev.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
@@ -165,12 +151,6 @@ export default function AdminEvents() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {ev.is_free ? <span className="badge-free text-xs">Gratuit</span> : <span className="text-xs text-gray-400">{ev.price} EUR</span>}
-                      <button
-                        onClick={() => toggleFeatured(ev.id, ev.is_featured)}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${ev.is_featured ? 'bg-primary' : 'bg-dark-border'}`}
-                      >
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${ev.is_featured ? 'left-5' : 'left-0.5'}`} />
-                      </button>
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditId(ev.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, X, Trash2, Pencil } from 'lucide-react';
+import { Search, X, Trash2, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Promotion } from '../../lib/types';
@@ -64,7 +64,12 @@ export default function AdminPromotions() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-white">Promotions</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">Promotions</h1>
+        <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
+          <Plus size={16} /> Creer une promo
+        </button>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-field bg-dark-surface border-dark-border text-white text-sm w-auto py-2">
@@ -99,8 +104,7 @@ export default function AdminPromotions() {
                   <th className="py-3 px-3">Etablissement</th>
                   <th className="py-3 px-3">Reduction</th>
                   <th className="py-3 px-3">Validite</th>
-                  <th className="py-3 px-3">Utilisations</th>
-                  <th className="py-3 px-3">Recurrente</th>
+                  <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Actions</th>
                 </tr>
               </thead>
@@ -117,9 +121,8 @@ export default function AdminPromotions() {
                       <td className="py-2.5 px-3 text-white font-medium">{p.title}</td>
                       <td className="py-2.5 px-3 text-gray-400">{est?.name || '-'}</td>
                       <td className="py-2.5 px-3"><span className="badge-pro text-xs">{promoLabel(p)}</span></td>
-                      <td className="py-2.5 px-3 text-gray-400 text-xs">{formatDate(p.valid_from)} → {formatDate(p.valid_until)}</td>
-                      <td className="py-2.5 px-3 text-gray-400 text-xs">{p.current_uses} / {p.max_uses ?? '∞'}</td>
-                      <td className="py-2.5 px-3 text-gray-400 text-xs">{p.is_recurring ? 'Oui' : 'Non'}</td>
+                      <td className="py-2.5 px-3 text-gray-400 text-xs">{(p as any).is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</td>
+                      <td className="py-2.5 px-3">{(p as any).is_active !== false ? <span className="text-emerald-400 text-xs font-medium">Active</span> : <span className="text-gray-500 text-xs">Inactive</span>}</td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditId(p.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
@@ -142,9 +145,9 @@ export default function AdminPromotions() {
                     <p className="text-sm font-medium text-white truncate">{p.title}</p>
                     <span className="badge-pro text-xs shrink-0">{promoLabel(p)}</span>
                   </div>
-                  <p className="text-xs text-gray-500">{est?.name} · {formatDate(p.valid_from)} → {formatDate(p.valid_until)}</p>
+                  <p className="text-xs text-gray-500">{est?.name} · {(p as any).is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">{p.current_uses} / {p.max_uses ?? '∞'} utilisations</span>
+                    <span className="text-xs">{(p as any).is_active !== false ? <span className="text-emerald-400 font-medium">Active</span> : <span className="text-gray-500">Inactive</span>}</span>
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditId(p.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
                       <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>

@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const username = u.user_metadata?.username || u.email?.split('@')[0] || 'utilisateur';
     const { data: created } = await supabase
       .from('profiles')
-      .upsert({ id: u.id, username })
+      .upsert({ id: u.id, username, email: u.email })
       .select('*')
       .maybeSingle();
     setProfile(created);
