@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Check, Lock, Image, CalendarDays, Tag, TrendingUp, Palette, Headphones } from 'lucide-react';
+import { Check, Lock, Image, CalendarDays, Tag, TrendingUp, Palette, Headphones, Loader2 } from 'lucide-react';
 import type { Establishment } from '../../lib/types';
+import { useAuth } from '../../contexts/AuthContext';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import toast from 'react-hot-toast';
 
 interface PartnerContext {
   establishment: Establishment;
@@ -19,7 +21,9 @@ const PRO_FEATURES = [
 
 export default function PartnerSubscription() {
   const { establishment } = useOutletContext<PartnerContext>();
+  const { user } = useAuth();
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [manageLoading, setManageLoading] = useState(false);
 
   const expiresAt = establishment.pro_expires_at ? new Date(establishment.pro_expires_at) : null;
   const createdAt = new Date(establishment.created_at);
@@ -36,7 +40,7 @@ export default function PartnerSubscription() {
     d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   if (!establishment.is_pro) {
-    return <FreeView />;
+    return <FreeView establishment={establishment} />;
   }
 
   return (
@@ -66,9 +70,44 @@ export default function PartnerSubscription() {
         )}
       </div>
 
-      <button className="w-full py-3.5 rounded-input text-sm font-semibold transition-colors hover:opacity-90"
-        style={{ background: 'transparent', border: '1px solid #7B2D8B', color: '#7B2D8B' }}>
-        Gérer mon abonnement
+      <button
+        onClick={async () => {
+          if (!establishment.stripe_customer_id) {
+            toast.error('Aucun abonnement Stripe trouve');
+            return;
+          }
+          setManageLoading(true);
+          try {
+            const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`;
+            const res = await fetch(apiUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                customerId: establishment.stripe_customer_id,
+                returnUrl: window.location.href,
+              }),
+            });
+            const data = await res.json();
+            if (data?.url) {
+              window.location.href = data.url;
+              return;
+            }
+            toast.error(data?.error || 'Erreur');
+          } catch {
+            toast.error('Erreur de connexion');
+          } finally {
+            setManageLoading(false);
+          }
+        }}
+        disabled={manageLoading}
+        className="w-full py-3.5 rounded-input text-sm font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2"
+        style={{ background: 'transparent', border: '1px solid #7B2D8B', color: '#7B2D8B' }}
+      >
+        {manageLoading && <Loader2 size={16} className="animate-spin" />}
+        Gerer mon abonnement
       </button>
 
       <div className="rounded-card p-6" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
@@ -112,13 +151,46 @@ export default function PartnerSubscription() {
   );
 }
 
-function FreeView() {
+function FreeView({ establishment }: { establishment: Establishment }) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pro-checkout`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          establishmentId: establishment.id,
+          email: user.email,
+          establishmentName: establishment.name,
+        }),
+      });
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error(data?.error || 'Erreur lors de la creation du paiement');
+    } catch {
+      toast.error('Erreur de connexion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="rounded-card text-center py-12 px-8 mb-6"
         style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
         <h1 className="text-[28px] font-bold text-white mb-2">Passez au profil Pro</h1>
-        <p className="text-sm text-gray-400 mb-8">Débloquez toutes les fonctionnalités pour développer votre visibilité.</p>
+        <p className="text-sm text-gray-400 mb-8">Debloquez toutes les fonctionnalites pour developper votre visibilite.</p>
 
         <div className="mb-4">
           <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>690&euro;</span>
@@ -126,13 +198,18 @@ function FreeView() {
         </div>
         <p className="text-sm text-gray-400 mb-8">Soit 57,50&euro;/mois &middot; Engagement annuel</p>
 
-        <button className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4"
-          style={{ background: '#fff', color: '#7B2D8B' }}>
+        <button
+          onClick={handleSubscribe}
+          disabled={loading}
+          className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4 inline-flex items-center gap-2"
+          style={{ background: '#fff', color: '#7B2D8B' }}
+        >
+          {loading && <Loader2 size={18} className="animate-spin" />}
           Souscrire au profil Pro &rarr;
         </button>
 
         <p className="text-xs text-gray-600 flex items-center justify-center gap-1.5">
-          <Lock size={12} /> Paiement sécurisé par Stripe &middot; Facture disponible
+          <Lock size={12} /> Paiement securise par Stripe &middot; Facture disponible
         </p>
       </div>
 

@@ -1,4 +1,5 @@
-import { Check } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -22,13 +23,41 @@ const PREMIUM_FEATURES = [
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState<'pro' | 'premium' | null>(null);
 
-  const handleSubscribe = (type: 'pro' | 'premium') => {
+  const handleSubscribe = async (type: 'pro' | 'premium') => {
     if (!user) {
       navigate('/auth/login');
       return;
     }
-    toast('L\'integration Stripe sera activee prochainement.');
+
+    if (type === 'pro') {
+      navigate('/pros');
+      return;
+    }
+
+    setLoading(type);
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-premium-checkout`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      });
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error(data?.error || 'Erreur lors de la creation du paiement');
+    } catch {
+      toast.error('Erreur de connexion');
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -80,7 +109,8 @@ export default function Pricing() {
             ))}
           </ul>
 
-          <button onClick={() => handleSubscribe('premium')} className="btn-primary w-full">
+          <button onClick={() => handleSubscribe('premium')} disabled={loading === 'premium'} className="btn-primary w-full flex items-center justify-center gap-2">
+            {loading === 'premium' && <Loader2 size={16} className="animate-spin" />}
             Souscrire Premium
           </button>
         </div>
