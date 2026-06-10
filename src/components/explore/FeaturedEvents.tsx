@@ -39,7 +39,7 @@ export default function FeaturedEvents() {
         {events.map((event) => (
           <div
             key={event.id}
-            onClick={() => navigate(`/establishment/${event.establishment_id}`)}
+            onClick={() => navigate(`/event/${event.id}`)}
             className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group"
             style={{ width: 200, height: 120 }}
           >
