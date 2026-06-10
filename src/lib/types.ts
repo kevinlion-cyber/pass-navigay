@@ -4,6 +4,16 @@ export interface ProfileVisibility {
   orientation?: boolean;
   looking_for?: boolean;
   vibe?: boolean;
+  evening_energy?: boolean;
+  green_flags?: boolean;
+  what_i_bring?: boolean;
+  if_i_were_vibe?: boolean;
+  if_i_were_music?: boolean;
+  late_truth?: boolean;
+}
+
+export interface OpeningHours {
+  [day: string]: { open: string; close: string } | null;
 }
 
 export interface Profile {
@@ -70,8 +80,10 @@ export interface Establishment {
   is_sponsor: boolean;
   is_verified: boolean;
   created_at: string;
+  opening_hours: OpeningHours | null;
   avg_rating?: number;
   review_count?: number;
+  avg_safety_rating?: number;
 }
 
 export interface EstablishmentPhoto {
@@ -144,6 +156,7 @@ export interface Review {
   user_id: string;
   establishment_id: string;
   rating: number;
+  safety_rating: number | null;
   comment: string;
   created_at: string;
   user?: Profile;

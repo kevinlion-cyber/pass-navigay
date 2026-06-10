@@ -45,6 +45,7 @@ import PartnerEstablishment from './pages/partner/PartnerEstablishment';
 import PartnerEvents from './pages/partner/PartnerEvents';
 import PartnerPromotions from './pages/partner/PartnerPromotions';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
+import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
 
 export default function App() {
   return (
@@ -117,6 +118,7 @@ export default function App() {
               <Route path="/pros/abonnement" element={<PartnerSubscription />} />
             </Route>
           </Routes>
+          <PwaInstallPrompt />
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -1,14 +1,47 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X } from 'lucide-react';
+import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { CATEGORIES } from '../lib/constants';
-import type { Establishment, EstablishmentPhoto, Event, Promotion, Review, CategoryKey } from '../lib/types';
+import type { Establishment, EstablishmentPhoto, Event, Promotion, Review, CategoryKey, OpeningHours } from '../lib/types';
 import StarRating from '../components/ui/StarRating';
+import ShieldRating from '../components/ui/ShieldRating';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
+
+const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
+function OpeningHoursDisplay({ hours }: { hours: OpeningHours }) {
+  const today = DAYS_ORDER[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+  const hasHours = DAYS_ORDER.some((d) => hours[d] !== undefined);
+  if (!hasHours) return null;
+
+  return (
+    <div className="space-y-1.5">
+      {DAYS_ORDER.map((day) => {
+        const slot = hours[day];
+        const isToday = day === today;
+        return (
+          <div
+            key={day}
+            className={`flex items-center justify-between text-sm px-3 py-1.5 rounded-lg ${
+              isToday ? 'bg-primary/5 dark:bg-primary/10 font-medium' : ''
+            }`}
+          >
+            <span className={`capitalize ${isToday ? 'text-primary' : 'text-gray-700 dark:text-gray-300'}`}>
+              {day}
+            </span>
+            <span className={isToday ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}>
+              {slot ? `${slot.open} - ${slot.close}` : 'Ferme'}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function EstablishmentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +60,7 @@ export default function EstablishmentDetail() {
   const [authGateMessage, setAuthGateMessage] = useState('');
 
   const [newRating, setNewRating] = useState(0);
+  const [newSafetyRating, setNewSafetyRating] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
@@ -95,18 +129,25 @@ export default function EstablishmentDetail() {
     }
   };
 
+  const openMap = () => {
+    if (!establishment) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${establishment.latitude},${establishment.longitude}`;
+    window.open(url, '_blank');
+  };
+
   const submitReview = async () => {
     if (!user) {
       showAuthGate('Cree ton compte pour laisser un avis.');
       return;
     }
-    if (newRating === 0) { toast.error('Choisis une note.'); return; }
+    if (newRating === 0) { toast.error('Choisis une note qualite.'); return; }
     setSubmittingReview(true);
 
     const { error } = await supabase.from('reviews').upsert({
       user_id: user.id,
       establishment_id: id,
       rating: newRating,
+      safety_rating: newSafetyRating > 0 ? newSafetyRating : null,
       comment: newComment,
     });
 
@@ -115,6 +156,7 @@ export default function EstablishmentDetail() {
     } else {
       toast.success('Avis envoye !');
       setNewRating(0);
+      setNewSafetyRating(0);
       setNewComment('');
       loadAll();
     }
@@ -143,8 +185,13 @@ export default function EstablishmentDetail() {
   const avgRating = reviews.length > 0
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
+  const safetyReviews = reviews.filter((r) => r.safety_rating && r.safety_rating > 0);
+  const avgSafety = safetyReviews.length > 0
+    ? safetyReviews.reduce((s, r) => s + (r.safety_rating || 0), 0) / safetyReviews.length
+    : 0;
   const categoryLabel = CATEGORIES[establishment.category as CategoryKey]?.label || establishment.category;
   const isOwner = user?.id === establishment.owner_id;
+  const openingHours = establishment.opening_hours as OpeningHours | null;
 
   return (
     <div className="max-w-3xl mx-auto pb-8">
@@ -159,8 +206,15 @@ export default function EstablishmentDetail() {
         </div>
       )}
 
-      {establishment.is_pro && establishment.banner_url && (
+      {establishment.is_pro && establishment.banner_url ? (
         <img src={establishment.banner_url} alt="" className="w-full h-48 md:h-64 object-cover" />
+      ) : (
+        <div className="w-full h-48 md:h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-border dark:to-dark-bg flex items-center justify-center">
+          <div className="text-center">
+            <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+            <p className="text-sm text-gray-400 dark:text-gray-500">{establishment.name}</p>
+          </div>
+        </div>
       )}
 
       <div className="p-4 space-y-6">
@@ -182,12 +236,20 @@ export default function EstablishmentDetail() {
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {categoryLabel} &middot; {establishment.subcategory}
               </p>
-              {avgRating > 0 && (
-                <div className="flex items-center gap-2 mt-1">
-                  <StarRating rating={Math.round(avgRating)} size={14} />
-                  <span className="text-xs text-gray-400">({reviews.length} avis)</span>
-                </div>
-              )}
+              <div className="flex items-center gap-4 mt-1.5">
+                {avgRating > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <StarRating rating={Math.round(avgRating)} size={14} />
+                    <span className="text-xs text-gray-400">({reviews.length})</span>
+                  </div>
+                )}
+                {avgSafety > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <ShieldRating rating={Math.round(avgSafety)} size={14} />
+                    <span className="text-xs text-gray-400">({safetyReviews.length})</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -210,9 +272,18 @@ export default function EstablishmentDetail() {
           </div>
         </div>
 
-        <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <MapPin size={16} className="shrink-0 mt-0.5" />
-          <span>{establishment.address}, {establishment.postal_code} {establishment.city}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 flex-1">
+            <MapPin size={16} className="shrink-0 mt-0.5" />
+            <span>{establishment.address}, {establishment.postal_code} {establishment.city}</span>
+          </div>
+          <button
+            onClick={openMap}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+          >
+            <Map size={14} />
+            Itineraire
+          </button>
         </div>
 
         {establishment.is_pro && establishment.description && (
@@ -236,6 +307,18 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
+        {openingHours && Object.keys(openingHours).length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Clock size={18} className="text-primary" />
+              Horaires d'ouverture
+            </h2>
+            <div className="card p-4">
+              <OpeningHoursDisplay hours={openingHours} />
+            </div>
+          </div>
+        )}
+
         {establishment.is_pro && photos.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Galerie</h2>
@@ -253,9 +336,9 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {establishment.is_pro && events.length > 0 && (
+        {events.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Evenements</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Evenements a venir</h2>
             <div className="space-y-3">
               {events.map((event) => (
                 <div
@@ -266,7 +349,7 @@ export default function EstablishmentDetail() {
                   <div className="w-10 h-10 rounded-input bg-primary/10 flex items-center justify-center shrink-0">
                     <Calendar size={18} className="text-primary" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-medium text-gray-900 dark:text-white">{event.title}</h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {new Date(event.event_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -286,7 +369,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {establishment.is_pro && promotions.length > 0 && (
+        {promotions.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Promotions</h2>
             <div className="space-y-3">
@@ -317,11 +400,23 @@ export default function EstablishmentDetail() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Avis ({reviews.length})</h2>
 
-          <div className="card p-4 space-y-3 mb-4">
-            <StarRating rating={newRating} interactive onChange={(r) => {
-              if (!user) { showAuthGate('Cree ton compte pour noter cet etablissement.'); return; }
-              setNewRating(r);
-            }} />
+          <div className="card p-4 space-y-4 mb-4">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Qualite</p>
+                <StarRating rating={newRating} interactive onChange={(r) => {
+                  if (!user) { showAuthGate('Cree ton compte pour noter cet etablissement.'); return; }
+                  setNewRating(r);
+                }} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Safe place (optionnel)</p>
+                <ShieldRating rating={newSafetyRating} interactive onChange={(r) => {
+                  if (!user) { showAuthGate('Cree ton compte pour noter cet etablissement.'); return; }
+                  setNewSafetyRating(r);
+                }} />
+              </div>
+            </div>
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -351,11 +446,16 @@ export default function EstablishmentDetail() {
                         u?.username?.charAt(0).toUpperCase() || '?'
                       )}
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {u?.username || 'Anonyme'}
                       </span>
-                      <StarRating rating={review.rating} size={12} />
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <StarRating rating={review.rating} size={12} />
+                        {review.safety_rating && review.safety_rating > 0 && (
+                          <ShieldRating rating={review.safety_rating} size={12} />
+                        )}
+                      </div>
                     </div>
                     <span className="text-xs text-gray-400 ml-auto">
                       {new Date(review.created_at).toLocaleDateString('fr-FR')}

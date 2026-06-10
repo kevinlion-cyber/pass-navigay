@@ -7,6 +7,7 @@ import ProfileHeader from './profile/ProfileHeader';
 import ProfileFavorites from './profile/ProfileFavorites';
 import ProfileEvents from './profile/ProfileEvents';
 import ProfileAccountSettings from './profile/ProfileAccountSettings';
+import ProfileVisibilitySettings from './profile/ProfileVisibilitySettings';
 import PremiumBanner from './profile/PremiumBanner';
 import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
 
@@ -94,6 +95,7 @@ export default function ProfileSettings() {
 
       <ProfileFavorites userId={user.id} />
       <ProfileEvents userId={user.id} />
+      <ProfileVisibilitySettings profile={profile} />
       <ProfileAccountSettings profile={profile} />
 
       {questionnaireOpen && profile.is_premium && (

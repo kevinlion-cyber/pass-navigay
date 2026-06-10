@@ -1,0 +1,18 @@
+{
+  "name": "Pass Navigay",
+  "short_name": "PassNavigay",
+  "description": "Annuaire des lieux LGBT-friendly en France",
+  "start_url": "/explore",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7B2D8B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

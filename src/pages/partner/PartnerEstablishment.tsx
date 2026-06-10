@@ -3,13 +3,19 @@ import { useOutletContext } from 'react-router-dom';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
-import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon } from 'lucide-react';
+import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
-import type { CategoryKey, Establishment } from '../../lib/types';
+import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
 import cropImage from '../../lib/cropImage';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import EstablishmentGallerySection from './EstablishmentGallerySection';
+
+const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const DAYS_LABELS: Record<string, string> = {
+  lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
+  jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche',
+};
 
 interface PartnerContext {
   establishment: Establishment;
@@ -33,6 +39,15 @@ export default function PartnerEstablishment() {
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+
+  const initHours = (establishment.opening_hours as OpeningHours) || {};
+  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string } | null>>(() => {
+    const h: Record<string, { open: string; close: string } | null> = {};
+    DAYS_ORDER.forEach((day) => {
+      h[day] = initHours[day] ?? null;
+    });
+    return h;
+  });
 
   const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
   const [logoCrop, setLogoCrop] = useState({ x: 0, y: 0 });
@@ -170,6 +185,7 @@ export default function PartnerEstablishment() {
         latitude: parseFloat(latitude), longitude: parseFloat(longitude),
         category, subcategory, phone, website, description,
         logo_url: logoUrl, banner_url: bannerUrl,
+        opening_hours: openingHours,
       }).eq('id', establishment.id);
       if (error) throw error;
 
@@ -345,7 +361,68 @@ export default function PartnerEstablishment() {
           </div>
         </div>
 
-        {/* SECTION 4: Gallery */}
+        {/* SECTION 4: Opening Hours */}
+        <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
+          <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+            <Clock size={16} className="text-gray-400" />
+            Horaires d'ouverture
+          </h2>
+          <div className="space-y-3">
+            {DAYS_ORDER.map((day) => {
+              const isOpen = openingHours[day] !== null;
+              return (
+                <div key={day} className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 w-28 shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={isOpen}
+                      onChange={(e) => {
+                        setOpeningHours((prev) => ({
+                          ...prev,
+                          [day]: e.target.checked ? { open: '09:00', close: '18:00' } : null,
+                        }));
+                      }}
+                      className="rounded border-dark-border bg-dark-bg text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-gray-300">{DAYS_LABELS[day]}</span>
+                  </label>
+                  {isOpen && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={openingHours[day]?.open || '09:00'}
+                        onChange={(e) => {
+                          setOpeningHours((prev) => ({
+                            ...prev,
+                            [day]: { open: e.target.value, close: prev[day]?.close || '18:00' },
+                          }));
+                        }}
+                        className="input-field bg-dark-bg border-dark-border text-white text-sm w-28"
+                      />
+                      <span className="text-gray-500 text-sm">-</span>
+                      <input
+                        type="time"
+                        value={openingHours[day]?.close || '18:00'}
+                        onChange={(e) => {
+                          setOpeningHours((prev) => ({
+                            ...prev,
+                            [day]: { open: prev[day]?.open || '09:00', close: e.target.value },
+                          }));
+                        }}
+                        className="input-field bg-dark-bg border-dark-border text-white text-sm w-28"
+                      />
+                    </div>
+                  )}
+                  {!isOpen && (
+                    <span className="text-sm text-gray-600">Ferme</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SECTION 5: Gallery */}
         <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
           <EstablishmentGallerySection
             establishmentId={establishment.id}
