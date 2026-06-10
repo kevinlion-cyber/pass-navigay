@@ -188,6 +188,11 @@ export default function Explore() {
     }
   }, []);
 
+  const handleCardClick = useCallback((est: Establishment) => {
+    setSelectedPinId(est.id);
+    setMapFlyTo({ lng: est.longitude, lat: est.latitude });
+  }, []);
+
   const activeSearch = debouncedSearch.trim();
 
   const establishmentList = (
@@ -202,7 +207,8 @@ export default function Explore() {
         <div
           key={est.id}
           ref={(el) => registerCardRef(est.id, el)}
-          className={`rounded-card transition-all duration-300 ${
+          onClick={() => handleCardClick(est)}
+          className={`rounded-card transition-all duration-300 cursor-pointer ${
             selectedPinId === est.id
               ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-dark-bg'
               : ''
@@ -274,6 +280,7 @@ export default function Explore() {
               onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
+              selectedId={selectedPinId}
             />
           </div>
         </div>
@@ -296,6 +303,7 @@ export default function Explore() {
             onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
+            selectedId={selectedPinId}
           />
         </div>
 

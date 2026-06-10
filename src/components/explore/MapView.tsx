@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import { DEFAULT_CENTER, CATEGORIES } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
@@ -11,6 +11,7 @@ interface MapViewProps {
   onEstablishmentClick: (id: string) => void;
   onPinSelect?: (id: string | null) => void;
   flyTo?: { lng: number; lat: number } | null;
+  selectedId?: string | null;
 }
 
 interface PopupData {
@@ -53,232 +54,200 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
   return result;
 }
 
-function buildPopupElement(
-  est: Establishment,
-  extras: PopupData,
-  onNavigate: (id: string) => void,
-  isDark: boolean
-): HTMLDivElement {
-  const container = document.createElement('div');
-  container.style.cssText = `width:260px;border-radius:12px;overflow:hidden;font-family:Inter,system-ui,sans-serif;background:${isDark ? '#16161f' : '#fff'};box-shadow:0 4px 20px rgba(0,0,0,${isDark ? '0.5' : '0.15'});`;
-
-  const coverUrl = est.banner_url || '';
-  const coverHtml = coverUrl
-    ? `<div style="position:relative;height:100px;overflow:hidden;">
-        <img src="${coverUrl}" style="width:100%;height:100%;object-fit:cover;" />
-        ${est.logo_url ? `<img src="${est.logo_url}" style="position:absolute;bottom:-12px;left:12px;width:32px;height:32px;border-radius:50%;border:2px solid white;object-fit:cover;background:${isDark ? '#16161f' : '#fff'};" />` : ''}
-      </div>`
-    : `<div style="position:relative;height:60px;background:${isDark ? '#2a2a35' : '#f3e8f8'};">
-        ${est.logo_url ? `<img src="${est.logo_url}" style="position:absolute;bottom:-12px;left:12px;width:32px;height:32px;border-radius:50%;border:2px solid white;object-fit:cover;background:${isDark ? '#16161f' : '#fff'};" />` : ''}
-      </div>`;
-
-  const textColor = isDark ? '#f3f3f3' : '#1a1a1a';
-  const subColor = isDark ? '#a0a0a8' : '#666';
-  const catLabel = CATEGORIES[est.category as CategoryKey]?.label || est.category;
-
-  let badges = '';
-  if (est.is_pro) badges += `<span style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:rgba(123,45,139,0.15);color:#7B2D8B;margin-left:4px;">PRO</span>`;
-  if (est.is_sponsor) badges += `<span style="display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:rgba(212,160,23,0.15);color:#d4a017;margin-left:4px;">Sponsor</span>`;
-
-  const avgRating = est.avg_rating || 0;
-  const reviewCount = est.review_count || 0;
-  let starsHtml = '';
-  if (avgRating > 0) {
-    const filled = Math.round(avgRating);
-    const stars = [1, 2, 3, 4, 5]
-      .map(
-        (i) =>
-          `<svg width="12" height="12" viewBox="0 0 24 24" fill="${i <= filled ? '#d4a017' : 'none'}" stroke="${i <= filled ? '#d4a017' : (isDark ? '#444' : '#ccc')}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
-      )
-      .join('');
-    starsHtml = `<div style="display:flex;align-items:center;gap:2px;margin-top:6px;">${stars}<span style="font-size:11px;color:${subColor};margin-left:4px;">(${reviewCount})</span></div>`;
-  }
-
-  let promoHtml = '';
-  if (extras.promo) {
-    promoHtml = `<div style="margin-top:8px;padding:5px 8px;border-radius:6px;background:rgba(26,122,58,0.1);font-size:11px;color:#1a7a3a;display:flex;align-items:center;gap:4px;">
-      <span style="font-size:13px;">&#127991;&#65039;</span> ${escapeHtml(extras.promo.title)}
-    </div>`;
-  }
-
-  let eventHtml = '';
-  if (extras.event) {
-    eventHtml = `<div style="margin-top:${extras.promo ? '4' : '8'}px;padding:5px 8px;border-radius:6px;background:rgba(123,45,139,0.08);font-size:11px;color:#7B2D8B;display:flex;align-items:center;gap:4px;">
-      <span style="font-size:13px;">&#128197;</span> ${escapeHtml(extras.event.title)} — ${escapeHtml(extras.event.dateLabel)}
-    </div>`;
-  }
-
-  container.innerHTML = `
-    ${coverHtml}
-    <div style="padding:${coverUrl ? '16' : '16'}px 12px 12px;">
-      <div style="display:flex;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:600;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${escapeHtml(est.name)}</span>
-        ${badges}
-      </div>
-      <div style="font-size:11px;color:${subColor};margin-top:3px;">${escapeHtml(catLabel)} &middot; ${escapeHtml(est.subcategory)}</div>
-      <div style="font-size:11px;color:${subColor};margin-top:3px;display:flex;align-items:center;gap:3px;">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="${subColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(est.address)}, ${escapeHtml(est.city)}</span>
-      </div>
-      ${starsHtml}
-      ${promoHtml}
-      ${eventHtml}
-    </div>
-  `;
-
-  const btn = document.createElement('button');
-  btn.textContent = 'Voir la fiche';
-  btn.style.cssText = `display:block;width:calc(100% - 24px);margin:0 12px 12px;padding:8px;border:none;border-radius:8px;background:#7B2D8B;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity 0.15s;`;
-  btn.onmouseenter = () => { btn.style.opacity = '0.9'; };
-  btn.onmouseleave = () => { btn.style.opacity = '1'; };
-  btn.onclick = (e) => {
-    e.stopPropagation();
-    onNavigate(est.id);
-  };
-  container.appendChild(btn);
-
-  return container;
-}
-
-function escapeHtml(str: string): string {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-export default function MapView({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo }: MapViewProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
-  const openPopupRef = useRef<mapboxgl.Popup | null>(null);
+function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId }: MapViewProps) {
+  const map = useMap();
+  const [activeMarker, setActiveMarker] = useState<string | null>(null);
+  const [popupData, setPopupData] = useState<PopupData>({});
+  const [popupLoading, setPopupLoading] = useState(false);
+  const boundsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const emitBounds = useCallback(() => {
-    const map = mapRef.current;
     if (!map) return;
     const bounds = map.getBounds();
+    if (!bounds) return;
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
     onBoundsChange({
-      north: bounds.getNorth(),
-      south: bounds.getSouth(),
-      east: bounds.getEast(),
-      west: bounds.getWest(),
+      north: ne.lat(),
+      south: sw.lat(),
+      east: ne.lng(),
+      west: sw.lng(),
     });
-  }, [onBoundsChange]);
+  }, [map, onBoundsChange]);
 
   useEffect(() => {
-    const token = import.meta.env.VITE_MAPBOX_TOKEN;
-    if (!token || !mapContainerRef.current) return;
+    if (!map) return;
 
-    mapboxgl.accessToken = token;
-    const center = userLocation || DEFAULT_CENTER;
-
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [center.lng, center.lat],
-      zoom: 13,
+    const listener = map.addListener('idle', () => {
+      clearTimeout(boundsTimeoutRef.current);
+      boundsTimeoutRef.current = setTimeout(emitBounds, 100);
     });
-
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.on('moveend', emitBounds);
-    map.on('load', emitBounds);
-
-    map.on('click', (e) => {
-      const target = e.originalEvent.target as HTMLElement;
-      if (target.closest('.mapboxgl-popup') || target.closest('.map-marker')) return;
-      if (openPopupRef.current) {
-        openPopupRef.current.remove();
-        openPopupRef.current = null;
-        onPinSelect?.(null);
-      }
-    });
-
-    mapRef.current = map;
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      google.maps.event.removeListener(listener);
+      clearTimeout(boundsTimeoutRef.current);
     };
-  }, [userLocation, emitBounds, onPinSelect]);
+  }, [map, emitBounds]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const timer = setTimeout(() => map.resize(), 150);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!flyTo || !map) return;
+    map.panTo({ lat: flyTo.lat, lng: flyTo.lng });
+    map.setZoom(14);
+  }, [flyTo, map]);
 
   useEffect(() => {
-    if (!flyTo || !mapRef.current) return;
-    mapRef.current.flyTo({
-      center: [flyTo.lng, flyTo.lat],
-      zoom: 13,
-      duration: 1000,
-    });
-  }, [flyTo]);
+    if (!selectedId || !map) return;
+    const est = establishments.find((e) => e.id === selectedId);
+    if (est) {
+      map.panTo({ lat: est.latitude, lng: est.longitude });
+      if ((map.getZoom() || 13) < 14) map.setZoom(14);
+      handleMarkerClick(est);
+    }
+  }, [selectedId]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+  const handleMarkerClick = async (est: Establishment) => {
+    setActiveMarker(est.id);
+    onPinSelect?.(est.id);
+    setPopupLoading(true);
+    setPopupData({});
+    const extras = await fetchPopupExtras(est.id);
+    setPopupData(extras);
+    setPopupLoading(false);
+  };
 
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
+  const handleMapClick = () => {
+    setActiveMarker(null);
+    onPinSelect?.(null);
+  };
 
-    const isDark = document.documentElement.classList.contains('dark');
-
-    establishments.forEach((est) => {
-      const el = document.createElement('div');
-      el.className = 'map-marker';
-      if (est.is_sponsor) {
-        el.style.backgroundColor = '#d4a017';
-      }
-
-      el.addEventListener('click', async (e) => {
-        e.stopPropagation();
-
-        if (openPopupRef.current) {
-          openPopupRef.current.remove();
-          openPopupRef.current = null;
-        }
-
-        onPinSelect?.(est.id);
-
-        const placeholderEl = document.createElement('div');
-        placeholderEl.style.cssText = `width:260px;padding:40px;display:flex;align-items:center;justify-content:center;`;
-        placeholderEl.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="animate-spin" style="color:#7B2D8B;animation:spin 1s linear infinite;"><style>@keyframes spin{to{transform:rotate(360deg)}}</style><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
-
-        const popup = new mapboxgl.Popup({
-          offset: 15,
-          closeButton: false,
-          closeOnClick: false,
-          maxWidth: '260px',
-          className: 'rich-popup',
-        })
-          .setLngLat([est.longitude, est.latitude])
-          .setDOMContent(placeholderEl)
-          .addTo(map);
-
-        openPopupRef.current = popup;
-
-        const extras = await fetchPopupExtras(est.id);
-        if (!openPopupRef.current || openPopupRef.current !== popup) return;
-
-        const content = buildPopupElement(est, extras, onEstablishmentClick, isDark);
-        popup.setDOMContent(content);
-      });
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([est.longitude, est.latitude])
-        .addTo(map);
-
-      markersRef.current.push(marker);
-    });
-  }, [establishments, onEstablishmentClick, onPinSelect]);
+  const activeEst = establishments.find((e) => e.id === activeMarker);
 
   return (
-    <div
-      ref={mapContainerRef}
-      className="rounded-card overflow-hidden"
-      style={{ width: '100%', height: '100%', minHeight: 300 }}
-    />
+    <>
+      <Map
+        defaultCenter={userLocation || DEFAULT_CENTER}
+        defaultZoom={13}
+        gestureHandling="greedy"
+        disableDefaultUI={false}
+        mapId="pass-navigay-map"
+        onClick={handleMapClick}
+        style={{ width: '100%', height: '100%' }}
+        colorScheme="DARK"
+      >
+        {establishments.map((est) => (
+          <AdvancedMarker
+            key={est.id}
+            position={{ lat: est.latitude, lng: est.longitude }}
+            onClick={() => handleMarkerClick(est)}
+          >
+            <div
+              className={`w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md transition-transform ${
+                activeMarker === est.id ? 'scale-150' : 'hover:scale-125'
+              }`}
+              style={{ backgroundColor: est.is_sponsor ? '#d4a017' : '#7B2D8B' }}
+            />
+          </AdvancedMarker>
+        ))}
+
+        {activeEst && (
+          <InfoWindow
+            position={{ lat: activeEst.latitude, lng: activeEst.longitude }}
+            onCloseClick={() => { setActiveMarker(null); onPinSelect?.(null); }}
+            pixelOffset={[0, -10]}
+          >
+            <PopupContent
+              est={activeEst}
+              extras={popupData}
+              loading={popupLoading}
+              onNavigate={onEstablishmentClick}
+            />
+          </InfoWindow>
+        )}
+      </Map>
+    </>
+  );
+}
+
+function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment; extras: PopupData; loading: boolean; onNavigate: (id: string) => void }) {
+  const catLabel = CATEGORIES[est.category as CategoryKey]?.label || est.category;
+
+  return (
+    <div className="w-[240px] font-sans">
+      {est.banner_url && (
+        <div className="relative h-[80px] -mx-2 -mt-2 mb-2 overflow-hidden rounded-t">
+          <img src={est.banner_url} alt="" className="w-full h-full object-cover" />
+          {est.logo_url && (
+            <img src={est.logo_url} alt="" className="absolute bottom-[-8px] left-2 w-7 h-7 rounded-full border-2 border-white object-cover bg-white" />
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-1 flex-wrap">
+        <span className="text-[13px] font-semibold text-gray-900 truncate max-w-[150px]">{est.name}</span>
+        {est.is_pro && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">PRO</span>}
+        {est.is_sponsor && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Sponsor</span>}
+      </div>
+
+      <p className="text-[11px] text-gray-500 mt-0.5">{catLabel} · {est.subcategory}</p>
+      <p className="text-[11px] text-gray-500 mt-0.5 truncate">{est.address}, {est.city}</p>
+
+      {(est.avg_rating ?? 0) > 0 && (
+        <div className="flex items-center gap-0.5 mt-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : 'none'} stroke={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : '#ccc'} strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          ))}
+          <span className="text-[10px] text-gray-400 ml-1">({est.review_count || 0})</span>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-400">
+          <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          Chargement...
+        </div>
+      )}
+
+      {extras.promo && (
+        <div className="mt-2 px-2 py-1 rounded bg-green-50 text-[11px] text-green-700 flex items-center gap-1">
+          <span>🏷</span> {extras.promo.title}
+        </div>
+      )}
+
+      {extras.event && (
+        <div className="mt-1 px-2 py-1 rounded bg-purple-50 text-[11px] text-purple-700 flex items-center gap-1">
+          <span>📅</span> {extras.event.title} — {extras.event.dateLabel}
+        </div>
+      )}
+
+      <button
+        onClick={() => onNavigate(est.id)}
+        className="mt-2 w-full py-1.5 rounded-lg text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ background: '#7B2D8B' }}
+      >
+        Voir la fiche
+      </button>
+    </div>
+  );
+}
+
+export default function MapView(props: MapViewProps) {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+
+  if (!apiKey) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-dark-surface rounded-card text-gray-500 text-sm">
+        Cle Google Maps non configuree
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-card overflow-hidden" style={{ width: '100%', height: '100%', minHeight: 300 }}>
+      <APIProvider apiKey={apiKey}>
+        <MapInner {...props} />
+      </APIProvider>
+    </div>
   );
 }

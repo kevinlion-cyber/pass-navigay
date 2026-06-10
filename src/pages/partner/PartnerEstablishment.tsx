@@ -69,11 +69,19 @@ export default function PartnerEstablishment() {
     setAddress(query);
     if (query.length < 3) { setAddressSuggestions([]); return; }
     try {
-      const token = import.meta.env.VITE_MAPBOX_TOKEN;
-      if (!token) return;
-      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=FR&language=fr&limit=5`);
+      const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+      if (!key) return;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:FR&language=fr&key=${key}`);
       const data = await res.json();
-      setAddressSuggestions(data.features || []);
+      const features = (data.results || []).slice(0, 5).map((r: any) => ({
+        place_name: r.formatted_address,
+        center: [r.geometry.location.lng, r.geometry.location.lat],
+        context: r.address_components.map((c: any) => ({
+          id: c.types.includes('locality') ? 'place.' : c.types.includes('postal_code') ? 'postcode.' : c.types[0] + '.',
+          text: c.long_name,
+        })),
+      }));
+      setAddressSuggestions(features);
     } catch { /* ignore */ }
   };
 
