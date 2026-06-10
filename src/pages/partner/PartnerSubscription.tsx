@@ -43,7 +43,6 @@ export default function PartnerSubscription() {
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-white">Abonnement</h1>
 
-      {/* Status card */}
       <div className="rounded-card p-6" style={{ background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.4)' }}>
         <div className="flex items-center justify-between mb-4">
           <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: '#7B2D8B' }}>
@@ -67,13 +66,11 @@ export default function PartnerSubscription() {
         )}
       </div>
 
-      {/* Manage button */}
       <button className="w-full py-3.5 rounded-input text-sm font-semibold transition-colors hover:opacity-90"
         style={{ background: 'transparent', border: '1px solid #7B2D8B', color: '#7B2D8B' }}>
         Gérer mon abonnement
       </button>
 
-      {/* Features unlocked */}
       <div className="rounded-card p-6" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
         <h2 className="text-sm font-semibold text-white mb-4">Ce que vous avez débloqué</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -90,7 +87,6 @@ export default function PartnerSubscription() {
         </div>
       </div>
 
-      {/* Cancel section */}
       <div className="rounded-input p-5" style={{ background: 'rgba(192,57,43,0.05)', border: '1px solid rgba(192,57,43,0.2)' }}>
         <h3 className="text-sm font-medium mb-2" style={{ color: '#c0392b' }}>Résilier mon abonnement</h3>
         <p className="text-xs text-gray-500 mb-4 leading-relaxed">
@@ -119,29 +115,27 @@ export default function PartnerSubscription() {
 function FreeView() {
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Hero */}
       <div className="rounded-card text-center py-12 px-8 mb-6"
         style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
         <h1 className="text-[28px] font-bold text-white mb-2">Passez au profil Pro</h1>
         <p className="text-sm text-gray-400 mb-8">Débloquez toutes les fonctionnalités pour développer votre visibilité.</p>
 
-        <div className="mb-8">
-          <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>69€</span>
-          <span className="text-xl text-gray-500">/mois</span>
-          <p className="text-xs text-gray-600 mt-2">Sans engagement · Résiliation à tout moment</p>
+        <div className="mb-4">
+          <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>690&euro;</span>
+          <span className="text-xl text-gray-500">/an</span>
         </div>
+        <p className="text-sm text-gray-400 mb-8">Soit 57,50&euro;/mois &middot; Engagement annuel</p>
 
         <button className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4"
           style={{ background: '#fff', color: '#7B2D8B' }}>
-          Souscrire au profil Pro →
+          Souscrire au profil Pro &rarr;
         </button>
 
         <p className="text-xs text-gray-600 flex items-center justify-center gap-1.5">
-          <Lock size={12} /> Paiement sécurisé par Stripe · SSL · Données protégées
+          <Lock size={12} /> Paiement sécurisé par Stripe &middot; Facture disponible
         </p>
       </div>
 
-      {/* Features grid */}
       <div className="grid grid-cols-2 gap-3 max-w-[500px] mx-auto">
         {PRO_FEATURES.map(({ icon: Icon, label }) => (
           <div key={label} className="flex items-center gap-2.5 p-3 rounded-input"

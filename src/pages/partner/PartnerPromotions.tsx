@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Pencil, Trash2, X, Check, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Copy, Power } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Promotion } from '../../lib/types';
@@ -22,12 +22,9 @@ interface PromoForm {
   promo_type: PromoType;
   value: number;
   offer_text: string;
+  is_permanent: boolean;
   valid_from: string;
   valid_until: string;
-  is_recurring: boolean;
-  selected_days: string[];
-  limit_uses: boolean;
-  max_uses: number;
   image_url: string;
 }
 
@@ -37,24 +34,11 @@ const EMPTY_FORM: PromoForm = {
   promo_type: 'percentage',
   value: 0,
   offer_text: '',
+  is_permanent: false,
   valid_from: '',
   valid_until: '',
-  is_recurring: false,
-  selected_days: [],
-  limit_uses: false,
-  max_uses: 100,
   image_url: '',
 };
-
-const DAYS = [
-  { key: 'lun', label: 'L', full: 'MONDAY' },
-  { key: 'mar', label: 'M', full: 'TUESDAY' },
-  { key: 'mer', label: 'Me', full: 'WEDNESDAY' },
-  { key: 'jeu', label: 'J', full: 'THURSDAY' },
-  { key: 'ven', label: 'V', full: 'FRIDAY' },
-  { key: 'sam', label: 'S', full: 'SATURDAY' },
-  { key: 'dim', label: 'D', full: 'SUNDAY' },
-];
 
 export default function PartnerPromotions() {
   const { establishment } = useOutletContext<PartnerContext>();
@@ -75,7 +59,7 @@ export default function PartnerPromotions() {
     try {
       const { data } = await supabase.from('promotions').select('*')
         .eq('establishment_id', establishment.id)
-        .order('valid_until', { ascending: false });
+        .order('created_at', { ascending: false });
       setPromos((data as Promotion[]) || []);
     } catch {
       toast.error('Erreur lors du chargement des promotions');
@@ -94,51 +78,61 @@ export default function PartnerPromotions() {
 
   const openEdit = (p: Promotion) => {
     setEditing(p);
-    const days: string[] = [];
-    if (p.recurrence_rule) {
-      const parts = p.recurrence_rule.replace('WEEKLY:', '').split(',');
-      parts.forEach(full => {
-        const d = DAYS.find(d => d.full === full);
-        if (d) days.push(d.key);
-      });
-    }
     setForm({
       title: p.title,
       description: p.description || '',
       promo_type: p.promo_type,
       value: p.value || 0,
       offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
-      valid_from: p.valid_from.slice(0, 10),
-      valid_until: p.valid_until.slice(0, 10),
-      is_recurring: p.is_recurring,
-      selected_days: days,
-      limit_uses: p.max_uses !== null,
-      max_uses: p.max_uses || 100,
+      is_permanent: p.is_permanent ?? false,
+      valid_from: p.valid_from ? p.valid_from.slice(0, 10) : '',
+      valid_until: p.valid_until ? p.valid_until.slice(0, 10) : '',
       image_url: p.image_url || '',
     });
     setCroppedBlob(null);
     setFormOpen(true);
   };
 
-  const toggleDay = (key: string) => {
-    setForm(prev => ({
-      ...prev,
-      selected_days: prev.selected_days.includes(key)
-        ? prev.selected_days.filter(d => d !== key)
-        : [...prev.selected_days, key],
-    }));
+  const handleDuplicate = (p: Promotion) => {
+    setEditing(null);
+    setForm({
+      title: p.title + ' (copie)',
+      description: p.description || '',
+      promo_type: p.promo_type,
+      value: p.value || 0,
+      offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
+      is_permanent: p.is_permanent ?? false,
+      valid_from: '',
+      valid_until: '',
+      image_url: p.image_url || '',
+    });
+    setCroppedBlob(null);
+    setFormOpen(true);
+  };
+
+  const toggleActive = async (p: Promotion) => {
+    const newActive = !(p.is_active ?? true);
+    const { error } = await supabase.from('promotions').update({ is_active: newActive }).eq('id', p.id);
+    if (error) {
+      toast.error('Erreur lors de la mise à jour');
+    } else {
+      toast.success(newActive ? 'Promotion activée' : 'Promotion désactivée');
+      load();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.valid_from || !form.valid_until) return;
-    if (new Date(form.valid_until) <= new Date(form.valid_from)) {
-      toast.error('La date de fin doit être après la date de début');
-      return;
-    }
-    if (form.is_recurring && form.selected_days.length === 0) {
-      toast.error('Sélectionnez au moins un jour pour la récurrence');
-      return;
+    if (!form.title.trim()) return;
+    if (!form.is_permanent) {
+      if (!form.valid_from || !form.valid_until) {
+        toast.error('Renseignez les dates de validité ou cochez "Promotion permanente"');
+        return;
+      }
+      if (new Date(form.valid_until) <= new Date(form.valid_from)) {
+        toast.error('La date de fin doit être après la date de début');
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -152,24 +146,20 @@ export default function PartnerPromotions() {
         image_url = urlData.publicUrl;
       }
 
-      let recurrence_rule = '';
-      if (form.is_recurring && form.selected_days.length > 0) {
-        const fullDays = form.selected_days.map(k => DAYS.find(d => d.key === k)!.full);
-        recurrence_rule = 'WEEKLY:' + fullDays.join(',');
-      }
-
       const payload = {
         establishment_id: establishment.id,
         title: form.title.trim(),
         description: form.description.trim(),
         promo_type: form.promo_type,
         value: form.promo_type === 'offer' ? null : form.value,
-        valid_from: form.valid_from,
-        valid_until: form.valid_until + 'T23:59:59',
-        is_recurring: form.is_recurring,
-        recurrence_rule,
-        max_uses: form.limit_uses ? form.max_uses : null,
+        is_permanent: form.is_permanent,
+        valid_from: form.is_permanent ? new Date().toISOString().slice(0, 10) : form.valid_from,
+        valid_until: form.is_permanent ? '2099-12-31T23:59:59' : form.valid_until + 'T23:59:59',
+        is_recurring: false,
+        recurrence_rule: '',
+        max_uses: null,
         image_url,
+        is_active: true,
       };
 
       if (editing) {
@@ -220,7 +210,12 @@ export default function PartnerPromotions() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {promos.map(p => (
-            <PromoCard key={p.id} promo={p} onEdit={() => openEdit(p)} onDelete={() => setDeleteTarget(p)} />
+            <PromoCard key={p.id} promo={p}
+              onEdit={() => openEdit(p)}
+              onDelete={() => setDeleteTarget(p)}
+              onDuplicate={() => handleDuplicate(p)}
+              onToggleActive={() => toggleActive(p)}
+            />
           ))}
         </div>
       )}
@@ -267,7 +262,7 @@ export default function PartnerPromotions() {
                 <div className="flex gap-2">
                   {([
                     { key: 'percentage' as PromoType, label: '% Réduction' },
-                    { key: 'fixed' as PromoType, label: 'Montant fixe €' },
+                    { key: 'fixed' as PromoType, label: 'Montant fixe \u20ac' },
                     { key: 'offer' as PromoType, label: 'Offre spéciale' },
                   ]).map(({ key, label }) => (
                     <button key={key} type="button" onClick={() => setForm({ ...form, promo_type: key })}
@@ -307,59 +302,28 @@ export default function PartnerPromotions() {
                 )}
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valable à partir du</label>
-                  <input type="date" value={form.valid_from}
-                    onChange={e => setForm({ ...form, valid_from: e.target.value })}
-                    required className="input-field bg-dark-bg border-dark-border text-white" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Jusqu'au</label>
-                  <input type="date" value={form.valid_until}
-                    onChange={e => setForm({ ...form, valid_until: e.target.value })}
-                    required className="input-field bg-dark-bg border-dark-border text-white" />
-                </div>
-              </div>
-
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <ToggleSwitch checked={form.is_recurring} onChange={v => setForm({ ...form, is_recurring: v })} />
-                  <span className="text-sm text-gray-300">Promotion récurrente (hebdomadaire)</span>
+                  <ToggleSwitch checked={form.is_permanent} onChange={v => setForm({ ...form, is_permanent: v })} />
+                  <span className="text-sm text-gray-300">Promotion permanente (sans date de fin)</span>
                 </label>
-                {form.is_recurring && (
-                  <div className="flex flex-wrap gap-2 mt-3 ml-14">
-                    {DAYS.map(({ key, label }) => (
-                      <button key={key} type="button" onClick={() => toggleDay(key)}
-                        className="w-9 h-9 rounded-[6px] text-xs font-medium transition-colors flex items-center justify-center"
-                        style={form.selected_days.includes(key)
-                          ? { background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#7B2D8B' }
-                          : { background: '#1a1a24', border: '1px solid #2a2a3a', color: '#a0a0b0' }
-                        }>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <ToggleSwitch checked={form.limit_uses} onChange={v => setForm({ ...form, limit_uses: v })} />
-                  <span className="text-sm text-gray-300">Limiter le nombre d'utilisations</span>
-                </label>
-                {form.limit_uses && (
-                  <div className="mt-3 ml-14">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Nombre maximum d'utilisations</label>
-                    <input type="number" min={1} value={form.max_uses || ''} placeholder="100"
-                      onChange={e => setForm({ ...form, max_uses: parseInt(e.target.value) || 0 })}
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+              {!form.is_permanent && (
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valable à partir du</label>
+                    <input type="date" value={form.valid_from}
+                      onChange={e => setForm({ ...form, valid_from: e.target.value })}
+                      required className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
-                )}
-              </div>
-
-              {editing && (
-                <p className="text-xs text-gray-600">Utilisations actuelles : {editing.current_uses}</p>
+                  <div className="flex-1">
+                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Jusqu'au</label>
+                    <input type="date" value={form.valid_until}
+                      onChange={e => setForm({ ...form, valid_until: e.target.value })}
+                      required className="input-field bg-dark-bg border-dark-border text-white" />
+                  </div>
+                </div>
               )}
 
               <div className="flex gap-3 pt-2">
@@ -394,7 +358,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
       <h2 className="text-lg font-semibold text-white mb-2">Vous n'avez pas encore de promotions</h2>
       <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
         Lancez des offres exclusives pour les membres Pass Navigay :
-        happy hours, entrées gratuites, réductions récurrentes.
+        happy hours, entrées gratuites, réductions permanentes ou ponctuelles.
         C'est gratuit et cela fidélise une nouvelle clientèle.
       </p>
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 text-sm text-gray-400">
@@ -402,7 +366,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
           <Check size={14} style={{ color: '#1a7a3a' }} /> Visible immédiatement dans l'onglet Promos
         </span>
         <span className="flex items-center gap-1.5">
-          <Check size={14} style={{ color: '#1a7a3a' }} /> Récurrente ou ponctuelle, selon vos besoins
+          <Check size={14} style={{ color: '#1a7a3a' }} /> Permanente ou ponctuelle
         </span>
         <span className="flex items-center gap-1.5">
           <Check size={14} style={{ color: '#1a7a3a' }} /> Inclus dans votre abonnement Pro
@@ -418,18 +382,27 @@ function EmptyState({ onAction }: { onAction: () => void }) {
 }
 
 function PromoCard({
-  promo, onEdit, onDelete,
+  promo, onEdit, onDelete, onDuplicate, onToggleActive,
 }: {
   promo: Promotion;
   onEdit: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onToggleActive: () => void;
 }) {
+  const isActive = promo.is_active ?? true;
+  const isPermanent = promo.is_permanent ?? false;
+
   const now = new Date();
   const from = new Date(promo.valid_from);
   const until = new Date(promo.valid_until);
 
   let status: { label: string; bg: string; color: string };
-  if (now < from) {
+  if (!isActive) {
+    status = { label: 'Désactivée', bg: 'rgba(100,100,100,0.15)', color: '#888' };
+  } else if (isPermanent) {
+    status = { label: 'Permanente', bg: 'rgba(26,122,58,0.1)', color: '#1a7a3a' };
+  } else if (now < from) {
     status = { label: 'À venir', bg: 'rgba(123,45,139,0.1)', color: '#7B2D8B' };
   } else if (now > until) {
     status = { label: 'Expirée', bg: 'rgba(100,100,100,0.15)', color: '#888' };
@@ -452,10 +425,9 @@ function PromoCard({
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 
-  const usagePercent = promo.max_uses ? Math.min(100, Math.round((promo.current_uses / promo.max_uses) * 100)) : null;
-
   return (
-    <div className="rounded-card overflow-hidden" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+    <div className={`rounded-card overflow-hidden transition-opacity ${!isActive ? 'opacity-60' : ''}`}
+      style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
       {promo.image_url ? (
         <div className="h-[100px] overflow-hidden">
           <img src={promo.image_url} alt="" className="w-full h-full object-cover" />
@@ -482,35 +454,28 @@ function PromoCard({
           <p className="text-xs text-gray-500 truncate mb-2">{promo.description}</p>
         )}
 
-        <p className="text-xs text-gray-500 mb-2">
-          Du {formatDate(promo.valid_from)} au {formatDate(promo.valid_until)}
-        </p>
-
-        <div className="flex items-center gap-2 mb-3">
-          {promo.is_recurring && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-xs font-medium"
-              style={{ background: 'rgba(123,45,139,0.1)', color: '#7B2D8B' }}>
-              <RefreshCw size={10} /> Récurrente
-            </span>
-          )}
-        </div>
-
-        {usagePercent !== null && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-              <span>{promo.current_uses} utilisation{promo.current_uses > 1 ? 's' : ''}</span>
-              <span>/ {promo.max_uses}</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-dark-border overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${usagePercent}%`, background: '#7B2D8B' }} />
-            </div>
-          </div>
+        {!isPermanent && (
+          <p className="text-xs text-gray-500 mb-2">
+            Du {formatDate(promo.valid_from)} au {formatDate(promo.valid_until)}
+          </p>
         )}
 
-        <div className="flex items-center gap-2 border-t border-dark-border pt-3">
+        <div className="flex items-center gap-2 border-t border-dark-border pt-3 flex-wrap">
+          <button onClick={onToggleActive}
+            className={`flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded-input ${
+              isActive
+                ? 'text-gray-400 hover:text-amber-400 hover:bg-amber-400/10'
+                : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10'
+            }`}>
+            <Power size={13} /> {isActive ? 'Désactiver' : 'Activer'}
+          </button>
           <button onClick={onEdit}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
             <Pencil size={13} /> Modifier
+          </button>
+          <button onClick={onDuplicate}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-alert transition-colors px-2 py-1 rounded-input hover:bg-alert/10">

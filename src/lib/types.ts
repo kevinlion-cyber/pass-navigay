@@ -128,6 +128,8 @@ export interface Promotion {
   recurrence_rule: string;
   max_uses: number | null;
   current_uses: number;
+  is_active: boolean;
+  is_permanent: boolean;
   created_at: string;
   establishment?: Establishment;
 }

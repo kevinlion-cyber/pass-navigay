@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Event } from '../../lib/types';
@@ -26,7 +26,6 @@ interface EventForm {
   is_free: boolean;
   price: number;
   max_capacity: string;
-  request_featured: boolean;
   image_url: string;
 }
 
@@ -42,7 +41,6 @@ const EMPTY_FORM: EventForm = {
   is_free: true,
   price: 0,
   max_capacity: '',
-  request_featured: false,
   image_url: '',
 };
 
@@ -97,7 +95,6 @@ export default function PartnerEvents() {
       is_free: ev.is_free,
       price: ev.price || 0,
       max_capacity: (ev as any).max_capacity ? String((ev as any).max_capacity) : '',
-      request_featured: false,
       image_url: ev.image_url || '',
     });
     setCroppedBlob(null);
@@ -194,6 +191,26 @@ export default function PartnerEvents() {
     setDeleting(false);
   };
 
+  const handleDuplicate = (ev: Event) => {
+    setEditing(null);
+    setForm({
+      title: ev.title + ' (copie)',
+      description: ev.description || '',
+      theme: ev.theme || '',
+      start_datetime: '',
+      end_datetime: '',
+      same_address: ev.address === establishment.address || !ev.address,
+      custom_address: ev.address || '',
+      custom_city: '',
+      is_free: ev.is_free,
+      price: ev.price || 0,
+      max_capacity: (ev as any).max_capacity ? String((ev as any).max_capacity) : '',
+      image_url: ev.image_url || '',
+    });
+    setCroppedBlob(null);
+    setFormOpen(true);
+  };
+
   const isPast = (d: string) => new Date(d) < new Date();
 
   const formatDateFull = (d: string) => {
@@ -221,7 +238,7 @@ export default function PartnerEvents() {
           {events.map(ev => (
             <EventCard key={ev.id} event={ev} isPast={isPast(ev.event_date)}
               formatDate={formatDateFull} onEdit={() => openEdit(ev)}
-              onDelete={() => setDeleteTarget(ev)} />
+              onDelete={() => setDeleteTarget(ev)} onDuplicate={() => handleDuplicate(ev)} />
           ))}
         </div>
       )}
@@ -341,14 +358,6 @@ export default function PartnerEvents() {
                 <p className="text-xs text-gray-600 mt-1">Laissez vide si illimité.</p>
               </div>
 
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <ToggleSwitch checked={form.request_featured} onChange={v => setForm({ ...form, request_featured: v })} />
-                  <span className="text-sm text-gray-300">Demander la mise en avant sur l'app</span>
-                </label>
-                <p className="text-xs text-gray-600 mt-1 ml-14">Notre équipe examinera votre demande et vous contactera si l'événement est sélectionné.</p>
-              </div>
-
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setFormOpen(false)}
                   className="flex-1 btn-ghost py-2.5 text-sm">
@@ -404,13 +413,14 @@ function EmptyState({ onAction }: { onAction: () => void }) {
 }
 
 function EventCard({
-  event, isPast, formatDate, onEdit, onDelete,
+  event, isPast, formatDate, onEdit, onDelete, onDuplicate,
 }: {
   event: Event;
   isPast: boolean;
   formatDate: (d: string) => string;
   onEdit: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
 }) {
   return (
     <div className="rounded-card overflow-hidden" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
@@ -451,6 +461,10 @@ function EventCard({
           <button onClick={onEdit}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
             <Pencil size={13} /> Modifier
+          </button>
+          <button onClick={onDuplicate}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-alert transition-colors px-2 py-1 rounded-input hover:bg-alert/10">

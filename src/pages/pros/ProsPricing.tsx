@@ -44,7 +44,7 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
             </span>
             <div className="mt-5">
               <span className="text-[56px] font-bold text-white leading-none">0&euro;</span>
-              <span className="text-[18px] text-[#606070] ml-1">/mois</span>
+              <span className="text-[18px] text-[#606070] ml-1">/an</span>
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Pour démarrer et être visible sur l&rsquo;annuaire.</p>
 
@@ -83,10 +83,11 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
               Pro
             </span>
             <div className="mt-5">
-              <span className="text-[56px] font-bold text-white leading-none">69&euro;</span>
-              <span className="text-[18px] text-[#606070] ml-1">/mois</span>
+              <span className="text-[56px] font-bold text-white leading-none">690&euro;</span>
+              <span className="text-[18px] text-[#606070] ml-1">/an</span>
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Tout ce qu&rsquo;il faut pour développer votre visibilité.</p>
+            <p className="text-[13px] text-[#7B2D8B] mt-1 font-medium">Soit 57,50&euro;/mois</p>
 
             <ul className="mt-8 space-y-3.5 flex-1">
               {PRO_FEATURES.map((label) => (
@@ -107,7 +108,7 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
         </div>
 
         <p className="text-[12px] text-[#606070] text-center mt-8">
-          Paiement sécurisé par Stripe &middot; Résiliation à tout moment &middot; Sans engagement
+          Paiement sécurisé par Stripe &middot; Engagement annuel &middot; Facture disponible
         </p>
       </div>
     </section>
