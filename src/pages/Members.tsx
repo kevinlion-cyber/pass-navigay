@@ -51,10 +51,19 @@ export default function Members() {
     load();
   }, []);
 
+  const displayName = (m: MemberWithMeta) => {
+    if (m.prenom) {
+      const initial = m.nom ? ` ${m.nom.charAt(0).toUpperCase()}.` : '';
+      return `${m.prenom}${initial}`;
+    }
+    return m.username;
+  };
+
   const filtered = members.filter((m) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return m.username.toLowerCase().includes(q) || m.bio?.toLowerCase().includes(q);
+    const name = displayName(m).toLowerCase();
+    return name.includes(q) || m.username.toLowerCase().includes(q) || m.bio?.toLowerCase().includes(q);
   });
 
   if (loading) return <LoadingSpinner />;
@@ -120,14 +129,14 @@ export default function Members() {
                   <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-primary text-xl font-semibold">
-                    {member.username.charAt(0).toUpperCase()}
+                    {displayName(member).charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center justify-center gap-1.5 w-full">
                 <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                  {member.username}
+                  {displayName(member)}
                 </h3>
                 {member.is_premium && (
                   <span className="flex items-center gap-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400 shrink-0">
