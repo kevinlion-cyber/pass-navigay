@@ -33,7 +33,7 @@ export default function ProfileEvents({ userId }: ProfileEventsProps) {
         .from('events')
         .select('*, establishment:establishments(name, logo_url)')
         .in('establishment_id', estIds)
-        .gte('event_date', new Date().toISOString())
+        .or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`)
         .order('event_date', { ascending: true })
         .limit(10);
 

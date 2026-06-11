@@ -14,7 +14,7 @@ export default function FeaturedEvents() {
         .from('events')
         .select('*, establishment:establishments(name)')
         .eq('is_featured', true)
-        .gte('event_date', new Date().toISOString())
+        .or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`)
         .order('event_date')
         .limit(10);
       if (data) setEvents(data as unknown as Event[]);

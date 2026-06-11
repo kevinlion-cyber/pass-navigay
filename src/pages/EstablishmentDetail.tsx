@@ -74,7 +74,7 @@ export default function EstablishmentDetail() {
     const [estRes, photosRes, eventsRes, promosRes, reviewsRes] = await Promise.all([
       supabase.from('establishments').select('*').eq('id', id!).maybeSingle(),
       supabase.from('establishment_photos').select('*').eq('establishment_id', id!).order('order_index'),
-      supabase.from('events').select('*').eq('establishment_id', id!).gte('event_date', new Date().toISOString()).order('event_date'),
+      supabase.from('events').select('*').eq('establishment_id', id!).or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`).order('event_date'),
       supabase.from('promotions').select('*').eq('establishment_id', id!).gte('valid_until', new Date().toISOString()),
       supabase.from('reviews').select('*, user:profiles(username, avatar_url)').eq('establishment_id', id!).order('created_at', { ascending: false }),
     ]);

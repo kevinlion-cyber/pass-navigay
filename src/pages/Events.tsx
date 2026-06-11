@@ -31,10 +31,11 @@ export default function Events() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      const now = new Date().toISOString();
       const { data } = await supabase
         .from('events')
         .select('*, establishment:establishments(name, logo_url, city)')
-        .gte('event_date', new Date().toISOString())
+        .or(`event_date.gte.${now},end_date.gte.${now}`)
         .order('event_date');
       if (data) setEvents(data as unknown as Event[]);
       setLoading(false);

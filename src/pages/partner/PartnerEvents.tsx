@@ -219,7 +219,10 @@ export default function PartnerEvents() {
     setFormOpen(true);
   };
 
-  const isPast = (d: string) => new Date(d) < new Date();
+  const isPast = (ev: Event) => {
+    const endRef = ev.end_date || ev.event_date;
+    return new Date(endRef) < new Date();
+  };
 
   const formatDateFull = (d: string) => {
     const date = new Date(d);
@@ -244,7 +247,7 @@ export default function PartnerEvents() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {events.map(ev => (
-            <EventCard key={ev.id} event={ev} isPast={isPast(ev.event_date)}
+            <EventCard key={ev.id} event={ev} isPast={isPast(ev)}
               formatDate={formatDateFull} onEdit={() => openEdit(ev)}
               onDelete={() => setDeleteTarget(ev)} onDuplicate={() => handleDuplicate(ev)} />
           ))}
