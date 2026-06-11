@@ -7,10 +7,7 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const PRICES: Record<string, string> = {
-  yearly: "price_1Th1ix18e2LOhPJqyeE1nmX1",
-  monthly: "price_1Th1ix18e2LOhPJqMonthl01",
-};
+const YEARLY_PRICE_ID = "price_1Th1ix18e2LOhPJqyeE1nmX1";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -38,18 +35,39 @@ Deno.serve(async (req: Request) => {
     }
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
-    const priceId = PRICES[billingInterval === "monthly" ? "monthly" : "yearly"];
+
+    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+
+    if (billingInterval === "monthly") {
+      // Retrieve the product from the yearly price to create a monthly price_data
+      const yearlyPrice = await stripe.prices.retrieve(YEARLY_PRICE_ID);
+      const productId = yearlyPrice.product as string;
+
+      lineItems = [
+        {
+          price_data: {
+            currency: "eur",
+            product: productId,
+            recurring: { interval: "month" },
+            unit_amount: 6900, // 69€
+          },
+          quantity: 1,
+        },
+      ];
+    } else {
+      lineItems = [
+        {
+          price: YEARLY_PRICE_ID,
+          quantity: 1,
+        },
+      ];
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: email,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       success_url: `${appUrl}/partner/subscription?status=success`,
       cancel_url: `${appUrl}/partner/subscription?status=cancelled`,
       metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
