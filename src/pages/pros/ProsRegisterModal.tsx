@@ -135,6 +135,11 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       }
 
       setLoaderStep(3);
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: step1.email, username: `${step1.prenom} ${step1.nom}`, type: 'pro' }),
+      }).catch(() => {});
       await new Promise((r) => setTimeout(r, 800));
       toast.success('Bienvenue ! Votre établissement est en cours de validation.');
       onClose();

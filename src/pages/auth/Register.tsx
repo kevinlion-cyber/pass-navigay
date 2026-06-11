@@ -123,6 +123,11 @@ export default function Register() {
           await addBotMessage("Hmm, quelque chose n'a pas fonctionne. Reessaie.");
         }
       } else {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, username, type: 'user' }),
+        }).catch(() => {});
         await addBotMessage(BOT_MESSAGES.done);
         setChatStep('done');
         setTimeout(() => {
