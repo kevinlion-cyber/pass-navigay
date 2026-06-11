@@ -55,7 +55,7 @@ export default function Messages() {
 
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, username, avatar_url')
+      .select('id, username, prenom, nom, avatar_url')
       .in('id', userIds);
 
     const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
@@ -63,9 +63,13 @@ export default function Messages() {
     const result: ConversationPreview[] = userIds.map((uid) => {
       const conv = convMap.get(uid)!;
       const p = profileMap.get(uid);
+      let name = p?.username || 'Inconnu';
+      if (p?.prenom) {
+        name = p.prenom + (p.nom ? ` ${p.nom.charAt(0).toUpperCase()}.` : '');
+      }
       return {
         userId: uid,
-        username: p?.username || 'Inconnu',
+        username: name,
         avatar_url: p?.avatar_url || null,
         lastMessage: conv.lastMessage,
         lastMessageAt: conv.lastMessageAt,

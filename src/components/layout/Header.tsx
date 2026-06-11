@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, Shield, ChevronLeft, Bell } from 'lucide-react';
+import { Sun, Moon, Shield, ChevronLeft, Bell, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
@@ -10,9 +10,10 @@ const NAV_TABS = [
   { path: '/events', label: 'Evenements' },
   { path: '/promos', label: 'Promos' },
   { path: '/members', label: 'Membres' },
+  { path: '/messages', label: 'Messages', authOnly: true },
 ];
 
-const MAIN_PATHS = ['/explore', '/events', '/promos', '/members'];
+const MAIN_PATHS = ['/explore', '/events', '/promos', '/members', '/messages'];
 
 export default function Header() {
   const { user, profile } = useAuth();
@@ -79,7 +80,7 @@ export default function Header() {
 
         {isMainPage && (
           <nav className="hidden md:flex items-center gap-1 mx-6">
-            {NAV_TABS.map(({ path, label }) => {
+            {NAV_TABS.filter((t) => !t.authOnly || user).map(({ path, label }) => {
               const isActive = location.pathname.startsWith(path);
               return (
                 <Link
@@ -91,7 +92,14 @@ export default function Header() {
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
-                  {label}
+                  <span className="flex items-center gap-1.5">
+                    {label}
+                    {path === '/messages' && unreadCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
                   {isActive && (
                     <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
                   )}
