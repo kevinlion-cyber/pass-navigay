@@ -92,7 +92,7 @@ export default function PartnerSubscription() {
             });
             const data = await res.json();
             if (data?.url) {
-              window.location.href = data.url;
+              window.open(data.url, '_blank');
               return;
             }
             toast.error(data?.error || 'Erreur');
@@ -176,7 +176,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
       });
       const data = await res.json();
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
         return;
       }
       toast.error(data?.error || 'Erreur lors de la creation du paiement');

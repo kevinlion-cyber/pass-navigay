@@ -40,7 +40,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
       });
       const data = await res.json();
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
         return;
       }
     } catch {
