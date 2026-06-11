@@ -154,6 +154,7 @@ export default function PartnerSubscription() {
 function FreeView({ establishment }: { establishment: Establishment }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
 
   const handleSubscribe = async () => {
     if (!user) return;
@@ -170,6 +171,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
           establishmentId: establishment.id,
           email: user.email,
           establishmentName: establishment.name,
+          billingInterval,
         }),
       });
       const data = await res.json();
@@ -190,13 +192,50 @@ function FreeView({ establishment }: { establishment: Establishment }) {
       <div className="rounded-card text-center py-12 px-8 mb-6"
         style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
         <h1 className="text-[28px] font-bold text-white mb-2">Passez au profil Pro</h1>
-        <p className="text-sm text-gray-400 mb-8">Debloquez toutes les fonctionnalites pour developper votre visibilite.</p>
+        <p className="text-sm text-gray-400 mb-6">Debloquez toutes les fonctionnalites pour developper votre visibilite.</p>
+
+        {/* Billing toggle */}
+        <div className="inline-flex items-center gap-1 p-1 rounded-full mb-8" style={{ background: '#1e1e2e' }}>
+          <button
+            onClick={() => setBillingInterval('monthly')}
+            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
+              billingInterval === 'monthly'
+                ? 'bg-[#7B2D8B] text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingInterval('yearly')}
+            className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
+              billingInterval === 'yearly'
+                ? 'bg-[#7B2D8B] text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Annuel (-20%)
+          </button>
+        </div>
 
         <div className="mb-4">
-          <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>690&euro;</span>
-          <span className="text-xl text-gray-500">/an</span>
+          {billingInterval === 'yearly' ? (
+            <>
+              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>690&euro;</span>
+              <span className="text-xl text-gray-500">/an</span>
+            </>
+          ) : (
+            <>
+              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>69&euro;</span>
+              <span className="text-xl text-gray-500">/mois</span>
+            </>
+          )}
         </div>
-        <p className="text-sm text-gray-400 mb-8">Soit 57,50&euro;/mois &middot; Engagement annuel</p>
+        <p className="text-sm text-gray-400 mb-8">
+          {billingInterval === 'yearly'
+            ? 'Soit 57,50\u20AC/mois \u00B7 Vous economisez 138\u20AC/an'
+            : 'Sans engagement \u00B7 Resiliable a tout moment'}
+        </p>
 
         <button
           onClick={handleSubscribe}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Check } from 'lucide-react';
 
 const FREE_FEATURES = [
@@ -27,6 +28,8 @@ interface ProsPricingProps {
 }
 
 export default function ProsPricing({ onRegister }: ProsPricingProps) {
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
+
   return (
     <section className="py-[100px] px-6" style={{ background: '#0f0f17' }}>
       <div className="max-w-[900px] mx-auto">
@@ -37,14 +40,41 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
           Commencez gratuitement. Passez Pro quand vous êtes prêt.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-[60px]">
+        {/* Billing toggle */}
+        <div className="flex items-center justify-center mt-10 gap-3">
+          <button
+            onClick={() => setBillingInterval('monthly')}
+            className={`px-5 py-2 rounded-full text-[14px] font-medium transition-all ${
+              billingInterval === 'monthly'
+                ? 'bg-[#7B2D8B] text-white'
+                : 'text-[#a0a0b0] hover:text-white'
+            }`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingInterval('yearly')}
+            className={`px-5 py-2 rounded-full text-[14px] font-medium transition-all relative ${
+              billingInterval === 'yearly'
+                ? 'bg-[#7B2D8B] text-white'
+                : 'text-[#a0a0b0] hover:text-white'
+            }`}
+          >
+            Annuel
+            <span className="absolute -top-2.5 -right-12 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              -20%
+            </span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-[50px]">
           <div className="flex flex-col order-2 md:order-1 rounded-[20px] p-10" style={{ background: '#14141e', border: '1px solid #1e1e2e' }}>
             <span className="inline-block self-start px-3 py-1 rounded-full text-[13px] font-medium text-[#a0a0b0]" style={{ background: '#2a2a3a' }}>
               Gratuit
             </span>
             <div className="mt-5">
               <span className="text-[56px] font-bold text-white leading-none">0&euro;</span>
-              <span className="text-[18px] text-[#606070] ml-1">/an</span>
+              <span className="text-[18px] text-[#606070] ml-1">/mois</span>
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Pour démarrer et être visible sur l&rsquo;annuaire.</p>
 
@@ -83,11 +113,25 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
               Pro
             </span>
             <div className="mt-5">
-              <span className="text-[56px] font-bold text-white leading-none">690&euro;</span>
-              <span className="text-[18px] text-[#606070] ml-1">/an</span>
+              {billingInterval === 'yearly' ? (
+                <>
+                  <span className="text-[56px] font-bold text-white leading-none">690&euro;</span>
+                  <span className="text-[18px] text-[#606070] ml-1">/an</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[56px] font-bold text-white leading-none">69&euro;</span>
+                  <span className="text-[18px] text-[#606070] ml-1">/mois</span>
+                </>
+              )}
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Tout ce qu&rsquo;il faut pour développer votre visibilité.</p>
-            <p className="text-[13px] text-[#7B2D8B] mt-1 font-medium">Soit 57,50&euro;/mois</p>
+            {billingInterval === 'yearly' && (
+              <p className="text-[13px] text-emerald-400 mt-1 font-medium">Soit 57,50&euro;/mois — vous économisez 138&euro;/an</p>
+            )}
+            {billingInterval === 'monthly' && (
+              <p className="text-[13px] text-[#a0a0b0] mt-1">Sans engagement, résiliable à tout moment</p>
+            )}
 
             <ul className="mt-8 space-y-3.5 flex-1">
               {PRO_FEATURES.map((label) => (
@@ -108,7 +152,7 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
         </div>
 
         <p className="text-[12px] text-[#606070] text-center mt-8">
-          Paiement sécurisé par Stripe &middot; Engagement annuel &middot; Facture disponible
+          Paiement sécurisé par Stripe &middot; {billingInterval === 'yearly' ? 'Engagement annuel' : 'Sans engagement'} &middot; Facture disponible
         </p>
       </div>
     </section>

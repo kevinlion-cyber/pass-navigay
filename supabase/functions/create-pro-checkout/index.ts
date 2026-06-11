@@ -7,6 +7,11 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const PRICES: Record<string, string> = {
+  yearly: "price_1Th1ix18e2LOhPJqyeE1nmX1",
+  monthly: "price_1Th1ix18e2LOhPJqMonthl01",
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -23,7 +28,7 @@ Deno.serve(async (req: Request) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    const { establishmentId, email, establishmentName } = await req.json();
+    const { establishmentId, email, establishmentName, billingInterval } = await req.json();
 
     if (!email || !establishmentId) {
       return new Response(
@@ -33,6 +38,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
+    const priceId = PRICES[billingInterval === "monthly" ? "monthly" : "yearly"];
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -40,13 +46,13 @@ Deno.serve(async (req: Request) => {
       customer_email: email,
       line_items: [
         {
-          price: "price_1Th1ix18e2LOhPJqyeE1nmX1",
+          price: priceId,
           quantity: 1,
         },
       ],
       success_url: `${appUrl}/partner/subscription?status=success`,
       cancel_url: `${appUrl}/partner/subscription?status=cancelled`,
-      metadata: { establishmentId },
+      metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
