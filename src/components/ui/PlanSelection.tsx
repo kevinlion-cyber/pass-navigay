@@ -104,8 +104,8 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             Premium
           </span>
           <div className="mt-3">
-            <span className="text-[36px] font-bold text-white leading-none">6,69&euro;</span>
-            <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+            <span className="text-[36px] font-bold text-white leading-none">69&euro;</span>
+            <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
           </div>
           <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
             Sans engagement &middot; Resiliation a tout moment

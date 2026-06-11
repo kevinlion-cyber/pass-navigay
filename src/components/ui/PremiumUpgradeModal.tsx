@@ -91,11 +91,11 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
         </p>
 
         <div className="text-center my-4">
-          <span className="text-[36px] font-bold text-white">6,69&euro;</span>
-          <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+          <span className="text-[36px] font-bold text-white">69&euro;</span>
+          <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
         </div>
         <p className="text-[11px] text-center mb-5" style={{ color: '#606070' }}>
-          Sans engagement &middot; Resiliation a tout moment
+          Engagement annuel &middot; Paiement securise
         </p>
 
         <ul className="space-y-2.5 mb-6">
@@ -114,7 +114,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           style={{ background: '#7B2D8B' }}
         >
           {loading && <Loader2 size={16} className="animate-spin" />}
-          Passer Premium &mdash; 6,69&euro;/mois
+          Passer Premium &mdash; 69&euro;/an
         </button>
 
         <button

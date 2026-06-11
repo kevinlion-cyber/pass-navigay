@@ -137,7 +137,7 @@ export default function Messages() {
               style={{ background: '#7B2D8B' }}
             >
               <Crown size={16} />
-              Passer Premium &mdash; 6,69&euro;/mois
+              Passer Premium &mdash; 69&euro;/an
             </button>
             <button
               onClick={() => navigate('/explore')}

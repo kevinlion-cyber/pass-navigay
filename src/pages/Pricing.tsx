@@ -72,8 +72,8 @@ export default function Pricing() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil Pro Etablissement</h2>
             <div className="mt-2">
-              <span className="text-3xl font-semibold text-gray-900 dark:text-white">69</span>
-              <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
+              <span className="text-3xl font-semibold text-gray-900 dark:text-white">690</span>
+              <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
             </div>
           </div>
 
@@ -95,8 +95,8 @@ export default function Pricing() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Premium Utilisateur</h2>
             <div className="mt-2">
-              <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
-              <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
+              <span className="text-3xl font-semibold text-gray-900 dark:text-white">69</span>
+              <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
             </div>
           </div>
 

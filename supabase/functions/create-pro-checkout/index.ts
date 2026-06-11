@@ -40,14 +40,7 @@ Deno.serve(async (req: Request) => {
       customer_email: email,
       line_items: [
         {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Pass Navigay Pro - ${establishmentName || "Etablissement"}`,
-            },
-            unit_amount: 69000,
-            recurring: { interval: "year" },
-          },
+          price: "price_1Th1ix18e2LOhPJqyeE1nmX1",
           quantity: 1,
         },
       ],
