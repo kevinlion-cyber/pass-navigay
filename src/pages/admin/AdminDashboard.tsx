@@ -77,7 +77,7 @@ export default function AdminDashboard() {
           upcomingEvents: eventsRes.count ?? 0,
           activePromos: promosRes.count ?? 0,
           newThisWeek: weekRes.count ?? 0,
-          estimatedRevenue: proCount * 690,
+          estimatedRevenue: (premiumRes.count ?? 0) * 69 + proCount * 690,
         });
 
         const grouped: Record<string, number> = {};
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
         <MetricCard icon={Users} label="Membres inscrits" value={String(stats?.members ?? 0)} sub={`+${stats?.newThisWeek ?? 0} cette semaine`} />
         <MetricCard icon={Crown} label="Membres Premium" value={String(stats?.premiumMembers ?? 0)} sub={`${conversionRate}% de conversion`} />
         <MetricCard icon={ShieldCheck} label="Comptes verifies" value={String(stats?.verifiedMembers ?? 0)} />
-        <MetricCard icon={DollarSign} label="Revenu annuel estime" value={`${stats?.estimatedRevenue ?? 0} EUR`} sub={`${stats?.establishments.pro ?? 0} Pro x 690 EUR`} />
+        <MetricCard icon={DollarSign} label="Revenu annuel estime" value={`${stats?.estimatedRevenue ?? 0} EUR`} sub={`${stats?.premiumMembers ?? 0} Premium x 69 + ${stats?.establishments.pro ?? 0} Pro x 690`} />
         <MetricCard
           icon={Building2}
           label="Etablissements"
