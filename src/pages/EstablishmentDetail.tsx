@@ -230,8 +230,7 @@ export default function EstablishmentDetail() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{establishment.name}</h1>
-                {establishment.is_pro && <span className="badge-pro">PRO</span>}
-                {establishment.is_sponsor && <span className="badge-sponsor">Sponsor</span>}
+                {establishment.is_pro && <span className="badge-pro">PARTENAIRE OFFICIEL</span>}
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {categoryLabel} &middot; {establishment.subcategory}
