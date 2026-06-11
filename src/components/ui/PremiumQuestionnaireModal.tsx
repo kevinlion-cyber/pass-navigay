@@ -193,32 +193,24 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: '#0a0a0f' }}>
-      <div className="flex items-center justify-between px-4 h-14 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#7B2D8B' }}>
-            <span className="text-white text-xs font-bold">P</span>
+    <div className="fixed inset-x-0 top-14 bottom-0 z-[60] flex flex-col" style={{ background: '#0a0a0f' }}>
+      <div className="flex items-center gap-3 px-4 pt-3 pb-2 shrink-0">
+        <div className="flex-1">
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1a1a24' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${progress}%`, background: '#7B2D8B' }}
+            />
           </div>
-          <span className="text-sm font-semibold text-white">Pass Navigay</span>
+          <p className="text-[10px] mt-1 text-right" style={{ color: '#606070' }}>{progress}%</p>
         </div>
-
         <button
           onClick={onClose}
-          className="text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors"
+          className="text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors shrink-0"
           style={{ color: '#606070' }}
         >
-          Passer pour l'instant
+          Passer
         </button>
-      </div>
-
-      <div className="px-4 pb-2 shrink-0">
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1a1a24' }}>
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${progress}%`, background: '#7B2D8B' }}
-          />
-        </div>
-        <p className="text-[10px] mt-1 text-right" style={{ color: '#606070' }}>{progress}%</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4" style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
