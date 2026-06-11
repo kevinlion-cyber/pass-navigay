@@ -103,6 +103,18 @@ export default function ProfilePublic() {
   const firstName = profile.prenom || profile.username;
   const vis = (profile.profile_visibility || {}) as ProfileVisibility;
   const isPremiumProfile = profile.is_premium && profile.questionnaire_completed;
+  const hasPremiumContent = isPremiumProfile && (
+    (vis.gender_identity && profile.gender_identity) ||
+    (vis.orientation && profile.orientation) ||
+    (vis.looking_for && profile.looking_for && profile.looking_for.length > 0) ||
+    (vis.vibe && profile.vibe) ||
+    (vis.green_flags && profile.green_flags?.length) ||
+    (vis.evening_energy && profile.evening_energy) ||
+    (vis.what_i_bring && profile.what_i_bring) ||
+    (vis.if_i_were_vibe && profile.if_i_were_vibe) ||
+    (vis.if_i_were_music && profile.if_i_were_music) ||
+    (vis.late_truth && profile.late_truth)
+  );
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
@@ -271,7 +283,7 @@ export default function ProfilePublic() {
           </>
         )}
 
-        {favorites.length === 0 && reviews.length === 0 && !isPremiumProfile && (
+        {favorites.length === 0 && reviews.length === 0 && !hasPremiumContent && (
           <div className="text-center py-8">
             <p className="text-sm text-gray-400 dark:text-gray-500">
               {user?.id === userId ? 'Ton profil est encore vide. Ajoute des lieux en favoris et laisse des avis !' : 'Ce membre n\'a pas encore d\'activite publique.'}
@@ -279,7 +291,7 @@ export default function ProfilePublic() {
           </div>
         )}
 
-        {isPremiumProfile && (
+        {hasPremiumContent && (
           <>
             <div className="border-t border-light-border dark:border-dark-border" />
 
