@@ -165,6 +165,7 @@ export default function PartnerEvents() {
         is_free: form.is_free,
         image_url,
         is_featured: false,
+        max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
       };
 
       if (editing) {
