@@ -24,7 +24,7 @@ export default function AdminMembers() {
       let query = supabase.from('profiles').select('*', { count: 'exact' }).order('created_at', { ascending: false });
       if (premiumFilter === 'premium') query = query.eq('is_premium', true);
       if (premiumFilter === 'free') query = query.eq('is_premium', false);
-      if (search) query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`);
+      if (search) query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,prenom.ilike.%${search}%,nom.ilike.%${search}%`);
 
       const { data, count } = await query;
       setMembers((data as Profile[]) || []);
@@ -90,7 +90,7 @@ export default function AdminMembers() {
         </select>
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par username ou email..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, prenom ou email..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>}
         </div>
       </div>
@@ -106,7 +106,8 @@ export default function AdminMembers() {
               <thead>
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Avatar</th>
-                  <th className="py-3 px-3">Username</th>
+                  <th className="py-3 px-3">Prenom</th>
+                  <th className="py-3 px-3">Nom</th>
                   <th className="py-3 px-3">Email</th>
                   <th className="py-3 px-3">Premium</th>
                   <th className="py-3 px-3">Verifie</th>
@@ -119,10 +120,11 @@ export default function AdminMembers() {
                   <tr key={m.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                     <td className="py-2.5 px-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center">
-                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{m.username?.charAt(0).toUpperCase()}</span>}
+                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{((m as any).prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{m.username}</td>
+                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{(m as any).prenom || '-'}</td>
+                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{(m as any).nom || '-'}</td>
                     <td className="py-2.5 px-3 text-[13px] text-[#a0a0b0] max-w-[180px] truncate">{(m as any).email || '-'}</td>
                     <td className="py-2.5 px-3">{m.is_premium ? <span className="badge-sponsor text-xs">Premium</span> : <span className="text-gray-500 text-xs">Gratuit</span>}</td>
                     <td className="py-2.5 px-3">
@@ -155,10 +157,10 @@ export default function AdminMembers() {
               <div key={m.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center shrink-0">
-                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{m.username?.charAt(0).toUpperCase()}</span>}
+                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{((m as any).prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.username}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{(m as any).prenom || ''} {(m as any).nom || ''}</p>
                     <p className="text-xs text-gray-500 truncate">{(m as any).email || '-'}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
