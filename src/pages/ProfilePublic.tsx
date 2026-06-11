@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Crown, Clock, Calendar, Sparkles } from 'lucide-react';
+import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Profile, ProfileVisibility } from '../lib/types';
+import type { Profile, ProfileVisibility, Establishment } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
@@ -38,6 +38,8 @@ export default function ProfilePublic() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [favorites, setFavorites] = useState<Establishment[]>([]);
+  const [reviews, setReviews] = useState<{ rating: number; comment: string; created_at: string; establishment: { id: string; name: string } }[]>([]);
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [premiumGateOpen, setPremiumGateOpen] = useState(false);
@@ -49,13 +51,31 @@ export default function ProfilePublic() {
 
   const loadData = async () => {
     setLoading(true);
-    const profileRes = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId!)
-      .maybeSingle();
+    const [profileRes, favRes, reviewsRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', userId!).maybeSingle(),
+      supabase
+        .from('favorites')
+        .select('establishment:establishments(id, name, city, category, logo_url)')
+        .eq('user_id', userId!)
+        .limit(6),
+      supabase
+        .from('reviews')
+        .select('rating, comment, created_at, establishment:establishments(id, name)')
+        .eq('user_id', userId!)
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ]);
 
     if (profileRes.data) setProfile(profileRes.data as Profile);
+    if (favRes.data) {
+      const establishments = favRes.data
+        .map((f: any) => f.establishment)
+        .filter(Boolean);
+      setFavorites(establishments);
+    }
+    if (reviewsRes.data) {
+      setReviews(reviewsRes.data as any);
+    }
     setLoading(false);
   };
 
@@ -175,6 +195,88 @@ export default function ProfilePublic() {
             <MessageCircle size={18} />
             Envoyer un message a {firstName}
           </button>
+        )}
+
+        {favorites.length > 0 && (
+          <>
+            <div className="border-t border-light-border dark:border-dark-border" />
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Heart size={16} className="text-rose-500" />
+                Lieux favoris
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {favorites.map((est) => (
+                  <button
+                    key={est.id}
+                    onClick={() => navigate(`/establishment/${est.id}`)}
+                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border hover:border-primary/40 transition-colors text-left"
+                  >
+                    {est.logo_url ? (
+                      <img src={est.logo_url} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <MapPin size={14} className="text-primary" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{est.name}</p>
+                      <p className="text-[11px] text-gray-400 truncate">{est.city}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {reviews.length > 0 && (
+          <>
+            <div className="border-t border-light-border dark:border-dark-border" />
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Star size={16} className="text-amber-500" />
+                Derniers avis
+              </h2>
+              <div className="space-y-2.5">
+                {reviews.map((review, i) => (
+                  <div
+                    key={i}
+                    className="p-3 rounded-xl bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <button
+                        onClick={() => review.establishment && navigate(`/establishment/${review.establishment.id}`)}
+                        className="text-xs font-medium text-primary hover:underline truncate"
+                      >
+                        {review.establishment?.name}
+                      </button>
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }, (_, idx) => (
+                          <Star
+                            key={idx}
+                            size={11}
+                            className={idx < review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300 dark:text-gray-600'}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {favorites.length === 0 && reviews.length === 0 && !isPremiumProfile && (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              {user?.id === userId ? 'Ton profil est encore vide. Ajoute des lieux en favoris et laisse des avis !' : 'Ce membre n\'a pas encore d\'activite publique.'}
+            </p>
+          </div>
         )}
 
         {isPremiumProfile && (
