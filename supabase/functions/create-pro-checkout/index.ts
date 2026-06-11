@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 const YEARLY_PRICE_ID = "price_1Th1ix18e2LOhPJqyeE1nmX1";
+const MONTHLY_AMOUNT = 6900; // 69€ in cents
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -37,40 +38,45 @@ Deno.serve(async (req: Request) => {
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
 
-    let lineItems;
+    let priceId = YEARLY_PRICE_ID;
 
     if (billingInterval === "monthly") {
-      // Get the product ID from the yearly price
+      // Get the product from the yearly price
       const yearlyPrice = await stripe.prices.retrieve(YEARLY_PRICE_ID);
       const productId = typeof yearlyPrice.product === "string"
         ? yearlyPrice.product
-        : yearlyPrice.product.id;
+        : (yearlyPrice.product as { id: string }).id;
 
-      lineItems = [
-        {
-          price_data: {
-            currency: "eur",
-            product: productId,
-            recurring: { interval: "month" as const },
-            unit_amount: 6900,
-          },
-          quantity: 1,
-        },
-      ];
-    } else {
-      lineItems = [
-        {
-          price: YEARLY_PRICE_ID,
-          quantity: 1,
-        },
-      ];
+      // Look for an existing monthly price on this product
+      const existingPrices = await stripe.prices.list({
+        product: productId,
+        active: true,
+        type: "recurring",
+      });
+
+      const monthlyPrice = existingPrices.data.find(
+        (p) => p.recurring?.interval === "month" && p.unit_amount === MONTHLY_AMOUNT
+      );
+
+      if (monthlyPrice) {
+        priceId = monthlyPrice.id;
+      } else {
+        // Create the monthly price on the same product
+        const newPrice = await stripe.prices.create({
+          product: productId,
+          currency: "eur",
+          unit_amount: MONTHLY_AMOUNT,
+          recurring: { interval: "month" },
+        });
+        priceId = newPrice.id;
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: email,
-      line_items: lineItems,
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/partner/subscription?status=success`,
       cancel_url: `${appUrl}/partner/subscription?status=cancelled`,
       metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
@@ -81,7 +87,7 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("create-pro-checkout error:", err);
+    console.error("create-pro-checkout error:", message, err);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
