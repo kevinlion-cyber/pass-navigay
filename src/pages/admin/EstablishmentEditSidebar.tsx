@@ -11,7 +11,6 @@ import AdminEditSidebar, {
   SidebarInput,
   SidebarTextarea,
   SidebarSelect,
-  SidebarToggle,
 } from '../../components/admin/AdminEditSidebar';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -274,7 +273,6 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           postal_code: form.postal_code,
           category: form.category,
           subcategory: form.subcategory,
-          is_pro: isPro,
           opening_hours: openingHours,
         }).select('id').single();
         if (error) throw error;
@@ -332,7 +330,6 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             subcategory: form.subcategory,
             banner_url: newBannerUrl,
             logo_url: newLogoUrl,
-            is_pro: isPro,
             opening_hours: openingHours,
           })
           .eq('id', targetId);
@@ -555,17 +552,6 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             );
           })}
         </div>
-
-        <div className="mb-2 mt-6">
-          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Statut</p>
-        </div>
-
-        <SidebarToggle
-          checked={isPro}
-          onChange={(v) => setIsPro(v)}
-          label="Profil Pro"
-          description="Active la banniere, la galerie, les evenements et les promotions pour cet etablissement."
-        />
 
         <div className="mb-2 mt-6">
           <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Cadeau Pro</p>

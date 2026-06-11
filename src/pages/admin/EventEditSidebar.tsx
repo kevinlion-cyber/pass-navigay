@@ -28,7 +28,6 @@ interface FormData {
   is_free: boolean;
   price: number;
   max_capacity: string;
-  is_featured: boolean;
 }
 
 const initialForm: FormData = {
@@ -42,7 +41,6 @@ const initialForm: FormData = {
   is_free: true,
   price: 0,
   max_capacity: '',
-  is_featured: false,
 };
 
 function toLocalDatetime(iso: string | null): string {
@@ -97,7 +95,6 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         is_free: ev.is_free ?? true,
         price: ev.price || 0,
         max_capacity: ev.max_capacity ? String(ev.max_capacity) : '',
-        is_featured: ev.is_featured ?? false,
       });
       setImageUrl(ev.image_url || null);
     } catch (err: any) {
@@ -140,7 +137,6 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         is_free: form.is_free,
         price: form.is_free ? 0 : form.price,
         max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
-        is_featured: form.is_featured,
         image_url: newImageUrl,
       };
 
@@ -284,17 +280,6 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
           placeholder="Illimite si vide"
         />
       </SidebarField>
-
-      <div className="mb-2 mt-6">
-        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Mise en avant</p>
-      </div>
-
-      <SidebarToggle
-        checked={form.is_featured}
-        onChange={(v) => set('is_featured', v)}
-        label="Evenement mis en avant (featured)"
-        description="Les evenements featured apparaissent dans le bandeau en haut de l'app."
-      />
     </AdminEditSidebar>
   );
 }
