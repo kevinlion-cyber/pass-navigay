@@ -85,8 +85,8 @@ export default function PartnerPromotions() {
       value: p.value || 0,
       offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
       is_permanent: p.is_permanent ?? false,
-      valid_from: p.valid_from ? p.valid_from.slice(0, 10) : '',
-      valid_until: p.valid_until ? p.valid_until.slice(0, 10) : '',
+      valid_from: p.valid_from ? p.valid_from.slice(0, 16) : '',
+      valid_until: p.valid_until ? p.valid_until.slice(0, 16) : '',
       image_url: p.image_url || '',
     });
     setCroppedBlob(null);
@@ -153,8 +153,8 @@ export default function PartnerPromotions() {
         promo_type: form.promo_type,
         value: form.promo_type === 'offer' ? null : form.value,
         is_permanent: form.is_permanent,
-        valid_from: form.is_permanent ? new Date().toISOString().slice(0, 10) : form.valid_from,
-        valid_until: form.is_permanent ? '2099-12-31T23:59:59' : form.valid_until + 'T23:59:59',
+        valid_from: form.is_permanent ? new Date().toISOString() : new Date(form.valid_from).toISOString(),
+        valid_until: form.is_permanent ? '2099-12-31T23:59:59' : new Date(form.valid_until).toISOString(),
         is_recurring: false,
         recurrence_rule: '',
         max_uses: null,
@@ -313,13 +313,13 @@ export default function PartnerPromotions() {
                 <div className="flex gap-4">
                   <div className="flex-1">
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valable à partir du</label>
-                    <input type="date" value={form.valid_from}
+                    <input type="datetime-local" value={form.valid_from}
                       onChange={e => setForm({ ...form, valid_from: e.target.value })}
                       required className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Jusqu'au</label>
-                    <input type="date" value={form.valid_until}
+                    <input type="datetime-local" value={form.valid_until}
                       onChange={e => setForm({ ...form, valid_until: e.target.value })}
                       required className="input-field bg-dark-bg border-dark-border text-white" />
                   </div>
