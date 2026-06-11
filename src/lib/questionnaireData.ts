@@ -25,7 +25,7 @@ export const QUESTIONNAIRE_SECTIONS: SectionDef[] = [
         field: '_intro',
         botMessage: '',
         type: 'single',
-        options: ['Allons-y !', "J'ai 5 minutes, vas-y"],
+        options: ["C'est parti !"],
       },
     ],
   },
