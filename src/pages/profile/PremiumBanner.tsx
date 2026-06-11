@@ -31,14 +31,19 @@ export default function PremiumBanner() {
             L'acces aux promotions exclusives
           </li>
         </ul>
-        <button
-          onClick={() => setUpgradeOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90 mt-1"
-          style={{ background: '#7B2D8B' }}
-        >
-          <Crown size={16} />
-          Passer Premium &mdash; 69&euro;/an
-        </button>
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
+          >
+            <Crown size={16} />
+            Passer Premium
+          </button>
+          <span className="text-[12px]" style={{ color: '#808090' }}>
+            a partir de 5,75&euro;/mois
+          </span>
+        </div>
       </div>
 
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />

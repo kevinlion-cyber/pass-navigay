@@ -21,6 +21,7 @@ const PREMIUM_FEATURES = [
 export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
 
   if (!open) return null;
 
@@ -36,7 +37,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ userId: user.id, email: user.email }),
+        body: JSON.stringify({ userId: user.id, email: user.email, billingInterval }),
       });
       const data = await res.json();
       if (data?.url) {
@@ -49,6 +50,9 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
 
     setLoading(false);
   };
+
+  const yearlyPrice = 69;
+  const monthlyPrice = 7.9;
 
   return (
     <div
@@ -86,17 +90,54 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
         </div>
 
         <h2 className="text-[20px] font-bold text-white text-center">Passe Premium</h2>
-        <p className="text-[14px] text-center mt-2 mb-1" style={{ color: '#a0a0b0' }}>
+        <p className="text-[14px] text-center mt-2 mb-4" style={{ color: '#a0a0b0' }}>
           Debloque toutes les fonctionnalites
         </p>
 
-        <div className="text-center my-4">
-          <span className="text-[36px] font-bold text-white">69&euro;</span>
-          <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+        {/* Billing interval toggle */}
+        <div className="flex items-center justify-center gap-1 mb-4 p-1 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <button
+            onClick={() => setBillingInterval('monthly')}
+            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+            style={{
+              background: billingInterval === 'monthly' ? '#7B2D8B' : 'transparent',
+              color: billingInterval === 'monthly' ? '#fff' : '#808090',
+            }}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingInterval('yearly')}
+            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+            style={{
+              background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent',
+              color: billingInterval === 'yearly' ? '#fff' : '#808090',
+            }}
+          >
+            Annuel
+            <span className="ml-1 text-[11px] opacity-80">-27%</span>
+          </button>
         </div>
-        <p className="text-[11px] text-center mb-5" style={{ color: '#606070' }}>
-          Engagement annuel &middot; Paiement securise
-        </p>
+
+        <div className="text-center my-4">
+          {billingInterval === 'yearly' ? (
+            <>
+              <span className="text-[36px] font-bold text-white">{yearlyPrice}&euro;</span>
+              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+              <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
+                soit {(yearlyPrice / 12).toFixed(2)}&euro;/mois
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="text-[36px] font-bold text-white">{monthlyPrice}&euro;</span>
+              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+              <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
+                Sans engagement
+              </p>
+            </>
+          )}
+        </div>
 
         <ul className="space-y-2.5 mb-6">
           {PREMIUM_FEATURES.map((label) => (
@@ -114,7 +155,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           style={{ background: '#7B2D8B' }}
         >
           {loading && <Loader2 size={16} className="animate-spin" />}
-          Passer Premium &mdash; 69&euro;/an
+          Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC/an` : `${monthlyPrice}\u20AC/mois`}
         </button>
 
         <button

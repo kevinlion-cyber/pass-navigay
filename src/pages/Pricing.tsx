@@ -24,6 +24,7 @@ export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<'pro' | 'premium' | null>(null);
+  const [premiumInterval, setPremiumInterval] = useState<'monthly' | 'yearly'>('yearly');
 
   const handleSubscribe = async (type: 'pro' | 'premium') => {
     if (!user) {
@@ -45,7 +46,7 @@ export default function Pricing() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ userId: user.id, email: user.email }),
+        body: JSON.stringify({ userId: user.id, email: user.email, billingInterval: premiumInterval }),
       });
       const data = await res.json();
       if (data?.url) {
@@ -94,9 +95,45 @@ export default function Pricing() {
         <div className="card p-6 space-y-6 border-primary">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Premium Utilisateur</h2>
-            <div className="mt-2">
-              <span className="text-3xl font-semibold text-gray-900 dark:text-white">69</span>
-              <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
+
+            {/* Billing toggle */}
+            <div className="flex items-center gap-1 mt-3 p-1 rounded-lg bg-gray-100 dark:bg-white/5">
+              <button
+                onClick={() => setPremiumInterval('monthly')}
+                className={`flex-1 py-1.5 px-3 rounded-md text-[13px] font-medium transition-all ${
+                  premiumInterval === 'monthly'
+                    ? 'bg-white dark:bg-purple-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                Mensuel
+              </button>
+              <button
+                onClick={() => setPremiumInterval('yearly')}
+                className={`flex-1 py-1.5 px-3 rounded-md text-[13px] font-medium transition-all ${
+                  premiumInterval === 'yearly'
+                    ? 'bg-white dark:bg-purple-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                Annuel <span className="text-[11px] opacity-70">-27%</span>
+              </button>
+            </div>
+
+            <div className="mt-3">
+              {premiumInterval === 'yearly' ? (
+                <>
+                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">69</span>
+                  <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
+                  <p className="text-xs text-gray-400 mt-0.5">soit 5,75 EUR/mois</p>
+                </>
+              ) : (
+                <>
+                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">7,90</span>
+                  <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
+                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement</p>
+                </>
+              )}
             </div>
           </div>
 
