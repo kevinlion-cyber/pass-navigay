@@ -23,13 +23,11 @@ interface FormData {
   establishment_id: string;
   promo_type: string;
   value: number;
+  offer_text: string;
+  is_permanent: boolean;
   valid_from: string;
   valid_until: string;
-  is_recurring: boolean;
-  recurrence_rule: string;
-  limit_uses: boolean;
-  max_uses: number;
-  current_uses: number;
+  is_active: boolean;
 }
 
 const initialForm: FormData = {
@@ -38,13 +36,11 @@ const initialForm: FormData = {
   establishment_id: '',
   promo_type: 'percentage',
   value: 0,
+  offer_text: '',
+  is_permanent: false,
   valid_from: '',
   valid_until: '',
-  is_recurring: false,
-  recurrence_rule: '',
-  limit_uses: false,
-  max_uses: 1,
-  current_uses: 0,
+  is_active: true,
 };
 
 const promoTypeOptions = [
@@ -53,9 +49,12 @@ const promoTypeOptions = [
   { value: 'offer', label: 'Offre speciale (texte libre)' },
 ];
 
-function toDateStr(iso: string | null): string {
+function toLocalDatetime(iso: string | null): string {
   if (!iso) return '';
-  return new Date(iso).toISOString().slice(0, 10);
+  const d = new Date(iso);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
 }
 
 export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Props) {
@@ -97,13 +96,11 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         establishment_id: p.establishment_id || '',
         promo_type: p.promo_type || 'percentage',
         value: p.value || 0,
-        valid_from: toDateStr(p.valid_from),
-        valid_until: toDateStr(p.valid_until),
-        is_recurring: p.is_recurring ?? false,
-        recurrence_rule: p.recurrence_rule || '',
-        limit_uses: p.max_uses != null,
-        max_uses: p.max_uses || 1,
-        current_uses: p.current_uses || 0,
+        offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
+        is_permanent: p.is_permanent ?? false,
+        valid_from: toLocalDatetime(p.valid_from),
+        valid_until: toLocalDatetime(p.valid_until),
+        is_active: p.is_active ?? true,
       });
       setImageUrl(p.image_url || null);
     } catch (err: any) {
@@ -124,10 +121,12 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
   const validate = (): boolean => {
     const e: Partial<Record<string, string>> = {};
     if (!form.title.trim()) e.title = 'Le titre est requis';
-    if (!form.valid_from) e.valid_from = 'La date de debut est requise';
-    if (!form.valid_until) e.valid_until = 'La date de fin est requise';
-    if (form.valid_from && form.valid_until && form.valid_until <= form.valid_from) {
-      e.valid_until = 'La date de fin doit etre posterieure a la date de debut';
+    if (!form.is_permanent) {
+      if (!form.valid_from) e.valid_from = 'La date de debut est requise';
+      if (!form.valid_until) e.valid_until = 'La date de fin est requise';
+      if (form.valid_from && form.valid_until && new Date(form.valid_until) <= new Date(form.valid_from)) {
+        e.valid_until = 'La date de fin doit etre posterieure a la date de debut';
+      }
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -144,17 +143,19 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         description: form.description,
         establishment_id: form.establishment_id || null,
         promo_type: form.promo_type,
-        value: form.promo_type !== 'offer' ? form.value : null,
-        valid_from: new Date(form.valid_from).toISOString(),
-        valid_until: new Date(form.valid_until + 'T23:59:59').toISOString(),
-        is_recurring: form.is_recurring,
-        recurrence_rule: form.is_recurring ? form.recurrence_rule : null,
-        max_uses: form.limit_uses ? form.max_uses : null,
+        value: form.promo_type === 'offer' ? null : form.value,
+        is_permanent: form.is_permanent,
+        valid_from: form.is_permanent ? new Date().toISOString() : new Date(form.valid_from).toISOString(),
+        valid_until: form.is_permanent ? '2099-12-31T23:59:59' : new Date(form.valid_until).toISOString(),
+        is_recurring: false,
+        recurrence_rule: '',
+        max_uses: null,
         image_url: newImageUrl,
+        is_active: form.is_active,
       };
 
       if (isNew) {
-        const { data: created, error } = await supabase.from('promotions').insert(payload).select('id').single();
+        const { data: created, error } = await supabase.from('promotions').insert({ ...payload, current_uses: 0 }).select('id').single();
         if (error) throw error;
 
         if (croppedImage && created) {
@@ -252,52 +253,40 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         </SidebarField>
       )}
 
+      {form.promo_type === 'offer' && (
+        <SidebarField label="Texte de l'offre">
+          <SidebarInput value={form.offer_text} onChange={(v) => set('offer_text', v)} placeholder="Ex: 1 cocktail offert" />
+        </SidebarField>
+      )}
+
       <div className="mb-2 mt-6">
         <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Validite</p>
       </div>
 
-      <SidebarField label="Date de debut" error={errors.valid_from}>
-        <SidebarInput value={form.valid_from} onChange={(v) => set('valid_from', v)} type="date" required error={!!errors.valid_from} />
-      </SidebarField>
+      <SidebarToggle checked={form.is_permanent} onChange={(v) => set('is_permanent', v)} label="Promotion permanente" />
 
-      <SidebarField label="Date de fin" error={errors.valid_until}>
-        <SidebarInput value={form.valid_until} onChange={(v) => set('valid_until', v)} type="date" required error={!!errors.valid_until} />
-      </SidebarField>
+      {!form.is_permanent && (
+        <>
+          <SidebarField label="Date de debut" error={errors.valid_from}>
+            <SidebarInput value={form.valid_from} onChange={(v) => set('valid_from', v)} type="datetime-local" required error={!!errors.valid_from} />
+          </SidebarField>
 
-      <div className="mb-2 mt-6">
-        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Recurrence</p>
-      </div>
-
-      <SidebarToggle checked={form.is_recurring} onChange={(v) => set('is_recurring', v)} label="Promotion recurrente" />
-
-      {form.is_recurring && (
-        <SidebarField label="Regle de recurrence">
-          <SidebarInput
-            value={form.recurrence_rule}
-            onChange={(v) => set('recurrence_rule', v)}
-            placeholder="WEEKLY:TUESDAY,FRIDAY"
-          />
-          <p className="text-[11px] text-[#606070] mt-1.5">
-            Exemples : WEEKLY:TUESDAY - WEEKLY:MONDAY,WEDNESDAY,FRIDAY - MONTHLY:FIRST_SUNDAY
-          </p>
-        </SidebarField>
+          <SidebarField label="Date de fin" error={errors.valid_until}>
+            <SidebarInput value={form.valid_until} onChange={(v) => set('valid_until', v)} type="datetime-local" required error={!!errors.valid_until} />
+          </SidebarField>
+        </>
       )}
 
       <div className="mb-2 mt-6">
-        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Utilisations</p>
+        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Statut</p>
       </div>
 
-      <SidebarToggle checked={form.limit_uses} onChange={(v) => set('limit_uses', v)} label="Limiter les utilisations" />
-
-      {form.limit_uses && (
-        <SidebarField label="Nombre maximum d'utilisations">
-          <SidebarInput value={form.max_uses} onChange={(v) => set('max_uses', parseInt(v) || 1)} type="number" min={1} />
-        </SidebarField>
-      )}
-
-      <p className="text-[13px] text-[#606070] italic">
-        Utilisations actuelles : {form.current_uses}
-      </p>
+      <SidebarToggle
+        checked={form.is_active}
+        onChange={(v) => set('is_active', v)}
+        label="Promotion active"
+        description="Desactivez pour masquer temporairement la promotion sans la supprimer."
+      />
     </AdminEditSidebar>
   );
 }

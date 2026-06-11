@@ -5,7 +5,7 @@ import { Camera, Trash2, X, Loader2, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
-import type { CategoryKey } from '../../lib/types';
+import type { CategoryKey, OpeningHours } from '../../lib/types';
 import AdminEditSidebar, {
   SidebarField,
   SidebarInput,
@@ -16,6 +16,12 @@ import AdminEditSidebar, {
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import GiftPeriodModal from '../../components/admin/GiftPeriodModal';
+
+const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const DAYS_LABELS: Record<string, string> = {
+  lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
+  jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche',
+};
 
 interface Props {
   establishmentId: string | null;
@@ -78,6 +84,11 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
   const [isPro, setIsPro] = useState(false);
   const [croppedBanner, setCroppedBanner] = useState<Blob | null>(null);
   const [croppedLogo, setCroppedLogo] = useState<Blob | null>(null);
+  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string } | null>>(() => {
+    const h: Record<string, { open: string; close: string } | null> = {};
+    DAYS_ORDER.forEach((day) => { h[day] = null; });
+    return h;
+  });
 
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [pendingPhotos, setPendingPhotos] = useState<{ blob: Blob; preview: string }[]>([]);
@@ -144,6 +155,10 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       setLogoUrl(d.logo_url || null);
       setIsPro(d.is_pro ?? false);
       setProExpiresAt(d.pro_expires_at ?? null);
+      const loadedHours = (d.opening_hours as OpeningHours) || {};
+      const h: Record<string, { open: string; close: string } | null> = {};
+      DAYS_ORDER.forEach((day) => { h[day] = loadedHours[day] ?? null; });
+      setOpeningHours(h);
       setGalleryPhotos((photosRes.data || []).map((p: any) => ({ id: p.id, url: p.url, order_index: p.order_index })));
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
@@ -260,6 +275,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           category: form.category,
           subcategory: form.subcategory,
           is_pro: isPro,
+          opening_hours: openingHours,
         }).select('id').single();
         if (error) throw error;
         targetId = created.id;
@@ -317,6 +333,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             banner_url: newBannerUrl,
             logo_url: newLogoUrl,
             is_pro: isPro,
+            opening_hours: openingHours,
           })
           .eq('id', targetId);
         if (error) throw error;
@@ -483,6 +500,61 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           className="hidden"
           onChange={handleGalleryFiles}
         />
+
+        <div className="mb-2 mt-6">
+          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Horaires d'ouverture</p>
+        </div>
+
+        <div className="space-y-2.5 mb-5">
+          {DAYS_ORDER.map((day) => {
+            const isOpen = openingHours[day] !== null;
+            return (
+              <div key={day} className="flex items-center gap-2">
+                <label className="flex items-center gap-2 w-24 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isOpen}
+                    onChange={(e) => {
+                      setOpeningHours((prev) => ({
+                        ...prev,
+                        [day]: e.target.checked ? { open: '09:00', close: '18:00' } : null,
+                      }));
+                    }}
+                    className="rounded border-[#2a2a3a] bg-[#0a0a0f] text-[#7B2D8B] focus:ring-[#7B2D8B]"
+                  />
+                  <span className="text-[13px] text-[#a0a0b0]">{DAYS_LABELS[day]}</span>
+                </label>
+                {isOpen && (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="time"
+                      value={openingHours[day]?.open || '09:00'}
+                      onChange={(e) => {
+                        setOpeningHours((prev) => ({
+                          ...prev,
+                          [day]: { open: e.target.value, close: prev[day]?.close || '18:00' },
+                        }));
+                      }}
+                      className="px-2 py-1 rounded text-[12px] bg-[#0a0a0f] border border-[#2a2a3a] text-white w-[90px]"
+                    />
+                    <span className="text-[#606070] text-[11px]">-</span>
+                    <input
+                      type="time"
+                      value={openingHours[day]?.close || '18:00'}
+                      onChange={(e) => {
+                        setOpeningHours((prev) => ({
+                          ...prev,
+                          [day]: { open: prev[day]?.open || '09:00', close: e.target.value },
+                        }));
+                      }}
+                      className="px-2 py-1 rounded text-[12px] bg-[#0a0a0f] border border-[#2a2a3a] text-white w-[90px]"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
         <div className="mb-2 mt-6">
           <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Statut</p>

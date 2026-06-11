@@ -24,8 +24,10 @@ interface FormData {
   establishment_id: string;
   event_date: string;
   end_date: string;
+  address: string;
   is_free: boolean;
   price: number;
+  max_capacity: string;
   is_featured: boolean;
 }
 
@@ -36,8 +38,10 @@ const initialForm: FormData = {
   establishment_id: '',
   event_date: '',
   end_date: '',
+  address: '',
   is_free: true,
   price: 0,
+  max_capacity: '',
   is_featured: false,
 };
 
@@ -89,8 +93,10 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         establishment_id: ev.establishment_id || '',
         event_date: toLocalDatetime(ev.event_date),
         end_date: toLocalDatetime(ev.end_date),
+        address: ev.address || '',
         is_free: ev.is_free ?? true,
         price: ev.price || 0,
+        max_capacity: ev.max_capacity ? String(ev.max_capacity) : '',
         is_featured: ev.is_featured ?? false,
       });
       setImageUrl(ev.image_url || null);
@@ -130,8 +136,10 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         establishment_id: form.establishment_id || null,
         event_date: new Date(form.event_date).toISOString(),
         end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+        address: form.address || null,
         is_free: form.is_free,
         price: form.is_free ? 0 : form.price,
+        max_capacity: form.max_capacity ? parseInt(form.max_capacity) : null,
         is_featured: form.is_featured,
         image_url: newImageUrl,
       };
@@ -242,6 +250,14 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       </SidebarField>
 
       <div className="mb-2 mt-6">
+        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Lieu</p>
+      </div>
+
+      <SidebarField label="Adresse">
+        <SidebarInput value={form.address} onChange={(v) => set('address', v)} placeholder="Adresse de l'evenement" />
+      </SidebarField>
+
+      <div className="mb-2 mt-6">
         <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Tarification</p>
       </div>
 
@@ -258,6 +274,16 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
           />
         </SidebarField>
       )}
+
+      <SidebarField label="Nombre de places max">
+        <SidebarInput
+          value={form.max_capacity}
+          onChange={(v) => set('max_capacity', v)}
+          type="number"
+          min={1}
+          placeholder="Illimite si vide"
+        />
+      </SidebarField>
 
       <div className="mb-2 mt-6">
         <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Mise en avant</p>
