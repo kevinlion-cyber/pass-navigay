@@ -77,27 +77,29 @@ export default function Header() {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1 mx-6">
-          {NAV_TABS.map(({ path, label }) => {
-            const isActive = location.pathname.startsWith(path);
-            return (
-              <Link
-                key={path}
-                to={path}
-                className={`relative px-4 py-4 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-primary'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                {label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        {isMainPage && (
+          <nav className="hidden md:flex items-center gap-1 mx-6">
+            {NAV_TABS.map(({ path, label }) => {
+              const isActive = location.pathname.startsWith(path);
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`relative px-4 py-4 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-primary'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
 
         <div className="flex items-center gap-2 shrink-0">
           <button
