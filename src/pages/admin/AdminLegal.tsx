@@ -67,9 +67,9 @@ export default function AdminLegal() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-white">Contenu légal</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Contenu légal</h1>
 
-      <div className="flex items-center gap-1 border-b border-dark-border overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-light-border dark:border-dark-border overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}

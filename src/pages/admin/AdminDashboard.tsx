@@ -12,6 +12,8 @@ interface Stats {
   activePromos: number;
   newThisWeek: number;
   estimatedRevenue: number;
+  paidPremium: number;
+  paidPro: number;
 }
 
 interface ChartPoint {
@@ -49,7 +51,7 @@ export default function AdminDashboard() {
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [membersRes, premiumRes, verifiedRes, estRes, eventsRes, promosRes, chartRes, weekRes, rmRes, reRes] = await Promise.all([
+        const [membersRes, premiumRes, verifiedRes, estRes, eventsRes, promosRes, chartRes, weekRes, rmRes, reRes, premiumBillingRes, proBillingRes] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true),
           supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_verified', true),
@@ -60,10 +62,22 @@ export default function AdminDashboard() {
           supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
           supabase.from('profiles').select('id, username, avatar_url, created_at').order('created_at', { ascending: false }).limit(5),
           supabase.from('establishments').select('id, name, category, is_pro, is_sponsor, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('profiles').select('premium_billing_interval').eq('is_premium', true).not('stripe_customer_id', 'is', null),
+          supabase.from('establishments').select('pro_billing_interval').eq('is_pro', true).not('stripe_customer_id', 'is', null),
         ]);
 
         const estData = estRes.data || [];
         const proCount = estData.filter((e: any) => e.is_pro).length;
+
+        const premiumBilling = premiumBillingRes.data || [];
+        const premiumMonthly = premiumBilling.filter((p: any) => p.premium_billing_interval === 'monthly').length;
+        const premiumYearly = premiumBilling.length - premiumMonthly;
+
+        const proBilling = proBillingRes.data || [];
+        const proMonthly = proBilling.filter((p: any) => p.pro_billing_interval === 'monthly').length;
+        const proYearly = proBilling.length - proMonthly;
+
+        const estimatedRevenue = (premiumYearly * 69) + (premiumMonthly * 7.9 * 12) + (proYearly * 690) + (proMonthly * 69 * 12);
 
         setStats({
           members: membersRes.count ?? 0,
@@ -77,7 +91,9 @@ export default function AdminDashboard() {
           upcomingEvents: eventsRes.count ?? 0,
           activePromos: promosRes.count ?? 0,
           newThisWeek: weekRes.count ?? 0,
-          estimatedRevenue: (premiumRes.count ?? 0) * 69 + proCount * 690,
+          estimatedRevenue: Math.round(estimatedRevenue),
+          paidPremium: premiumBilling.length,
+          paidPro: proBilling.length,
         });
 
         const grouped: Record<string, number> = {};
@@ -129,13 +145,13 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-white">Tableau de bord</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Tableau de bord</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={Users} label="Membres inscrits" value={String(stats?.members ?? 0)} sub={`+${stats?.newThisWeek ?? 0} cette semaine`} />
         <MetricCard icon={Crown} label="Membres Premium" value={String(stats?.premiumMembers ?? 0)} sub={`${conversionRate}% de conversion`} />
         <MetricCard icon={ShieldCheck} label="Comptes verifies" value={String(stats?.verifiedMembers ?? 0)} />
-        <MetricCard icon={DollarSign} label="Revenu annuel estime" value={`${stats?.estimatedRevenue ?? 0} EUR`} sub={`${stats?.premiumMembers ?? 0} Premium x 69 + ${stats?.establishments.pro ?? 0} Pro x 690`} />
+        <MetricCard icon={DollarSign} label="Revenu annuel estime" value={`${stats?.estimatedRevenue ?? 0} EUR`} sub={`${stats?.paidPremium ?? 0} Premium + ${stats?.paidPro ?? 0} Pro abonnes`} />
         <MetricCard
           icon={Building2}
           label="Etablissements"
@@ -147,8 +163,8 @@ export default function AdminDashboard() {
         <MetricCard icon={TrendingUp} label="Nouveaux (7j)" value={String(stats?.newThisWeek ?? 0)} />
       </div>
 
-      <div className="bg-dark-surface border border-dark-border rounded-card p-6">
-        <h2 className="text-sm font-semibold text-white mb-4">Inscriptions (30 derniers jours)</h2>
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Inscriptions (30 derniers jours)</h2>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chart}>
@@ -170,8 +186,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-dark-surface border border-dark-border rounded-card p-6">
-          <h2 className="text-sm font-semibold text-white mb-4">Derniers membres inscrits</h2>
+        <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Derniers membres inscrits</h2>
           <div className="space-y-3">
             {recentMembers.map((m) => (
               <div key={m.id} className="flex items-center gap-3">
@@ -183,7 +199,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{m.username}</p>
+                  <p className="text-sm text-gray-900 dark:text-white truncate">{m.username}</p>
                   <p className="text-xs text-gray-500">{daysAgo(m.created_at)}</p>
                 </div>
               </div>
@@ -191,13 +207,13 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-dark-surface border border-dark-border rounded-card p-6">
-          <h2 className="text-sm font-semibold text-white mb-4">Derniers etablissements</h2>
+        <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Derniers etablissements</h2>
           <div className="space-y-3">
             {recentEstablishments.map((e) => (
               <div key={e.id} className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{e.name}</p>
+                  <p className="text-sm text-gray-900 dark:text-white truncate">{e.name}</p>
                   <p className="text-xs text-gray-500">{e.category} · {daysAgo(e.created_at)}</p>
                 </div>
                 {statusBadge(e)}
@@ -212,14 +228,14 @@ export default function AdminDashboard() {
 
 function MetricCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+    <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-9 h-9 rounded-input bg-primary/10 flex items-center justify-center">
           <Icon size={18} className="text-primary" />
         </div>
         <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
       {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   );

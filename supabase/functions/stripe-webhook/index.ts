@@ -57,9 +57,22 @@ Deno.serve(async (req: Request) => {
       const subscriptionId = session.subscription as string;
       const customerId = session.customer as string;
 
+      let billingInterval = "yearly";
+      if (subscriptionId) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
+          const interval = sub.items.data[0]?.price?.recurring?.interval;
+          billingInterval = interval === "month" ? "monthly" : "yearly";
+        } catch { /* fallback to yearly */ }
+      }
+
       if (establishmentId) {
         const expiresAt = new Date();
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        if (billingInterval === "monthly") {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        } else {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        }
         await supabase
           .from("establishments")
           .update({
@@ -67,17 +80,23 @@ Deno.serve(async (req: Request) => {
             pro_expires_at: expiresAt.toISOString(),
             stripe_subscription_id: subscriptionId,
             stripe_customer_id: customerId,
+            pro_billing_interval: billingInterval,
           })
           .eq("id", establishmentId);
       } else if (userId) {
         const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        if (billingInterval === "monthly") {
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+        } else {
+          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        }
         await supabase
           .from("profiles")
           .update({
             is_premium: true,
             premium_expires_at: expiresAt.toISOString(),
             stripe_customer_id: customerId,
+            premium_billing_interval: billingInterval,
           })
           .eq("id", userId);
       }

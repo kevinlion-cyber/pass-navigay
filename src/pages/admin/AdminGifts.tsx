@@ -102,7 +102,7 @@ export default function AdminGifts() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Gift size={22} className="text-[#c084f5]" />
-        <h1 className="text-xl font-bold text-white">Cadeaux offerts</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Cadeaux offerts</h1>
         <span className="text-sm text-gray-500">{gifts.length} au total</span>
       </div>
 
@@ -110,7 +110,7 @@ export default function AdminGifts() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as any)}
-          className="input-field bg-dark-surface border-dark-border text-white text-sm w-auto py-2"
+          className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2"
         >
           <option value="all">Tous</option>
           <option value="premium">Premium utilisateur</option>
@@ -129,7 +129,7 @@ export default function AdminGifts() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-dark-border">
+                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Type</th>
                   <th className="py-3 px-3">Destinataire</th>
                   <th className="py-3 px-3">Duree offerte</th>
@@ -143,7 +143,7 @@ export default function AdminGifts() {
                 {gifts.map((g) => {
                   const isActive = new Date(g.new_expiry) > now;
                   return (
-                    <tr key={g.id} className="border-b border-dark-border/50 hover:bg-dark-surface/50">
+                    <tr key={g.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
                         {g.gift_type === 'premium' ? (
                           <span
@@ -172,7 +172,7 @@ export default function AdminGifts() {
                           {g.recipient_name}
                         </button>
                       </td>
-                      <td className="py-2.5 px-3 text-white text-[13px]">{g.days_added} jours</td>
+                      <td className="py-2.5 px-3 text-gray-900 dark:text-white text-[13px]">{g.days_added} jours</td>
                       <td className="py-2.5 px-3 text-[13px] text-gray-300">{formatDateFr(g.new_expiry)}</td>
                       <td className="py-2.5 px-3">
                         {isActive ? (
@@ -206,7 +206,7 @@ export default function AdminGifts() {
             {gifts.map((g) => {
               const isActive = new Date(g.new_expiry) > now;
               return (
-                <div key={g.id} className="bg-dark-surface border border-dark-border rounded-card p-4 space-y-2">
+                <div key={g.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {g.gift_type === 'premium' ? (
@@ -249,7 +249,7 @@ export default function AdminGifts() {
                     >
                       {g.recipient_name}
                     </button>
-                    <span className="text-[13px] text-white">{g.days_added} jours</span>
+                    <span className="text-[13px] text-gray-900 dark:text-white">{g.days_added} jours</span>
                   </div>
                   <p className="text-[12px] text-gray-400">Valable jusqu'au {formatDateFr(g.new_expiry)}</p>
                   {g.note && <p className="text-[11px] text-gray-500 italic">{g.note}</p>}

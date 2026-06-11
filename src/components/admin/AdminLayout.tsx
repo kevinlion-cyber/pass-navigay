@@ -44,7 +44,7 @@ export default function AdminLayout() {
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <span className="text-lg font-bold">
-          <span className="text-white">Pass</span>
+          <span className="text-gray-900 dark:text-white">Pass</span>
           <span style={{ color: '#7B2D8B' }}> Navigay</span>
           <span className="text-gray-500 font-normal"> · Admin</span>
         </span>

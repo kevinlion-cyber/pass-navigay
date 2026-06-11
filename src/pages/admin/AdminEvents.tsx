@@ -61,26 +61,26 @@ export default function AdminEvents() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Evenements</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Evenements</h1>
         <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
           <Plus size={16} /> Creer un evenement
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <select value={estFilter} onChange={(e) => setEstFilter(e.target.value)} className="input-field bg-dark-surface border-dark-border text-white text-sm w-auto py-2">
+        <select value={estFilter} onChange={(e) => setEstFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
           <option value="all">Tous les etablissements</option>
           {establishments.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
-        <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="input-field bg-dark-surface border-dark-border text-white text-sm w-auto py-2">
+        <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
           <option value="all">Tous les prix</option>
           <option value="free">Gratuit</option>
           <option value="paid">Payant</option>
         </select>
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-dark-surface border-dark-border text-white text-sm pl-9 py-2" />
-          {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"><X size={14} /></button>}
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
+          {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>}
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function AdminEvents() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-dark-border">
+                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Image</th>
                   <th className="py-3 px-3">Titre</th>
                   <th className="py-3 px-3">Etablissement</th>
@@ -106,13 +106,13 @@ export default function AdminEvents() {
                 {events.map((ev) => {
                   const est = ev.establishment as any;
                   return (
-                    <tr key={ev.id} className="border-b border-dark-border/50 hover:bg-dark-surface/50">
+                    <tr key={ev.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
                         <div className="w-10 h-10 rounded bg-dark-border overflow-hidden">
                           {ev.image_url ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-white font-medium">{ev.title}</td>
+                      <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{ev.title}</td>
                       <td className="py-2.5 px-3">
                         {est?.name ? (
                           <a href={`/establishment/${est.id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">{est.name}</a>
@@ -122,8 +122,8 @@ export default function AdminEvents() {
                       <td className="py-2.5 px-3 text-gray-400">{ev.is_free ? <span className="badge-free text-xs">Gratuit</span> : `${ev.price} EUR`}</td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setEditId(ev.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-white transition-colors"><Pencil size={15} /></button>
-                          <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                          <button onClick={() => setEditId(ev.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"><Pencil size={15} /></button>
+                          <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                           <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                         </div>
                       </td>
@@ -138,13 +138,13 @@ export default function AdminEvents() {
             {events.map((ev) => {
               const est = ev.establishment as any;
               return (
-                <div key={ev.id} className="bg-dark-surface border border-dark-border rounded-card p-4 space-y-3">
+                <div key={ev.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded bg-dark-border overflow-hidden shrink-0">
                       {ev.image_url ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{ev.title}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ev.title}</p>
                       <p className="text-xs text-gray-500">{est?.name} · {formatDate(ev.event_date)}</p>
                     </div>
                   </div>
@@ -153,8 +153,8 @@ export default function AdminEvents() {
                       {ev.is_free ? <span className="badge-free text-xs">Gratuit</span> : <span className="text-xs text-gray-400">{ev.price} EUR</span>}
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => setEditId(ev.id)} className="p-1.5 text-gray-500 hover:text-white"><Pencil size={15} /></button>
-                      <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                      <button onClick={() => setEditId(ev.id)} className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><Pencil size={15} /></button>
+                      <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                       <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                     </div>
                   </div>

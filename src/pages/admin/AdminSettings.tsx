@@ -65,7 +65,7 @@ export default function AdminSettings() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-xl font-bold text-white">Parametres</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Parametres</h1>
 
       <div className="space-y-5">
         <div>
@@ -74,7 +74,7 @@ export default function AdminSettings() {
             value={settings.disclaimer_text}
             onChange={(e) => setSettings({ ...settings, disclaimer_text: e.target.value })}
             rows={4}
-            className="input-field bg-dark-surface border-dark-border text-white resize-none"
+            className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none"
           />
         </div>
 
@@ -83,7 +83,7 @@ export default function AdminSettings() {
           <input
             value={settings.onboarding_title}
             onChange={(e) => setSettings({ ...settings, onboarding_title: e.target.value })}
-            className="input-field bg-dark-surface border-dark-border text-white"
+            className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white"
           />
         </div>
 
@@ -93,13 +93,13 @@ export default function AdminSettings() {
             value={settings.onboarding_text}
             onChange={(e) => setSettings({ ...settings, onboarding_text: e.target.value })}
             rows={3}
-            className="input-field bg-dark-surface border-dark-border text-white resize-none"
+            className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none"
           />
         </div>
 
-        <div className="flex items-center justify-between bg-dark-surface border border-dark-border rounded-card p-4">
+        <div className="flex items-center justify-between bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
           <div>
-            <p className="text-sm font-medium text-white">Mode maintenance</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Mode maintenance</p>
             <p className="text-xs text-gray-500 mt-0.5">Les utilisateurs verront un message de maintenance.</p>
           </div>
           <button

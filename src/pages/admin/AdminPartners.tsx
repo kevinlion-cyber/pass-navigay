@@ -129,15 +129,15 @@ export default function AdminPartners() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Partenaires</h1>
-        <button onClick={exportCSV} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors border border-dark-border rounded-input px-3 py-2">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Partenaires</h1>
+        <button onClick={exportCSV} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors border border-light-border dark:border-dark-border rounded-input px-3 py-2">
           <Download size={15} /> Export CSV
         </button>
       </div>
 
-      <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
         <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu annuel estime</p>
-        <p className="text-2xl font-bold text-white">{estimatedRevenue} EUR</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-white">{estimatedRevenue} EUR</p>
         <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 690 EUR/an</p>
       </div>
 
@@ -148,7 +148,7 @@ export default function AdminPartners() {
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-dark-border">
+                <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Etablissement</th>
                   <th className="py-3 px-3">Proprietaire</th>
                   <th className="py-3 px-3">Statut</th>
@@ -159,15 +159,15 @@ export default function AdminPartners() {
               </thead>
               <tbody>
                 {partners.map((p) => (
-                  <tr key={p.id} className="border-b border-dark-border/50 hover:bg-dark-surface/50">
-                    <td className="py-2.5 px-3 text-white font-medium">{p.name}</td>
+                  <tr key={p.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
+                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{p.name}</td>
                     <td className="py-2.5 px-3 text-gray-400">{p.owner_username}</td>
                     <td className="py-2.5 px-3">{p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}</td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{p.is_pro ? formatDate(p.pro_expires_at) : '-'}</td>
                     <td className="py-2.5 px-3 text-gray-400">{p.is_pro ? '690 EUR/an' : '0 EUR'}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-1">
-                        <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                        <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                         {!p.is_pro && <button onClick={() => activatePro(p.id)} title="Activer Pro" className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
                         <button onClick={() => { setGiftTarget(p); setGiftMonths(1); }} title="Offrir des mois" className="p-1.5 text-gray-500 hover:text-amber-400"><Gift size={15} /></button>
                         <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
@@ -181,15 +181,15 @@ export default function AdminPartners() {
 
           <div className="md:hidden space-y-3">
             {partners.map((p) => (
-              <div key={p.id} className="bg-dark-surface border border-dark-border rounded-card p-4 space-y-2">
+              <div key={p.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-white">{p.name}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
                   {p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}
                 </div>
                 <p className="text-xs text-gray-500">Proprietaire : {p.owner_username}</p>
                 {p.is_pro && <p className="text-xs text-gray-500">Expiration : {formatDate(p.pro_expires_at)}</p>}
                 <div className="flex items-center justify-end gap-1">
-                  <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-white"><ExternalLink size={15} /></a>
+                  <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                   {!p.is_pro && <button onClick={() => activatePro(p.id)} className="p-1.5 text-gray-500 hover:text-primary"><Crown size={15} /></button>}
                   <button onClick={() => { setGiftTarget(p); setGiftMonths(1); }} className="p-1.5 text-gray-500 hover:text-amber-400"><Gift size={15} /></button>
                   <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
@@ -213,9 +213,9 @@ export default function AdminPartners() {
       {giftTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setGiftTarget(null)} />
-          <div className="relative bg-dark-surface border border-dark-border rounded-card p-6 w-full max-w-sm space-y-4">
-            <h2 className="text-lg font-bold text-white">Offrir des mois Pro</h2>
-            <p className="text-sm text-gray-400">Etablissement : <span className="text-white">{giftTarget.name}</span></p>
+          <div className="relative bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Offrir des mois Pro</h2>
+            <p className="text-sm text-gray-400">Etablissement : <span className="text-gray-900 dark:text-white">{giftTarget.name}</span></p>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Nombre de mois</label>
               <input
@@ -224,11 +224,11 @@ export default function AdminPartners() {
                 max={24}
                 value={giftMonths}
                 onChange={(e) => setGiftMonths(Math.max(1, parseInt(e.target.value) || 1))}
-                className="input-field bg-dark-bg border-dark-border text-white w-32"
+                className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white w-32"
               />
             </div>
             <div className="flex items-center gap-3 pt-2">
-              <button onClick={() => setGiftTarget(null)} className="flex-1 py-2.5 rounded-input border border-dark-border text-gray-400 hover:text-white text-sm font-medium transition-colors">Annuler</button>
+              <button onClick={() => setGiftTarget(null)} className="flex-1 py-2.5 rounded-input border border-light-border dark:border-dark-border text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors">Annuler</button>
               <button onClick={handleGiftMonths} disabled={gifting} className="flex-1 btn-primary text-sm py-2.5">{gifting ? 'En cours...' : 'Offrir'}</button>
             </div>
           </div>

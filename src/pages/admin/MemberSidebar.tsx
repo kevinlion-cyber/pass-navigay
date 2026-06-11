@@ -159,8 +159,8 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
             <div className="flex-1 overflow-y-auto">
               <div style={{ background: '#14141e', borderBottom: '1px solid #1e1e2e' }} className="px-6 py-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-semibold text-white">Profil du membre</span>
-                  <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+                  <span className="text-[14px] font-semibold text-gray-900 dark:text-white">Profil du membre</span>
+                  <button onClick={onClose} className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <X size={18} />
                   </button>
                 </div>
@@ -175,7 +175,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
                     )}
                   </div>
                   <div>
-                    <p className="text-[20px] font-bold text-white">{profile.username}</p>
+                    <p className="text-[20px] font-bold text-gray-900 dark:text-white">{profile.username}</p>
                     {profile.is_premium ? (
                       <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: 'rgba(212,160,23,0.15)', color: '#d4a017', border: '1px solid rgba(212,160,23,0.3)' }}>
                         Premium
@@ -212,7 +212,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
                     <p className="text-[11px] text-gray-500">Messages</p>
                   </div>
                   <div className="text-center rounded-lg p-3" style={{ background: '#1a1a24' }}>
-                    <p className="text-[14px] font-bold text-white">{formatRelativeDate(profile.last_active_at)}</p>
+                    <p className="text-[14px] font-bold text-gray-900 dark:text-white">{formatRelativeDate(profile.last_active_at)}</p>
                     <p className="text-[11px] text-gray-500">Activité</p>
                   </div>
                 </div>
@@ -261,7 +261,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
                           )}
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold text-white">{fav.establishments?.name || 'Inconnu'}</p>
+                          <p className="text-[13px] font-semibold text-gray-900 dark:text-white">{fav.establishments?.name || 'Inconnu'}</p>
                           <p className="text-[11px] text-[#c084f5]">{fav.establishments?.category}</p>
                         </div>
                       </div>
