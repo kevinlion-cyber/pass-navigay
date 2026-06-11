@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const PRO_YEARLY_PRICE_ID = "price_1Th1ix18e2LOhPJqyeE1nmX1";
-const MONTHLY_AMOUNT = 6900; // 69€ in cents
+const MONTHLY_AMOUNT = 6900;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -41,15 +41,25 @@ Deno.serve(async (req: Request) => {
     let priceId = PRO_YEARLY_PRICE_ID;
 
     if (billingInterval === "monthly") {
-      // Get the product from the yearly price
-      const yearlyPrice = await stripe.prices.retrieve(PRO_YEARLY_PRICE_ID);
-      const productId = typeof yearlyPrice.product === "string"
-        ? yearlyPrice.product
-        : (yearlyPrice.product as Stripe.Product).id;
+      // Look for an existing "Pass Pro Mensuel" product
+      const products = await stripe.products.search({
+        query: "name:'Pass Pro Mensuel'",
+      });
 
-      // Find existing monthly price or create one
+      let monthlyProductId: string;
+
+      if (products.data.length > 0 && products.data[0].active) {
+        monthlyProductId = products.data[0].id;
+      } else {
+        const newProduct = await stripe.products.create({
+          name: "Pass Pro Mensuel",
+        });
+        monthlyProductId = newProduct.id;
+      }
+
+      // Find existing monthly price on that product
       const existingPrices = await stripe.prices.list({
-        product: productId,
+        product: monthlyProductId,
         active: true,
         type: "recurring",
       });
@@ -62,7 +72,7 @@ Deno.serve(async (req: Request) => {
         priceId = monthlyPrice.id;
       } else {
         const newPrice = await stripe.prices.create({
-          product: productId,
+          product: monthlyProductId,
           currency: "eur",
           unit_amount: MONTHLY_AMOUNT,
           recurring: { interval: "month" },
