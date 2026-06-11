@@ -25,7 +25,8 @@ Deno.serve(async (req: Request) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    const { establishmentId, email, establishmentName, billingInterval } = await req.json();
+    const body = await req.json();
+    const { establishmentId, email, billingInterval } = body;
 
     if (!email || !establishmentId) {
       return new Response(
@@ -36,20 +37,22 @@ Deno.serve(async (req: Request) => {
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
 
-    let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+    let lineItems;
 
     if (billingInterval === "monthly") {
-      // Retrieve the product from the yearly price to create a monthly price_data
+      // Get the product ID from the yearly price
       const yearlyPrice = await stripe.prices.retrieve(YEARLY_PRICE_ID);
-      const productId = yearlyPrice.product as string;
+      const productId = typeof yearlyPrice.product === "string"
+        ? yearlyPrice.product
+        : yearlyPrice.product.id;
 
       lineItems = [
         {
           price_data: {
             currency: "eur",
             product: productId,
-            recurring: { interval: "month" },
-            unit_amount: 6900, // 69€
+            recurring: { interval: "month" as const },
+            unit_amount: 6900,
           },
           quantity: 1,
         },
@@ -78,6 +81,7 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("create-pro-checkout error:", err);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
