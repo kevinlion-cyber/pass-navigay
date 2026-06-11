@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin, Zap, Music, Quote } from 'lucide-react';
+import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin, Zap, Music, Quote, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Profile, ProfileVisibility, Establishment } from '../lib/types';
@@ -176,6 +176,12 @@ export default function ProfilePublic() {
           <div className="mt-4">
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-2xl font-bold text-white">{firstName}</h1>
+              {(profile as any).is_verified && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck size={11} />
+                  Verifie
+                </span>
+              )}
               {profile.is_premium && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-[11px] font-semibold text-amber-400 border border-amber-500/20">
                   <Crown size={11} />

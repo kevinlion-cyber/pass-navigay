@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Check, X, Crown, Save, Loader2, Pencil } from 'lucide-react';
+import { Camera, Check, X, Crown, Save, Loader2, Pencil, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -193,6 +193,12 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
               {profile.prenom || profile.username}
             </h1>
+            {(profile as any).is_verified && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <ShieldCheck size={12} />
+                Verifie
+              </span>
+            )}
             {profile.is_premium && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                 <Crown size={12} />
