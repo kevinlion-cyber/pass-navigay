@@ -193,8 +193,8 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: '#0a0a0f' }}>
-      <div className="flex items-center justify-between px-4 py-3 shrink-0">
+    <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: '#0a0a0f' }}>
+      <div className="flex items-center justify-between px-4 h-14 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#7B2D8B' }}>
             <span className="text-white text-xs font-bold">P</span>
