@@ -71,10 +71,7 @@ export default function Header() {
             </button>
           )}
           <Link to="/explore" className="flex items-center">
-            <span className="text-lg font-bold leading-none">
-              <span className="text-gray-900 dark:text-white">Pass</span>
-              <span style={{ color: '#7B2D8B' }}> Navigay</span>
-            </span>
+            <img src="/logo-pass-navigay.png" alt="Pass Navigay" className="h-9" />
           </Link>
         </div>
 
