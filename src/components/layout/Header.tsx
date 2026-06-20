@@ -71,7 +71,7 @@ export default function Header() {
             </button>
           )}
           <Link to="/explore" className="flex items-center">
-            <img src="/logo-pass-navigay.png" alt="Pass Navigay" className="h-9" />
+            <img src="/logo-pass-navigay.png" alt="Pass Navigay" className="h-12" />
           </Link>
         </div>
 

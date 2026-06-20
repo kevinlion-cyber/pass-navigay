@@ -8,7 +8,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | A1 | Icône + nom de l'app (logo au lieu de « PN ») à l'installation sur mobile (PWA) | ⬜ |
-| A2 | Logo plus gros dans l'app | ⬜ |
+| A2 | Logo plus gros dans l'app | ✅ logo header agrandi (h-9 → h-12) |
 
 ## B. Accès & inscription
 | # | Demande | Statut |
@@ -27,7 +27,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | D1 | Mode clair : corriger les textes peu lisibles (contraste) | ⬜ |
-| D2 | Proposer le choix sombre/clair aussi sur Admin et Pro | ⬜ |
+| D2 | Proposer le choix sombre/clair aussi sur Admin et Pro | 🟡 Admin = déjà OK (toggle + theme-aware). Pro = l'espace partenaire est codé en dur en sombre (couleurs hex inline) → vrai mode clair = re-style complet (chantier dédié). |
 
 ## E. Carte / Explore
 | # | Demande | Statut |
