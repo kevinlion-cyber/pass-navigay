@@ -56,6 +56,7 @@ export interface Profile {
   questionnaire_completed: boolean;
   profile_visibility: ProfileVisibility;
   city: string | null;
+  account_type: string;
 }
 
 export interface Establishment {

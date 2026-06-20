@@ -15,7 +15,7 @@ _Dernière mise à jour : 2026-06-20._
 |---|---------|--------|
 | B1 | Bloquer l'accès au site sans connexion : écran connexion / création de compte avant d'entrer dans l'app | ❌ NON RETENU (décision Fred 2026-06-20 : on garde « explorer sans compte ») |
 | B2 | Inscription : proposer le choix Gratuit / Mensuel / Annuel | ⬜ |
-| B3 | Créer un compte Pro ne doit PAS créer un membre automatiquement | ⬜ |
+| B3 | Créer un compte Pro ne doit PAS créer un membre automatiquement | ✅ profils marqués `account_type='pro'` à l'inscription pro → exclus de l'annuaire Membres (migration 34) |
 
 ## C. Tarifs & contenu Premium
 | # | Demande | Statut |
@@ -67,9 +67,9 @@ _Dernière mise à jour : 2026-06-20._
 ## K. Espace Pro (partenaire)
 | # | Demande | Statut |
 |---|---------|--------|
-| K1 | Dashboard Pro : KPI « Promos utilisées » + nb d'utilisations des promotions | ⬜ |
-| K2 | Gestion des avis côté partenaire : voir et répondre aux avis | ⬜ |
-| K3 | Remplacer la photo principale / bandeau par un **placeholder** (garder la galerie). (décision Fred 2026-06-20) | ⬜ |
+| K1 | Dashboard Pro : KPI « Promos utilisées » + nb d'utilisations des promotions | ✅ carte « Promos utilisées » (total des validations) ajoutée au dashboard Pro |
+| K2 | Gestion des avis côté partenaire : voir et répondre aux avis | ⬜ (feature à part — colonne reply + page partenaire) |
+| K3 | Remplacer la photo principale / bandeau par un **placeholder** (garder la galerie). (décision Fred 2026-06-20) | ✅ fiche établissement affiche toujours le placeholder (bandeau perso retiré) |
 | K4 | Ajouter un **toggle** style « Même adresse que mon établissement » (capture) — périmètre exact à reconfirmer avec Kevin | ❓ Fred : « un truc du genre » |
 
 ## L. Admin
@@ -78,7 +78,7 @@ _Dernière mise à jour : 2026-06-20._
 | L1 | Tableau de bord : Membres inscrits / Premium / promos actives / promos utilisées ; Établissements inscrits / Premium / Événements à venir / taux de conversion | ⬜ |
 | L2 | Admin peut gérer lui-même les filtres & catégories de pros (sur l'app et l'admin) | ⬜ |
 | L3 | Paramètres admin / changer le mot de passe | ⚠️ Note : l'accès admin est désormais un vrai compte Supabase (`is_admin`), il n'y a plus de mot de passe `admin2025`. À expliquer à Kevin. |
-| L4 | Offrir une période Pro depuis l'admin (Kevin dit ne pas l'avoir) | ⬜ (à vérifier : le bouton existe peut-être déjà) |
+| L4 | Offrir une période Pro depuis l'admin (Kevin dit ne pas l'avoir) | ✅ existe déjà : Admin → Établissements → ✏️ Modifier → bouton « Offrir une période Pro ». (à montrer à Kevin) |
 
 ## M. Filtre Ville transversal
 | # | Demande | Statut |

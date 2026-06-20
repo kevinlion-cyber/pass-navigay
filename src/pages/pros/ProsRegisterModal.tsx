@@ -75,6 +75,9 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       await supabase.from('profiles').upsert({
         id: userId,
         username: `${step1.prenom} ${step1.nom}`,
+        prenom: step1.prenom,
+        nom: step1.nom,
+        account_type: 'pro',
       });
 
       setLoaderStep(1);

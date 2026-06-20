@@ -17,6 +17,7 @@ interface DashboardData {
   pastEventsThisMonth: number;
   activePromos: number;
   expiredPromos: number;
+  promoUses: number;
   views: number;
   recentEvents: Event[];
   recentPromos: Promotion[];
@@ -31,6 +32,7 @@ export default function PartnerDashboard() {
     pastEventsThisMonth: 0,
     activePromos: 0,
     expiredPromos: 0,
+    promoUses: 0,
     views: 0,
     recentEvents: [],
     recentPromos: [],
@@ -59,11 +61,24 @@ export default function PartnerDashboard() {
             .order('valid_until', { ascending: true }).limit(3),
         ]);
 
+        // Nombre total d'utilisations des promotions de l'établissement
+        const { data: promoIdRows } = await supabase
+          .from('promotions').select('id').eq('establishment_id', establishment.id);
+        const promoIdList = (promoIdRows || []).map((r: { id: string }) => r.id);
+        let promoUses = 0;
+        if (promoIdList.length) {
+          const { count } = await supabase
+            .from('promotion_uses').select('*', { count: 'exact', head: true })
+            .in('promotion_id', promoIdList);
+          promoUses = count ?? 0;
+        }
+
         setData({
           activeEvents: evActiveRes.count ?? 0,
           pastEventsThisMonth: evPastRes.count ?? 0,
           activePromos: prActiveRes.count ?? 0,
           expiredPromos: prExpiredRes.count ?? 0,
+          promoUses,
           views: 0,
           recentEvents: (evRecentRes.data as Event[]) || [],
           recentPromos: (prRecentRes.data as Promotion[]) || [],
@@ -115,12 +130,12 @@ export default function PartnerDashboard() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-32 rounded-card" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-32 rounded-card" />)}
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Abonnement */}
             <div className="rounded-card p-5"
               style={establishment.is_pro
@@ -214,6 +229,19 @@ export default function PartnerDashboard() {
                   + Créer une promo <ArrowRight size={12} className="inline ml-0.5" />
                 </button>
               )}
+            </div>
+
+            {/* Promos utilisées */}
+            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-input flex items-center justify-center"
+                  style={{ background: 'rgba(26,122,58,0.12)' }}>
+                  <TrendingUp size={18} style={{ color: '#1a7a3a' }} />
+                </div>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos utilisées</span>
+              </div>
+              <p className="text-lg font-bold text-white">{data.promoUses}</p>
+              <p className="text-xs text-gray-500 mt-1">total des validations</p>
             </div>
           </div>
 

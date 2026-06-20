@@ -39,7 +39,7 @@ export default function Members() {
   useEffect(() => {
     const load = async () => {
       const [profilesRes, favCountsRes] = await Promise.all([
-        supabase.from('public_profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('public_profiles').select('*').neq('account_type', 'pro').order('created_at', { ascending: false }),
         supabase.from('favorites').select('user_id'),
       ]);
 

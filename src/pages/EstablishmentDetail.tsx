@@ -220,16 +220,13 @@ export default function EstablishmentDetail() {
         </div>
       )}
 
-      {establishment.is_pro && establishment.banner_url ? (
-        <img src={establishment.banner_url} alt="" className="w-full h-48 md:h-64 object-cover" />
-      ) : (
-        <div className="w-full h-48 md:h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-border dark:to-dark-bg flex items-center justify-center">
-          <div className="text-center">
-            <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">{establishment.name}</p>
-          </div>
+      {/* Photo principale = placeholder (bandeau personnalisable retiré, cf. demande Kevin) */}
+      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-border dark:to-dark-bg flex items-center justify-center">
+        <div className="text-center">
+          <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+          <p className="text-sm text-gray-400 dark:text-gray-500">{establishment.name}</p>
         </div>
-      )}
+      </div>
 
       <div className="p-4 space-y-6">
         <div className="flex items-start justify-between gap-4">
