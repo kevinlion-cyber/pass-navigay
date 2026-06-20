@@ -23,6 +23,7 @@ export default function Promos() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<PromoTypeFilter>('all');
+  const [cityFilter, setCityFilter] = useState('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [usedPromoIds, setUsedPromoIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
@@ -60,8 +61,13 @@ export default function Promos() {
     loadUses();
   }, [user, isPremium, promos]);
 
+  const cities = Array.from(
+    new Set(promos.map((p) => (p.establishment as any)?.city).filter(Boolean))
+  ).sort() as string[];
+
   const filtered = promos.filter((p) => {
     if (typeFilter !== 'all' && p.promo_type !== typeFilter) return false;
+    if (cityFilter !== 'all' && (p.establishment as any)?.city !== cityFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchTitle = p.title.toLowerCase().includes(q);
@@ -136,6 +142,14 @@ export default function Promos() {
           options={PROMO_FILTERS}
           onChange={setTypeFilter}
         />
+        {cities.length > 0 && (
+          <FilterDropdown
+            label="Ville"
+            value={cityFilter}
+            options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
+            onChange={setCityFilter}
+          />
+        )}
       </div>
 
       {!isPremium && filtered.length > 0 && (

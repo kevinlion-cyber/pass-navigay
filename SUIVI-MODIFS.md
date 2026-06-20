@@ -40,18 +40,18 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | F1 | Bandeau « à ne pas manquer » : roulement (loop) de tous les événements, 4–5 cases en affichage PC, 0 impact mobile | ⬜ |
-| F2 | Onglet Événements : filtres Ville + Date (arrivée / départ) | ⬜ |
+| F2 | Onglet Événements : filtres Ville + Date (arrivée / départ) | ✅ filtres Ville + plage de dates ajoutés (app) |
 
 ## G. Promotions
 | # | Demande | Statut |
 |---|---------|--------|
-| G1 | Onglet Promotions : ajouter filtre Ville | ⬜ |
+| G1 | Onglet Promotions : ajouter filtre Ville | ✅ |
 
 ## H. Membres
 | # | Demande | Statut |
 |---|---------|--------|
 | H1 | Free user : flouter les données membres + message « réservé aux membres Premium » (comme les promos) | ⬜ |
-| H2 | Filtres recherche membres : par ville, par type (il/elle/iel…) | ⬜ |
+| H2 | Filtres recherche membres : par ville, par type (il/elle/iel…) | 🟡 Filtre **type/pronoms** fait. Filtre **Ville** = les profils n'ont pas de champ `city` → nécessite une colonne `city` sur profiles + champ dans les réglages profil (à faire). |
 
 ## I. Fiche établissement
 | # | Demande | Statut |
@@ -83,7 +83,7 @@ _Dernière mise à jour : 2026-06-20._
 ## M. Filtre Ville transversal
 | # | Demande | Statut |
 |---|---------|--------|
-| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin (chapeau de F2/G1/H2) | ⬜ |
+| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres = bloqué par l'absence de champ ville. Admin : reste à faire. |
 
 ## N. Légal
 | # | Demande | Statut |

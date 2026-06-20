@@ -26,6 +26,9 @@ export default function Events() {
   const [search, setSearch] = useState('');
   const [themeFilter, setThemeFilter] = useState('Tous');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  const [cityFilter, setCityFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,10 +46,17 @@ export default function Events() {
     load();
   }, []);
 
+  const cities = Array.from(
+    new Set(events.map((e) => (e.establishment as any)?.city).filter(Boolean))
+  ).sort() as string[];
+
   const filtered = events.filter((e) => {
     if (themeFilter !== 'Tous' && e.theme?.toLowerCase() !== themeFilter.toLowerCase()) return false;
     if (priceFilter === 'free' && !e.is_free) return false;
     if (priceFilter === 'paid' && e.is_free) return false;
+    if (cityFilter !== 'all' && (e.establishment as any)?.city !== cityFilter) return false;
+    if (dateFrom && new Date(e.event_date) < new Date(dateFrom)) return false;
+    if (dateTo && new Date(e.event_date) > new Date(`${dateTo}T23:59:59`)) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchTitle = e.title.toLowerCase().includes(q);
@@ -117,6 +127,31 @@ export default function Events() {
           ]}
           onChange={setPriceFilter}
         />
+        {cities.length > 0 && (
+          <FilterDropdown
+            label="Ville"
+            value={cityFilter}
+            options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
+            onChange={setCityFilter}
+          />
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Du
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Au
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
+        </label>
+        {(dateFrom || dateTo) && (
+          <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+            className="text-xs text-primary hover:underline">Réinitialiser les dates</button>
+        )}
       </div>
 
       {filtered.length === 0 ? (

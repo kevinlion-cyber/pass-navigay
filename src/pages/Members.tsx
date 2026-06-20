@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Users, Crown, Heart, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
+import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 interface MemberWithMeta extends Profile {
@@ -26,6 +27,7 @@ export default function Members() {
   const [members, setMembers] = useState<MemberWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [pronounsFilter, setPronounsFilter] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,7 +61,12 @@ export default function Members() {
     return m.username;
   };
 
+  const pronounsList = Array.from(
+    new Set(members.map((m) => m.pronouns).filter(Boolean))
+  ).sort() as string[];
+
   const filtered = members.filter((m) => {
+    if (pronounsFilter !== 'all' && m.pronouns !== pronounsFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     const name = displayName(m).toLowerCase();
@@ -80,23 +87,33 @@ export default function Members() {
         </p>
       </div>
 
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un membre..."
-          className="input-field pl-9 text-xs w-full"
-          style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X size={14} />
-          </button>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un membre..."
+            className="input-field pl-9 text-xs w-full"
+            style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        {pronounsList.length > 0 && (
+          <FilterDropdown
+            label="Pronoms"
+            value={pronounsFilter}
+            options={[{ value: 'all', label: 'Tous' }, ...pronounsList.map((p) => ({ value: p, label: p }))]}
+            onChange={setPronounsFilter}
+          />
         )}
       </div>
 
