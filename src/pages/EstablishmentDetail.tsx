@@ -320,18 +320,6 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {openingHours && Object.keys(openingHours).length > 0 && (
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Clock size={18} className="text-primary" />
-              Horaires d'ouverture
-            </h2>
-            <div className="card p-4">
-              <OpeningHoursDisplay hours={openingHours} />
-            </div>
-          </div>
-        )}
-
         {establishment.is_pro && photos.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Galerie</h2>
@@ -406,6 +394,18 @@ export default function EstablishmentDetail() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {openingHours && Object.keys(openingHours).length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Clock size={18} className="text-primary" />
+              Horaires d'ouverture
+            </h2>
+            <div className="card p-4">
+              <OpeningHoursDisplay hours={openingHours} />
             </div>
           </div>
         )}

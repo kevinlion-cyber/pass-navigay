@@ -50,13 +50,13 @@ _Dernière mise à jour : 2026-06-20._
 ## H. Membres
 | # | Demande | Statut |
 |---|---------|--------|
-| H1 | Free user : flouter les données membres + message « réservé aux membres Premium » (comme les promos) | ⬜ |
+| H1 | Free user : flouter les données membres + message « réservé aux membres Premium » (comme les promos) | ✅ liste membres floutée + overlay « Réservé aux membres Premium » + bouton Passer Premium pour les non-Premium |
 | H2 | Filtres recherche membres : par ville, par type (il/elle/iel…) | ✅ Filtre type/pronoms + filtre Ville (colonne `city` ajoutée aux profils + champ dans les réglages profil + vue publique mise à jour). |
 
 ## I. Fiche établissement
 | # | Demande | Statut |
 |---|---------|--------|
-| I1 | Horaires en bas de page (sous photos / événements / promotions) | ⬜ |
+| I1 | Horaires en bas de page (sous photos / événements / promotions) | ✅ bloc horaires déplacé sous événements + promotions (avant les avis) |
 | I2 | Bug avis : étoiles + note + bouclier | 🟡 Étoiles **fonctionnent** quand il y a des avis (22 avis en base, code+couleur OK) → le « pas d'étoiles » vient d'établissements SANS avis (ex. Paris 02 de Kevin). Bouclier **ajouté** à la carte de listing + calcul moyenne sécurité. ⚠️ `safety_rating` vide partout (personne n'a noté la sécurité) → bouclier ne s'affiche que quand des notes sécurité existent. À confirmer avec Kevin. |
 
 ## J. Page profil

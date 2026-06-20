@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Users, Crown, Heart, Clock } from 'lucide-react';
+import { Search, X, Users, Crown, Heart, Clock, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import type { Profile } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
 
 interface MemberWithMeta extends Profile {
   favorites_count: number;
@@ -29,7 +31,10 @@ export default function Members() {
   const [search, setSearch] = useState('');
   const [pronounsFilter, setPronounsFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const isPremium = profile?.is_premium === true;
 
   useEffect(() => {
     const load = async () => {
@@ -136,8 +141,12 @@ export default function Members() {
           <p className="text-gray-500 dark:text-gray-400">Aucun membre trouve</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {filtered.map((member) => (
+        <div className="relative">
+        <div
+          className={`grid grid-cols-2 gap-3 ${!isPremium ? 'pointer-events-none select-none' : ''}`}
+          style={!isPremium ? { filter: 'blur(5px)' } : undefined}
+        >
+          {(isPremium ? filtered : filtered.slice(0, 6)).map((member) => (
             <button
               key={member.id}
               onClick={() => navigate(`/profile/${member.id}`)}
@@ -216,7 +225,28 @@ export default function Members() {
             </button>
           ))}
         </div>
+        {!isPremium && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center space-y-3">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
+                <Lock size={24} style={{ color: '#7B2D8B' }} />
+              </div>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">Reserve aux membres Premium</p>
+              <button
+                onClick={() => setUpgradeOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#7B2D8B' }}
+              >
+                <Crown size={16} />
+                Passer Premium
+              </button>
+            </div>
+          </div>
+        )}
+        </div>
       )}
+
+      <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
   );
 }
