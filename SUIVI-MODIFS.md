@@ -39,7 +39,7 @@ _Dernière mise à jour : 2026-06-20._
 ## F. Événements
 | # | Demande | Statut |
 |---|---------|--------|
-| F1 | Bandeau « à ne pas manquer » : roulement (loop) de tous les événements, 4–5 cases en affichage PC, 0 impact mobile | ⬜ |
+| F1 | Bandeau « à ne pas manquer » : roulement (loop) de tous les événements, 4–5 cases en affichage PC, 0 impact mobile | ✅ bandeau montre tous les événements à venir (featured d'abord), auto‑défilement en boucle sur PC (pause au survol), cartes plus larges sur PC. **Bug corrigé** : le clic menait vers `/event/` (404) → `/events/`. |
 | F2 | Onglet Événements : filtres Ville + Date (arrivée / départ) | ✅ filtres Ville + plage de dates ajoutés (app) |
 
 ## G. Promotions

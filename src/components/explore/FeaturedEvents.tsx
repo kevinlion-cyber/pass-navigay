@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -7,20 +7,41 @@ import type { Event } from '../../lib/types';
 export default function FeaturedEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
+      const now = new Date().toISOString();
+      // Tous les événements à venir (les « featured » d'abord), pour le roulement.
       const { data } = await supabase
         .from('events')
         .select('*, establishment:establishments(name)')
-        .eq('is_featured', true)
-        .or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`)
-        .order('event_date')
-        .limit(10);
+        .or(`event_date.gte.${now},end_date.gte.${now}`)
+        .order('is_featured', { ascending: false })
+        .order('event_date', { ascending: true })
+        .limit(15);
       if (data) setEvents(data as unknown as Event[]);
     };
     load();
   }, []);
+
+  // Roulement automatique sur grand écran (PC) ; aucun impact sur mobile.
+  useEffect(() => {
+    if (events.length === 0) return;
+    if (!window.matchMedia('(min-width: 1024px)').matches) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const id = setInterval(() => {
+      if (pausedRef.current || !el) return;
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 8) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: 240, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [events]);
 
   if (events.length === 0) return null;
 
@@ -33,15 +54,18 @@ export default function FeaturedEvents() {
         </span>
       </div>
       <div
+        ref={scrollRef}
         className="flex gap-3 px-4 pb-3 overflow-x-auto"
         style={{ scrollbarWidth: 'none' }}
+        onMouseEnter={() => { pausedRef.current = true; }}
+        onMouseLeave={() => { pausedRef.current = false; }}
       >
         {events.map((event) => (
           <div
             key={event.id}
-            onClick={() => navigate(`/event/${event.id}`)}
-            className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group"
-            style={{ width: 200, height: 120 }}
+            onClick={() => navigate(`/events/${event.id}`)}
+            className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group w-[200px] lg:w-[230px]"
+            style={{ height: 120 }}
           >
             {event.image_url ? (
               <img
