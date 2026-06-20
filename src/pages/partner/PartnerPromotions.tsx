@@ -197,7 +197,7 @@ export default function PartnerPromotions() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Mes promotions</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes promotions</h1>
         <button onClick={openCreate} className="btn-primary text-sm py-2.5 px-5 flex items-center gap-2">
           <Plus size={16} /> Créer une promotion
         </button>
@@ -223,12 +223,12 @@ export default function PartnerPromotions() {
       {formOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={e => e.target === e.currentTarget && setFormOpen(false)}>
-          <div className="bg-dark-surface border border-dark-border rounded-card w-full max-w-[580px] max-h-[90vh] overflow-y-auto p-6 space-y-5">
+          <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-[580px] max-h-[90vh] overflow-y-auto p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editing ? 'Modifier la promotion' : 'Nouvelle promotion'}
               </h2>
-              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -245,7 +245,7 @@ export default function PartnerPromotions() {
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Titre de la promotion</label>
                 <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                   required placeholder="Happy Hour -50%, Cocktail offert, Entrée gratuite..."
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
 
               <div>
@@ -253,7 +253,7 @@ export default function PartnerPromotions() {
                 <textarea value={form.description}
                   onChange={e => { if (e.target.value.length <= 300) setForm({ ...form, description: e.target.value }); }}
                   rows={3} placeholder="Détaillez les conditions, les restrictions, comment bénéficier de l'offre..."
-                  className="input-field bg-dark-bg border-dark-border text-white resize-none" style={{ minHeight: 80 }} />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none" style={{ minHeight: 80 }} />
                 <p className="text-xs text-gray-600 text-right mt-1">{form.description.length}/300</p>
               </div>
 
@@ -269,7 +269,7 @@ export default function PartnerPromotions() {
                       className="flex-1 py-2.5 rounded-[8px] text-sm font-medium transition-colors"
                       style={form.promo_type === key
                         ? { background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#7B2D8B' }
-                        : { background: '#1a1a24', border: '1px solid #2a2a3a', color: '#a0a0b0' }
+                        : { background: '#1a1a24', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }
                       }>
                       {label}
                     </button>
@@ -280,7 +280,7 @@ export default function PartnerPromotions() {
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valeur (%)</label>
                     <input type="number" min={1} max={100} value={form.value || ''} placeholder="20"
                       onChange={e => setForm({ ...form, value: parseInt(e.target.value) || 0 })}
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 )}
                 {form.promo_type === 'fixed' && (
@@ -288,7 +288,7 @@ export default function PartnerPromotions() {
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Montant (&euro;)</label>
                     <input type="number" min={0.01} step="0.01" value={form.value || ''} placeholder="5"
                       onChange={e => setForm({ ...form, value: parseFloat(e.target.value) || 0 })}
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 )}
                 {form.promo_type === 'offer' && (
@@ -297,7 +297,7 @@ export default function PartnerPromotions() {
                     <input value={form.offer_text}
                       onChange={e => setForm({ ...form, offer_text: e.target.value })}
                       placeholder="1 cocktail offert pour 1 acheté"
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 )}
               </div>
@@ -315,13 +315,13 @@ export default function PartnerPromotions() {
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Valable à partir du</label>
                     <input type="datetime-local" value={form.valid_from}
                       onChange={e => setForm({ ...form, valid_from: e.target.value })}
-                      required className="input-field bg-dark-bg border-dark-border text-white" />
+                      required className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Jusqu'au</label>
                     <input type="datetime-local" value={form.valid_until}
                       onChange={e => setForm({ ...form, valid_until: e.target.value })}
-                      required className="input-field bg-dark-bg border-dark-border text-white" />
+                      required className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 </div>
               )}
@@ -332,7 +332,7 @@ export default function PartnerPromotions() {
                   Annuler
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: '#7B2D8B' }}>
                   {saving && <LoadingSpinner size={16} />}
                   {editing ? 'Enregistrer' : 'Lancer la promotion'}
@@ -355,7 +355,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <span className="text-5xl mb-6">🏷</span>
-      <h2 className="text-lg font-semibold text-white mb-2">Vous n'avez pas encore de promotions</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Vous n'avez pas encore de promotions</h2>
       <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
         Lancez des offres exclusives pour les membres Pass Navigay :
         happy hours, entrées gratuites, réductions permanentes ou ponctuelles.
@@ -373,7 +373,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
         </span>
       </div>
       <button onClick={onAction}
-        className="py-3 px-8 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90"
+        className="py-3 px-8 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
         style={{ background: '#7B2D8B' }}>
         + Créer ma première promotion
       </button>
@@ -427,7 +427,7 @@ function PromoCard({
 
   return (
     <div className={`rounded-card overflow-hidden transition-opacity ${!isActive ? 'opacity-60' : ''}`}
-      style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+      style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
       {promo.image_url ? (
         <div className="h-[100px] overflow-hidden">
           <img src={promo.image_url} alt="" className="w-full h-full object-cover" />
@@ -442,7 +442,7 @@ function PromoCard({
               style={{ background: typeBg(), color: promo.promo_type === 'percentage' ? '#7B2D8B' : promo.promo_type === 'fixed' ? '#ea9428' : '#1a7a3a' }}>
               {promoLabel()}
             </span>
-            <h3 className="text-sm font-bold text-white truncate">{promo.title}</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">{promo.title}</h3>
           </div>
           <span className="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium"
             style={{ background: status.bg, color: status.color }}>
@@ -460,7 +460,7 @@ function PromoCard({
           </p>
         )}
 
-        <div className="flex items-center gap-2 border-t border-dark-border pt-3 flex-wrap">
+        <div className="flex items-center gap-2 border-t border-light-border dark:border-dark-border pt-3 flex-wrap">
           <button onClick={onToggleActive}
             className={`flex items-center gap-1.5 text-xs transition-colors px-2 py-1 rounded-input ${
               isActive
@@ -470,11 +470,11 @@ function PromoCard({
             <Power size={13} /> {isActive ? 'Désactiver' : 'Activer'}
           </button>
           <button onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
             <Pencil size={13} /> Modifier
           </button>
           <button onClick={onDuplicate}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
             <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}
@@ -497,7 +497,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   return (
     <button type="button" onClick={() => onChange(!checked)}
       className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0"
-      style={{ background: checked ? '#7B2D8B' : '#2a2a35' }}>
+      style={{ background: checked ? '#7B2D8B' : 'var(--pn-border2)' }}>
       <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
         style={{ transform: checked ? 'translateX(24px)' : 'translateX(4px)' }} />
     </button>

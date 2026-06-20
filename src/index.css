@@ -168,6 +168,26 @@
   animation: prosFadeInUp 0.5s ease forwards;
 }
 
+/* Espace partenaire : palette adaptable clair/sombre (les pages utilisent var(--pn-*)) */
+.partner-scope {
+  --pn-bg: #f7f5f0;
+  --pn-bg2: #ffffff;
+  --pn-surface: #ffffff;
+  --pn-surface2: #f3f0ec;
+  --pn-border: #e5e0da;
+  --pn-border2: #ddd6cd;
+  background: var(--pn-bg);
+  min-height: 100vh;
+}
+.dark .partner-scope {
+  --pn-bg: #0f0f17;
+  --pn-bg2: #0a0a0f;
+  --pn-surface: #16161f;
+  --pn-surface2: #14141e;
+  --pn-border: #1e1e2e;
+  --pn-border2: #2a2a35;
+}
+
 .legal-placeholder {
   color: #d4a017;
   font-weight: 600;

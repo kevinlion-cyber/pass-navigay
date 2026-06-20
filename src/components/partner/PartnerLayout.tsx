@@ -2,9 +2,10 @@ import { useEffect, useState, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, LogOut, BarChart3, Store, CalendarDays, Tag,
-  CreditCard, User, MessageSquare,
+  CreditCard, User, MessageSquare, Sun, Moon,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTheme } from '../../contexts/ThemeContext';
 import type { Establishment } from '../../lib/types';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
 export default function PartnerLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -99,7 +101,7 @@ export default function PartnerLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center">
         <LoadingSpinner size={32} />
       </div>
     );
@@ -122,23 +124,27 @@ export default function PartnerLayout() {
   const subItems = NAV_ITEMS.filter(i => i.group === 'sub');
 
   return (
-    <div className="min-h-screen" style={{ background: '#0f0f17' }}>
+    <div className="min-h-screen partner-scope" style={{ background: 'var(--pn-bg)' }}>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-[100] h-14 flex items-center justify-between px-4"
-        style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
+        style={{ background: 'var(--pn-bg2)', borderBottom: '1px solid var(--pn-border)' }}>
         <div className="flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-gray-400 hover:text-white transition-colors">
+            className="lg:hidden text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
             <Menu size={24} />
           </button>
           <span className="text-[15px] font-semibold">
-            <span className="text-white">Pass</span>
+            <span className="text-gray-900 dark:text-white">Pass</span>
             <span style={{ color: '#7B2D8B' }}> Navigay</span>
             <span style={{ color: '#606070' }}> · Espace Partenaire</span>
           </span>
         </div>
         <div className="flex items-center gap-3" ref={avatarRef}>
           <span className="text-[13px] text-gray-500 hidden sm:block">{est.name}</span>
+          <button onClick={toggleTheme} aria-label="Basculer le thème"
+            className="text-gray-500 hover:text-primary transition-colors">
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
           <button onClick={() => setAvatarOpen(!avatarOpen)}
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
             style={{ background: '#7B2D8B' }}>
@@ -146,9 +152,9 @@ export default function PartnerLayout() {
           </button>
           {avatarOpen && (
             <div className="absolute top-12 right-4 rounded-input overflow-hidden shadow-xl z-[110]"
-              style={{ background: '#16161f', border: '1px solid #2a2a35', minWidth: 200 }}>
+              style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)', minWidth: 200 }}>
               <button onClick={() => { setAvatarOpen(false); navigate('/profile/settings'); }}
-                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:bg-dark-border transition-colors text-left">
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border transition-colors text-left">
                 <User size={15} /> Mon profil Pass Navigay
               </button>
               <button onClick={() => { setAvatarOpen(false); handleLogout(); }}
@@ -172,20 +178,20 @@ export default function PartnerLayout() {
       <aside
         className={`fixed top-14 left-0 z-[106] h-[calc(100vh-56px)] overflow-y-auto transition-transform duration-[250ms] ease-in-out
           lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ width: 240, background: '#0a0a0f', borderRight: '1px solid #1e1e2e' }}>
+        style={{ width: 240, background: 'var(--pn-bg2)', borderRight: '1px solid var(--pn-border)' }}>
 
         {/* Sidebar header */}
-        <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid #1e1e2e' }}>
+        <div className="p-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--pn-border)' }}>
           {est.logo_url ? (
             <img src={est.logo_url} alt="" className="w-10 h-10 rounded-[8px] object-cover shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-[8px] flex items-center justify-center text-sm font-bold text-white shrink-0"
+            <div className="w-10 h-10 rounded-[8px] flex items-center justify-center text-sm font-bold text-gray-900 dark:text-white shrink-0"
               style={{ background: '#7B2D8B' }}>
               {initials}
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate leading-tight">{est.name}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white truncate leading-tight">{est.name}</p>
             {est.is_pro ? (
               <span className="text-[11px] font-semibold" style={{ color: '#7B2D8B' }}>Pro</span>
             ) : (
@@ -203,14 +209,14 @@ export default function PartnerLayout() {
                 <NavLink key={to} to={to} className={({ isActive }) =>
                   `flex items-center gap-2.5 rounded-[8px] text-sm font-medium transition-all duration-150 relative ${
                     isActive
-                      ? 'text-white border-l-[3px] pl-[9px] pr-3 py-2.5'
-                      : 'text-[#a0a0b0] hover:text-white hover:bg-[#14141e] px-3 py-2.5'
+                      ? 'text-gray-900 dark:text-white border-l-[3px] pl-[9px] pr-3 py-2.5'
+                      : 'text-[#a0a0b0] hover:text-gray-900 dark:text-white hover:bg-[var(--pn-surface2)] px-3 py-2.5'
                   }`
                 } style={({ isActive }) => isActive ? { background: 'rgba(123,45,139,0.15)', borderLeftColor: '#7B2D8B' } : {}}>
                   <span className="relative">
                     <Icon size={18} />
                     {badge && (
-                      <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1"
+                      <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold text-gray-900 dark:text-white px-1"
                         style={{ background: badge.color }}>
                         {badge.value}
                       </span>
@@ -222,15 +228,15 @@ export default function PartnerLayout() {
             })}
           </div>
 
-          <div className="mx-3 my-2" style={{ borderTop: '1px solid #1e1e2e' }} />
+          <div className="mx-3 my-2" style={{ borderTop: '1px solid var(--pn-border)' }} />
 
           <div className="space-y-0.5">
             {subItems.map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} className={({ isActive }) =>
                 `flex items-center gap-2.5 rounded-[8px] text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? 'text-white border-l-[3px] pl-[9px] pr-3 py-2.5'
-                    : 'text-[#a0a0b0] hover:text-white hover:bg-[#14141e] px-3 py-2.5'
+                    ? 'text-gray-900 dark:text-white border-l-[3px] pl-[9px] pr-3 py-2.5'
+                    : 'text-[#a0a0b0] hover:text-gray-900 dark:text-white hover:bg-[var(--pn-surface2)] px-3 py-2.5'
                 }`
               } style={({ isActive }) => isActive ? { background: 'rgba(123,45,139,0.15)', borderLeftColor: '#7B2D8B' } : {}}>
                 <Icon size={18} />
@@ -243,7 +249,7 @@ export default function PartnerLayout() {
         </nav>
 
         {/* Sidebar bottom */}
-        <div className="p-2" style={{ borderTop: '1px solid #1e1e2e' }}>
+        <div className="p-2" style={{ borderTop: '1px solid var(--pn-border)' }}>
           <button onClick={handleLogout}
             className="w-full flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-sm font-medium transition-colors"
             style={{ color: '#c0392b' }}

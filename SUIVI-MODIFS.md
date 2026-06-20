@@ -27,7 +27,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | D1 | Mode clair : corriger les textes peu lisibles (contraste) | ⬜ |
-| D2 | Proposer le choix sombre/clair aussi sur Admin et Pro | 🟡 Admin = déjà OK (toggle + theme-aware). Pro = l'espace partenaire est codé en dur en sombre (couleurs hex inline) → vrai mode clair = re-style complet (chantier dédié). |
+| D2 | Proposer le choix sombre/clair aussi sur Admin et Pro | ✅ Admin déjà OK. Pro : palette passée en variables CSS clair/sombre (`.partner-scope`), classes dark-only rendues theme-aware, **bouton bascule** ajouté au header Pro. ⚠️ À QA visuellement en mode clair : quelques contrastes à peaufiner (textes gris très clairs, certains boutons colorés multi-lignes). |
 
 ## E. Carte / Explore
 | # | Demande | Statut |

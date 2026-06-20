@@ -9,7 +9,7 @@ export default function ProGate({ feature }: { feature: string }) {
       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
         <Lock size={28} className="text-primary" />
       </div>
-      <h2 className="text-lg font-semibold text-white">Fonctionnalite Pro</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Fonctionnalite Pro</h2>
       <p className="text-sm text-gray-400 max-w-sm">
         Passez au profil Pro pour {feature}.
       </p>

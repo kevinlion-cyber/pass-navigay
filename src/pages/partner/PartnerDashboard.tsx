@@ -110,7 +110,7 @@ export default function PartnerDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Bonjour {establishment.name} <span role="img" aria-label="wave">👋</span>
         </h1>
         <p className="text-sm text-gray-400 mt-1">Bienvenue dans votre espace partenaire Pass Navigay.</p>
@@ -140,7 +140,7 @@ export default function PartnerDashboard() {
             <div className="rounded-card p-5"
               style={establishment.is_pro
                 ? { background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.3)' }
-                : { background: '#16161f', border: '1px solid #2a2a35' }
+                : { background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }
               }>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-input flex items-center justify-center"
@@ -172,7 +172,7 @@ export default function PartnerDashboard() {
             </div>
 
             {/* Vues */}
-            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+            <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-input flex items-center justify-center"
                   style={{ background: 'rgba(123,45,139,0.15)' }}>
@@ -180,7 +180,7 @@ export default function PartnerDashboard() {
                 </div>
                 <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Vues de la fiche</span>
               </div>
-              <p className="text-lg font-bold text-white">{data.views}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{data.views}</p>
               <p className="text-xs text-gray-500 mt-1">ce mois-ci</p>
               {data.views > 0 ? (
                 <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#1a7a3a' }}>
@@ -192,7 +192,7 @@ export default function PartnerDashboard() {
             </div>
 
             {/* Événements */}
-            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+            <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-input flex items-center justify-center"
                   style={{ background: 'rgba(123,45,139,0.15)' }}>
@@ -200,7 +200,7 @@ export default function PartnerDashboard() {
                 </div>
                 <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Événements à venir</span>
               </div>
-              <p className="text-lg font-bold text-white">{data.activeEvents}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{data.activeEvents}</p>
               <p className="text-xs text-gray-500 mt-1">{data.pastEventsThisMonth} passé{data.pastEventsThisMonth > 1 ? 's' : ''} ce mois</p>
               {data.activeEvents === 0 && (
                 <button onClick={() => navigate('/pros/evenements')}
@@ -212,7 +212,7 @@ export default function PartnerDashboard() {
             </div>
 
             {/* Promos */}
-            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+            <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-input flex items-center justify-center"
                   style={{ background: 'rgba(123,45,139,0.15)' }}>
@@ -220,7 +220,7 @@ export default function PartnerDashboard() {
                 </div>
                 <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos actives</span>
               </div>
-              <p className="text-lg font-bold text-white">{data.activePromos}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{data.activePromos}</p>
               <p className="text-xs text-gray-500 mt-1">{data.expiredPromos} expirée{data.expiredPromos > 1 ? 's' : ''}</p>
               {data.activePromos === 0 && (
                 <button onClick={() => navigate('/pros/promotions')}
@@ -232,7 +232,7 @@ export default function PartnerDashboard() {
             </div>
 
             {/* Promos utilisées */}
-            <div className="bg-dark-surface border border-dark-border rounded-card p-5">
+            <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-input flex items-center justify-center"
                   style={{ background: 'rgba(26,122,58,0.12)' }}>
@@ -240,14 +240,14 @@ export default function PartnerDashboard() {
                 </div>
                 <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos utilisées</span>
               </div>
-              <p className="text-lg font-bold text-white">{data.promoUses}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{data.promoUses}</p>
               <p className="text-xs text-gray-500 mt-1">total des validations</p>
             </div>
           </div>
 
           {/* Actions rapides */}
           <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Par où commencer ?</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Par où commencer ?</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <QuickActionCard
                 emoji="🏪"
@@ -278,7 +278,7 @@ export default function PartnerDashboard() {
           {data.recentEvents.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Mes derniers événements</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Mes derniers événements</h2>
                 <button onClick={() => navigate('/pros/evenements')}
                   className="text-xs font-medium hover:underline flex items-center gap-1"
                   style={{ color: '#7B2D8B' }}>
@@ -288,8 +288,8 @@ export default function PartnerDashboard() {
               <div className="space-y-2">
                 {data.recentEvents.map((ev) => (
                   <div key={ev.id} className="flex items-center gap-4 p-3 rounded-card"
-                    style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
-                    <div className="w-12 h-12 rounded-input overflow-hidden shrink-0 bg-dark-border">
+                    style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
+                    <div className="w-12 h-12 rounded-input overflow-hidden shrink-0 bg-gray-200 dark:bg-dark-border">
                       {ev.image_url ? (
                         <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -299,7 +299,7 @@ export default function PartnerDashboard() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{ev.title}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ev.title}</p>
                       <p className="text-xs text-gray-500 capitalize">{formatDate(ev.event_date)}</p>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium shrink-0"
@@ -316,7 +316,7 @@ export default function PartnerDashboard() {
           {data.recentPromos.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white">Mes dernières promos</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Mes dernières promos</h2>
                 <button onClick={() => navigate('/pros/promotions')}
                   className="text-xs font-medium hover:underline flex items-center gap-1"
                   style={{ color: '#7B2D8B' }}>
@@ -326,10 +326,10 @@ export default function PartnerDashboard() {
               <div className="space-y-2">
                 {data.recentPromos.map((p) => (
                   <div key={p.id} className="flex items-center gap-4 p-3 rounded-card"
-                    style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+                    style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white truncate">{p.title}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.title}</p>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-pill text-xs font-semibold shrink-0"
                           style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>
                           {promoLabel(p)}
@@ -366,13 +366,13 @@ function QuickActionCard({
 }) {
   return (
     <button onClick={onClick} className="relative text-left p-6 rounded-card transition-all duration-200 group"
-      style={{ background: '#14141e', border: '1px solid #1e1e2e' }}
+      style={{ background: 'var(--pn-surface2)', border: '1px solid var(--pn-border)' }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = '#7B2D8B';
         e.currentTarget.style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '#1e1e2e';
+        e.currentTarget.style.borderColor = 'var(--pn-border)';
         e.currentTarget.style.transform = 'translateY(0)';
       }}>
       {showBadge && (
@@ -385,7 +385,7 @@ function QuickActionCard({
         style={{ background: 'rgba(123,45,139,0.15)' }}>
         {emoji}
       </div>
-      <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
       <p className="text-xs text-gray-500 leading-relaxed mb-4">{text}</p>
       <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#7B2D8B' }}>
         {buttonLabel} <ArrowRight size={12} />

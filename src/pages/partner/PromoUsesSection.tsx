@@ -124,10 +124,10 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
 
   return (
     <>
-      <div className="border-t border-dark-border pt-3 mt-1">
+      <div className="border-t border-light-border dark:border-dark-border pt-3 mt-1">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors w-full"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors w-full"
         >
           <Users size={13} />
           <span>Voir les utilisations ({totalCount})</span>
@@ -138,7 +138,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
           <div className="mt-3 space-y-2">
             {uses.map((u) => (
               <div key={u.id} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-dark-border overflow-hidden shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden shrink-0">
                   {u.avatar_url ? (
                     <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -148,7 +148,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white font-medium truncate">{u.username}</p>
+                  <p className="text-xs text-gray-900 dark:text-white font-medium truncate">{u.username}</p>
                 </div>
                 <span className="text-[11px] text-gray-500 shrink-0">{timeAgo(u.used_at)}</span>
               </div>
@@ -173,12 +173,12 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
         >
           <div
             className="relative w-full max-w-[480px] max-h-[85vh] flex flex-col"
-            style={{ background: '#0f0f17', border: '1px solid #1e1e2e', borderRadius: 14 }}
+            style={{ background: 'var(--pn-bg)', border: '1px solid var(--pn-border)', borderRadius: 14 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-dark-border shrink-0">
-              <h3 className="text-base font-bold text-white">Toutes les utilisations</h3>
-              <button onClick={() => setAllUsesOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-light-border dark:border-dark-border shrink-0">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Toutes les utilisations</h3>
+              <button onClick={() => setAllUsesOpen(false)} className="text-gray-500 hover:text-gray-900 dark:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -189,7 +189,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
               ) : (
                 allUses.map((u) => (
                   <div key={u.id} className="flex items-center gap-3 py-1.5">
-                    <div className="w-9 h-9 rounded-full bg-dark-border overflow-hidden shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden shrink-0">
                       {u.avatar_url ? (
                         <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -199,7 +199,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white font-medium truncate">{u.username}</p>
+                      <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{u.username}</p>
                       <p className="text-[11px] text-gray-500">{formatDateTimeFr(u.used_at)}</p>
                     </div>
                   </div>
@@ -207,13 +207,13 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
               )}
             </div>
 
-            <div className="shrink-0 px-6 py-4 border-t border-dark-border">
+            <div className="shrink-0 px-6 py-4 border-t border-light-border dark:border-dark-border">
               <p className="text-xs text-gray-400 mb-2">
                 {totalCount} utilisation{totalCount > 1 ? 's' : ''}
                 {maxUses ? ` sur ${maxUses} possibles` : ''}
               </p>
               {usagePercent !== null && (
-                <div className="h-2 rounded-full bg-dark-border overflow-hidden">
+                <div className="h-2 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{ width: `${usagePercent}%`, background: '#7B2D8B' }}

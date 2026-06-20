@@ -208,7 +208,7 @@ export default function PartnerEstablishment() {
   return (
     <div className="max-w-2xl pb-28 lg:pb-8">
       <div className="flex items-center gap-3 mb-8">
-        <h1 className="text-xl font-bold text-white">Mon établissement</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Mon établissement</h1>
         {establishment.is_pro ? (
           <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>Pro</span>
         ) : (
@@ -218,18 +218,18 @@ export default function PartnerEstablishment() {
 
       <form onSubmit={handleSave} className="space-y-0">
         {/* SECTION 1: Informations générales */}
-        <h2 className="text-base font-bold text-white mb-4">Informations générales</h2>
+        <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Informations générales</h2>
         <div className="space-y-4 mb-0">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Nom de l'établissement</label>
             <input value={name} onChange={e => setName(e.target.value)} required
-              className="input-field bg-dark-bg border-dark-border text-white" />
+              className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Catégorie principale</label>
               <select value={category} onChange={e => { setCategory(e.target.value as CategoryKey); setSubcategory(''); }}
-                className="input-field bg-dark-bg border-dark-border text-white">
+                className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white">
                 {categoryKeys.map(k => <option key={k} value={k}>{categories[k].label}</option>)}
               </select>
             </div>
@@ -237,7 +237,7 @@ export default function PartnerEstablishment() {
               <label className="block text-sm font-medium text-gray-300 mb-1">Type d'établissement</label>
               <select value={subcategory} onChange={e => setSubcategory(e.target.value)} required
                 disabled={!category}
-                className="input-field bg-dark-bg border-dark-border text-white disabled:opacity-50">
+                className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white disabled:opacity-50">
                 <option value="">Choisir</option>
                 {categories[category].subcategories.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -248,25 +248,25 @@ export default function PartnerEstablishment() {
             <textarea value={description}
               onChange={e => { if (e.target.value.length <= 500) setDescription(e.target.value); }}
               placeholder="Présentez votre établissement, son ambiance, ce qui le rend unique et inclusif..."
-              className="input-field bg-dark-bg border-dark-border text-white resize-y"
+              className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-y"
               style={{ minHeight: 140 }} />
             <p className="text-xs text-gray-600 text-right mt-1">{description.length} / 500</p>
           </div>
         </div>
 
         {/* SECTION 2: Coordonnées */}
-        <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
-          <h2 className="text-base font-bold text-white mb-4">Coordonnées</h2>
+        <div className="mt-8 pt-8" style={{ borderTop: '1px solid var(--pn-border)' }}>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Coordonnées</h2>
           <div className="space-y-4">
             <div className="relative">
               <label className="block text-sm font-medium text-gray-300 mb-1">Adresse</label>
               <input value={address} onChange={e => searchAddress(e.target.value)} required
-                className="input-field bg-dark-bg border-dark-border text-white" />
+                className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               {addressSuggestions.length > 0 && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-dark-surface border border-dark-border rounded-input max-h-48 overflow-y-auto">
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
                   {addressSuggestions.map((s: any) => (
                     <button key={s.id} type="button" onClick={() => selectAddress(s)}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-dark-border/50">
+                      className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
                       {s.place_name}
                     </button>
                   ))}
@@ -277,13 +277,13 @@ export default function PartnerEstablishment() {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Ville</label>
                 <input value={city} onChange={e => setCity(e.target.value)} required
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Code postal</label>
                 <input value={postalCode} onChange={e => setPostalCode(e.target.value)} required
                   pattern="[0-9]{5}" placeholder="75001"
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -291,21 +291,21 @@ export default function PartnerEstablishment() {
                 <label className="block text-sm font-medium text-gray-300 mb-1">Téléphone</label>
                 <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
                   placeholder="04 67 58 22 14"
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">Site web</label>
                 <input type="url" value={website} onChange={e => setWebsite(e.target.value)}
                   placeholder="https://monsite.fr"
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
             </div>
           </div>
         </div>
 
         {/* SECTION 3: Visuels */}
-        <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
-          <h2 className="text-base font-bold text-white mb-4">Visuels</h2>
+        <div className="mt-8 pt-8" style={{ borderTop: '1px solid var(--pn-border)' }}>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Visuels</h2>
           <div className="space-y-6">
             {/* Logo */}
             <div>
@@ -313,18 +313,18 @@ export default function PartnerEstablishment() {
               <p className="text-[11px] text-gray-600 mb-3">Affiché en vignette dans les listes et sur la carte.</p>
               {logoDisplay ? (
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-dark-border">
+                  <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-gray-200 dark:bg-dark-border">
                     <img src={logoDisplay} alt="" className="w-full h-full object-cover" />
                   </div>
                   <label className="text-sm px-4 py-2 rounded-[8px] cursor-pointer transition-colors hover:opacity-80"
-                    style={{ background: 'transparent', border: '1px solid #2a2a3a', color: '#a0a0b0' }}>
+                    style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
                     Changer
                     <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoSelect} className="hidden" />
                   </label>
                 </div>
               ) : (
                 <label className="flex flex-col items-center justify-center gap-2 rounded-[10px] cursor-pointer transition-colors hover:border-[#3a3a4a]"
-                  style={{ border: '2px dashed #2a2a3a', height: 120 }}>
+                  style={{ border: '2px dashed var(--pn-border2)', height: 120 }}>
                   <StoreIcon size={24} className="text-gray-600" />
                   <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre logo</span>
                   <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 5MB</span>
@@ -341,14 +341,14 @@ export default function PartnerEstablishment() {
                 <div>
                   <img src={bannerDisplay} alt="" className="w-full rounded-[8px] object-cover mb-2" style={{ aspectRatio: '16/9' }} />
                   <label className="text-sm px-4 py-2 rounded-[8px] cursor-pointer transition-colors hover:opacity-80 inline-block"
-                    style={{ background: 'transparent', border: '1px solid #2a2a3a', color: '#a0a0b0' }}>
+                    style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
                     Changer la bannière
                     <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerSelect} className="hidden" />
                   </label>
                 </div>
               ) : (
                 <label className="flex flex-col items-center justify-center gap-2 rounded-[10px] cursor-pointer transition-colors hover:border-[#3a3a4a]"
-                  style={{ border: '2px dashed #2a2a3a', height: 160 }}>
+                  style={{ border: '2px dashed var(--pn-border2)', height: 160 }}>
                   <Camera size={24} className="text-gray-600" />
                   <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre photo principale</span>
                   <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 10MB</span>
@@ -360,8 +360,8 @@ export default function PartnerEstablishment() {
         </div>
 
         {/* SECTION 4: Opening Hours */}
-        <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
-          <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+        <div className="mt-8 pt-8" style={{ borderTop: '1px solid var(--pn-border)' }}>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Clock size={16} className="text-gray-400" />
             Horaires d'ouverture
           </h2>
@@ -380,7 +380,7 @@ export default function PartnerEstablishment() {
                           [day]: e.target.checked ? { open: '09:00', close: '18:00' } : null,
                         }));
                       }}
-                      className="rounded border-dark-border bg-dark-bg text-primary focus:ring-primary"
+                      className="rounded border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-primary focus:ring-primary"
                     />
                     <span className="text-sm text-gray-300">{DAYS_LABELS[day]}</span>
                   </label>
@@ -395,7 +395,7 @@ export default function PartnerEstablishment() {
                             [day]: { open: e.target.value, close: prev[day]?.close || '18:00' },
                           }));
                         }}
-                        className="input-field bg-dark-bg border-dark-border text-white text-sm w-28"
+                        className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-28"
                       />
                       <span className="text-gray-500 text-sm">-</span>
                       <input
@@ -407,7 +407,7 @@ export default function PartnerEstablishment() {
                             [day]: { open: prev[day]?.open || '09:00', close: e.target.value },
                           }));
                         }}
-                        className="input-field bg-dark-bg border-dark-border text-white text-sm w-28"
+                        className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-28"
                       />
                     </div>
                   )}
@@ -421,7 +421,7 @@ export default function PartnerEstablishment() {
         </div>
 
         {/* SECTION 5: Gallery */}
-        <div className="mt-8 pt-8" style={{ borderTop: '1px solid #1e1e2e' }}>
+        <div className="mt-8 pt-8" style={{ borderTop: '1px solid var(--pn-border)' }}>
           <EstablishmentGallerySection
             establishmentId={establishment.id}
             pendingPhotos={pendingPhotos}
@@ -432,7 +432,7 @@ export default function PartnerEstablishment() {
         {/* Desktop submit button */}
         <div className="hidden lg:block mt-8">
           <button type="submit" disabled={saving}
-            className="w-60 py-3 rounded-[8px] text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-60 py-3 rounded-[8px] text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: '#7B2D8B' }}>
             {saving ? <><LoadingSpinner size={16} /> {uploadProgress || 'Sauvegarde...'}</> : 'Enregistrer les modifications'}
           </button>
@@ -440,12 +440,12 @@ export default function PartnerEstablishment() {
       </form>
 
       {/* Mobile sticky submit */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-4" style={{ background: '#0a0a0f', borderTop: '1px solid #1e1e2e' }}>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-4" style={{ background: 'var(--pn-bg2)', borderTop: '1px solid var(--pn-border)' }}>
         <button type="button" onClick={() => {
           const form = document.querySelector('form');
           if (form) form.requestSubmit();
         }} disabled={saving}
-          className="w-full py-3 rounded-[8px] text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-[8px] text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           style={{ background: '#7B2D8B' }}>
           {saving ? <><LoadingSpinner size={16} /> {uploadProgress || 'Sauvegarde...'}</> : 'Enregistrer les modifications'}
         </button>
@@ -469,7 +469,7 @@ export default function PartnerEstablishment() {
 function CropModal({ src, crop, zoom, aspect, cropShape, onCropChange, onZoomChange, onCropComplete, onConfirm, onCancel }: any) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-dark-surface border border-dark-border rounded-card w-full max-w-md overflow-hidden">
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-md overflow-hidden">
         <div className="relative w-full aspect-square bg-black">
           <Cropper image={src} crop={crop} zoom={zoom} aspect={aspect} cropShape={cropShape}
             showGrid={false} onCropChange={onCropChange} onZoomChange={onZoomChange} onCropComplete={onCropComplete} />
@@ -480,7 +480,7 @@ function CropModal({ src, crop, zoom, aspect, cropShape, onCropChange, onZoomCha
             onChange={e => onZoomChange(Number(e.target.value))} className="flex-1 accent-primary h-1" />
           <ZoomIn size={16} className="text-gray-400 shrink-0" />
         </div>
-        <div className="flex gap-3 px-5 py-4 border-t border-dark-border">
+        <div className="flex gap-3 px-5 py-4 border-t border-light-border dark:border-dark-border">
           <button type="button" onClick={onCancel}
             className="flex-1 btn-ghost py-2.5 text-sm flex items-center justify-center gap-2">
             <X size={16} /> Annuler

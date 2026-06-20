@@ -66,7 +66,7 @@ export default function PartnerReviews() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <MessageSquare size={22} style={{ color: '#7B2D8B' }} />
           Avis clients
         </h1>
@@ -76,14 +76,14 @@ export default function PartnerReviews() {
       </div>
 
       {reviews.length === 0 ? (
-        <div className="text-center py-16 rounded-card" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+        <div className="text-center py-16 rounded-card" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
           <MessageSquare size={40} className="mx-auto text-gray-600 mb-3" />
           <p className="text-gray-400">Pas encore d'avis sur votre établissement.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reviews.map((r) => (
-            <div key={r.id} className="rounded-card p-4" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+            <div key={r.id} className="rounded-card p-4" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-medium text-white overflow-hidden shrink-0">
                   {r.user?.avatar_url ? (
@@ -93,7 +93,7 @@ export default function PartnerReviews() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{r.user?.username || 'Anonyme'}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{r.user?.username || 'Anonyme'}</p>
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star key={s} size={12}
@@ -117,14 +117,14 @@ export default function PartnerReviews() {
                   onChange={(e) => setDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
                   rows={2}
                   placeholder="Votre réponse publique…"
-                  className="w-full px-3 py-2 rounded-input text-sm text-white placeholder-gray-600 outline-none resize-none"
-                  style={{ background: '#0f0f17', border: '1px solid #2a2a3a' }}
+                  className="w-full px-3 py-2 rounded-input text-sm text-gray-900 dark:text-white placeholder-gray-600 outline-none resize-none"
+                  style={{ background: 'var(--pn-bg)', border: '1px solid var(--pn-border2)' }}
                 />
                 <div className="flex justify-end mt-2">
                   <button
                     onClick={() => saveReply(r.id)}
                     disabled={savingId === r.id || (drafts[r.id] ?? '') === (r.reply || '')}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-all hover:opacity-90 disabled:opacity-40"
                     style={{ background: '#7B2D8B' }}
                   >
                     {savingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

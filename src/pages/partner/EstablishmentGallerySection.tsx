@@ -150,7 +150,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
   return (
     <div>
       <div className="flex items-center gap-3 mb-1">
-        <h2 className="text-base font-bold text-white">Galerie de photos</h2>
+        <h2 className="text-base font-bold text-gray-900 dark:text-white">Galerie de photos</h2>
         <span className="text-sm text-gray-500">({totalPhotos}/{MAX_PHOTOS})</span>
       </div>
       <p className="text-[13px] text-gray-500 mb-5">
@@ -170,7 +170,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
                   <img src={photo.url} alt={photo.caption} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
                     <button onClick={() => setDeleteTarget(photo)}
-                      className="w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                      className="w-9 h-9 rounded-full bg-black/60 text-gray-900 dark:text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -179,7 +179,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
                       value={photo.caption || ''}
                       onChange={e => handleCaptionChange(photo.id, e.target.value)}
                       placeholder="Ajouter une légende..."
-                      className="w-full bg-transparent text-xs text-[#a0a0b0] placeholder-[#606070] border-b border-[#2a2a3a] focus:outline-none focus:border-[#7B2D8B] py-0.5 px-0"
+                      className="w-full bg-transparent text-xs text-[#a0a0b0] placeholder-[#606070] border-b border-[var(--pn-border2)] focus:outline-none focus:border-[#7B2D8B] py-0.5 px-0"
                     />
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
                   <div key={i} className="relative rounded-[8px] overflow-hidden" style={{ aspectRatio: '4/3' }}>
                     <img src={p.preview} alt="" className="w-full h-full object-cover" />
                     <button onClick={() => removePending(i)}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-gray-900 dark:text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                       <span className="text-sm font-bold">&times;</span>
                     </button>
                   </div>
@@ -211,7 +211,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
           ) : photos.length === 0 && pendingPhotos.length === 0 ? (
             <button type="button" onClick={() => fileRef.current?.click()}
               className="w-full flex flex-col items-center justify-center gap-3 rounded-xl py-12 px-6 cursor-pointer transition-colors hover:border-[#3a3a4a]"
-              style={{ border: '2px dashed #2a2a3a' }}>
+              style={{ border: '2px dashed var(--pn-border2)' }}>
               <ImageIcon size={32} className="text-gray-600" />
               <span className="text-sm text-gray-400 font-medium">Ajoutez vos premières photos</span>
               <span className="text-xs text-gray-600">JPG, PNG, WEBP - Jusqu'à 10 photos à la fois - Max 5MB chacune</span>
@@ -222,7 +222,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
           ) : (
             <button type="button" onClick={() => fileRef.current?.click()}
               className="w-full flex items-center justify-center gap-2 rounded-[10px] py-5 cursor-pointer transition-colors hover:border-[#3a3a4a]"
-              style={{ border: '2px dashed #2a2a3a' }}>
+              style={{ border: '2px dashed var(--pn-border2)' }}>
               <Plus size={16} className="text-gray-500" />
               <span className="text-sm text-gray-500">Ajouter des photos ({totalPhotos}/{MAX_PHOTOS} utilisées)</span>
             </button>
@@ -234,14 +234,14 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
       )}
 
       {cropSrc && (
-        <div className="fixed inset-0 z-[2000] flex flex-col" style={{ background: '#0a0a0f' }}>
+        <div className="fixed inset-0 z-[2000] flex flex-col" style={{ background: 'var(--pn-bg2)' }}>
           <div className="shrink-0 flex items-center justify-between px-5 py-4"
-            style={{ background: '#14141e', borderBottom: '1px solid #1e1e2e' }}>
-            <span className="text-[15px] font-semibold text-white">
+            style={{ background: 'var(--pn-surface2)', borderBottom: '1px solid var(--pn-border)' }}>
+            <span className="text-[15px] font-semibold text-gray-900 dark:text-white">
               Recadrez la photo {cropIndex + 1}/{cropQueue.length}
             </span>
             <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
-              className="text-[#606070] hover:text-white transition-colors text-sm">
+              className="text-[#606070] hover:text-gray-900 dark:text-white transition-colors text-sm">
               Annuler tout
             </button>
           </div>
@@ -250,7 +250,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
               onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete}
               cropShape="rect" showGrid={false} />
           </div>
-          <div className="shrink-0 px-5 py-4 space-y-4" style={{ background: '#14141e', borderTop: '1px solid #1e1e2e' }}>
+          <div className="shrink-0 px-5 py-4 space-y-4" style={{ background: 'var(--pn-surface2)', borderTop: '1px solid var(--pn-border)' }}>
             <div className="flex items-center gap-3">
               <span className="text-[13px] text-[#a0a0b0] shrink-0">Zoom</span>
               <input type="range" min={1} max={3} step={0.01} value={zoom}
@@ -259,11 +259,11 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
             <div className="flex gap-3">
               <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
                 className="flex-1 py-2.5 rounded-lg text-[14px] transition-colors hover:opacity-90"
-                style={{ background: 'transparent', border: '1px solid #2a2a3a', color: '#a0a0b0' }}>
+                style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
                 Annuler
               </button>
               <button onClick={handleCropValidate}
-                className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90"
+                className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
                 style={{ background: '#7B2D8B' }}>
                 Valider
               </button>

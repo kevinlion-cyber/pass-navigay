@@ -45,7 +45,7 @@ export default function PartnerSubscription() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-white">Abonnement</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Abonnement</h1>
 
       <div className="rounded-card p-6" style={{ background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.4)' }}>
         <div className="flex items-center justify-between mb-4">
@@ -56,7 +56,7 @@ export default function PartnerSubscription() {
             <span className="text-xs text-gray-400">Renouvellement le {formatDate(expiresAt)}</span>
           )}
         </div>
-        <p className="text-sm text-white mb-4">
+        <p className="text-sm text-gray-900 dark:text-white mb-4">
           Votre profil Pro est actif. Toutes les fonctionnalités sont débloquées.
         </p>
 
@@ -112,8 +112,8 @@ export default function PartnerSubscription() {
         Gerer mon abonnement
       </button>
 
-      <div className="rounded-card p-6" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
-        <h2 className="text-sm font-semibold text-white mb-4">Ce que vous avez débloqué</h2>
+      <div className="rounded-card p-6" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Ce que vous avez débloqué</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {PRO_FEATURES.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center gap-3">
@@ -192,18 +192,18 @@ function FreeView({ establishment }: { establishment: Establishment }) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="rounded-card text-center py-12 px-8 mb-6"
-        style={{ background: 'linear-gradient(135deg, #1a0028, #0f0f17)', border: '1px solid rgba(123,45,139,0.2)' }}>
-        <h1 className="text-[28px] font-bold text-white mb-2">Passez au profil Pro</h1>
+        style={{ background: 'linear-gradient(135deg, #1a0028, var(--pn-bg))', border: '1px solid rgba(123,45,139,0.2)' }}>
+        <h1 className="text-[28px] font-bold text-gray-900 dark:text-white mb-2">Passez au profil Pro</h1>
         <p className="text-sm text-gray-400 mb-6">Debloquez toutes les fonctionnalites pour developper votre visibilite.</p>
 
         {/* Billing toggle */}
-        <div className="inline-flex items-center gap-1 p-1 rounded-full mb-8" style={{ background: '#1e1e2e' }}>
+        <div className="inline-flex items-center gap-1 p-1 rounded-full mb-8" style={{ background: 'var(--pn-border)' }}>
           <button
             onClick={() => setBillingInterval('monthly')}
             className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
               billingInterval === 'monthly'
                 ? 'bg-[#7B2D8B] text-white'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:text-white'
             }`}
           >
             Mensuel
@@ -213,7 +213,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
             className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
               billingInterval === 'yearly'
                 ? 'bg-[#7B2D8B] text-white'
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:text-white'
             }`}
           >
             Annuel (-20%)
@@ -257,9 +257,9 @@ function FreeView({ establishment }: { establishment: Establishment }) {
       <div className="grid grid-cols-2 gap-3 max-w-[500px] mx-auto">
         {PRO_FEATURES.map(({ label }) => (
           <div key={label} className="flex items-center gap-2.5 p-3 rounded-input"
-            style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+            style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
             <Check size={14} style={{ color: '#7B2D8B' }} className="shrink-0" />
-            <span className="text-sm text-white">{label}</span>
+            <span className="text-sm text-gray-900 dark:text-white">{label}</span>
           </div>
         ))}
       </div>

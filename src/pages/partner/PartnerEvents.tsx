@@ -224,7 +224,7 @@ export default function PartnerEvents() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Mes événements</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes événements</h1>
         <button onClick={openCreate} className="btn-primary text-sm py-2.5 px-5 flex items-center gap-2">
           <Plus size={16} /> Créer un événement
         </button>
@@ -247,12 +247,12 @@ export default function PartnerEvents() {
       {formOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={e => e.target === e.currentTarget && setFormOpen(false)}>
-          <div className="bg-dark-surface border border-dark-border rounded-card w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-6 space-y-5">
+          <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-[600px] max-h-[90vh] overflow-y-auto p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editing ? "Modifier l'événement" : 'Nouvel événement'}
               </h2>
-              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -269,7 +269,7 @@ export default function PartnerEvents() {
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Titre de l'événement</label>
                 <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
                   required placeholder="Pride Party, Drag Bingo, Brunch Spécial..."
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
 
               <div>
@@ -277,7 +277,7 @@ export default function PartnerEvents() {
                 <textarea value={form.description}
                   onChange={e => { if (e.target.value.length <= 500) setForm({ ...form, description: e.target.value }); }}
                   rows={3} placeholder="Décrivez l'ambiance, le programme, ce qui rend cet événement unique..."
-                  className="input-field bg-dark-bg border-dark-border text-white resize-none" style={{ minHeight: 100 }} />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none" style={{ minHeight: 100 }} />
                 <p className="text-xs text-gray-600 text-right mt-1">{form.description.length}/500</p>
               </div>
 
@@ -285,7 +285,7 @@ export default function PartnerEvents() {
                 <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Thème</label>
                 <input value={form.theme} onChange={e => setForm({ ...form, theme: e.target.value })}
                   placeholder="Pride, Drag, Électro, Brunch, Concert, Bien-être..."
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               </div>
 
               <div className="flex gap-4">
@@ -293,13 +293,13 @@ export default function PartnerEvents() {
                   <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Date et heure de début</label>
                   <input type="datetime-local" value={form.start_datetime}
                     onChange={e => setForm({ ...form, start_datetime: e.target.value })}
-                    required className="input-field bg-dark-bg border-dark-border text-white" />
+                    required className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Date et heure de fin (optionnel)</label>
                   <input type="datetime-local" value={form.end_datetime}
                     onChange={e => setForm({ ...form, end_datetime: e.target.value })}
-                    className="input-field bg-dark-bg border-dark-border text-white" />
+                    className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                 </div>
               </div>
 
@@ -314,12 +314,12 @@ export default function PartnerEvents() {
                       <input value={form.custom_address}
                         onChange={e => searchEventAddress(e.target.value)}
                         placeholder="Adresse de l'événement"
-                        className="input-field bg-dark-bg border-dark-border text-white" />
+                        className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                       {addressSuggestions.length > 0 && (
-                        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-dark-surface border border-dark-border rounded-input max-h-48 overflow-y-auto">
+                        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
                           {addressSuggestions.map((s: any) => (
                             <button key={s.id} type="button" onClick={() => selectEventAddress(s)}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-dark-border/50">
+                              className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
                               {s.place_name}
                             </button>
                           ))}
@@ -329,7 +329,7 @@ export default function PartnerEvents() {
                     <input value={form.custom_city}
                       onChange={e => setForm({ ...form, custom_city: e.target.value })}
                       placeholder="Ville"
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 )}
               </div>
@@ -345,7 +345,7 @@ export default function PartnerEvents() {
                     <input type="number" min={0.01} step="0.01" value={form.price || ''}
                       onChange={e => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
                       placeholder="15"
-                      className="input-field bg-dark-bg border-dark-border text-white" />
+                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                   </div>
                 )}
               </div>
@@ -355,7 +355,7 @@ export default function PartnerEvents() {
                 <input type="number" min={1} value={form.max_capacity}
                   onChange={e => setForm({ ...form, max_capacity: e.target.value })}
                   placeholder="50"
-                  className="input-field bg-dark-bg border-dark-border text-white" />
+                  className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                 <p className="text-xs text-gray-600 mt-1">Laissez vide si illimité.</p>
               </div>
 
@@ -365,7 +365,7 @@ export default function PartnerEvents() {
                   Annuler
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: '#7B2D8B' }}>
                   {saving && <LoadingSpinner size={16} />}
                   {editing ? 'Enregistrer' : "Publier l'événement"}
@@ -388,7 +388,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <span className="text-5xl mb-6">📅</span>
-      <h2 className="text-lg font-semibold text-white mb-2">Vous n'avez pas encore d'événements</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Vous n'avez pas encore d'événements</h2>
       <p className="text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
         Publiez vos soirées, brunchs, concerts et expositions pour toucher
         des milliers de membres Pass Navigay qui cherchent quoi faire.
@@ -405,7 +405,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
         </span>
       </div>
       <button onClick={onAction}
-        className="py-3 px-8 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90"
+        className="py-3 px-8 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
         style={{ background: '#7B2D8B' }}>
         + Créer mon premier événement
       </button>
@@ -424,7 +424,7 @@ function EventCard({
   onDuplicate: () => void;
 }) {
   return (
-    <div className="rounded-card overflow-hidden" style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
+    <div className="rounded-card overflow-hidden" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
       <div className="h-[120px] overflow-hidden relative">
         {event.image_url ? (
           <img src={event.image_url} alt="" className="w-full h-full object-cover" />
@@ -437,7 +437,7 @@ function EventCard({
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-sm font-bold text-white">{event.title}</h3>
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">{event.title}</h3>
           <span className={`shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium ${
             isPast ? 'bg-gray-700 text-gray-400' : ''
           }`} style={!isPast ? { background: 'rgba(26,122,58,0.1)', color: '#1a7a3a' } : {}}>
@@ -458,13 +458,13 @@ function EventCard({
         {event.description && (
           <p className="text-xs text-gray-500 line-clamp-2 mb-3">{event.description}</p>
         )}
-        <div className="flex items-center gap-2 border-t border-dark-border pt-3">
+        <div className="flex items-center gap-2 border-t border-light-border dark:border-dark-border pt-3">
           <button onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
             <Pencil size={13} /> Modifier
           </button>
           <button onClick={onDuplicate}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
             <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}
@@ -481,7 +481,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   return (
     <button type="button" onClick={() => onChange(!checked)}
       className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0"
-      style={{ background: checked ? '#7B2D8B' : '#2a2a35' }}>
+      style={{ background: checked ? '#7B2D8B' : 'var(--pn-border2)' }}>
       <span className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
         style={{ transform: checked ? 'translateX(24px)' : 'translateX(4px)' }} />
     </button>
