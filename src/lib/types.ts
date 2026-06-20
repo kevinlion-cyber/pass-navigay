@@ -55,6 +55,7 @@ export interface Profile {
   late_truth: string | null;
   questionnaire_completed: boolean;
   profile_visibility: ProfileVisibility;
+  city: string | null;
 }
 
 export interface Establishment {

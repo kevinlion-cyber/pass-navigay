@@ -16,7 +16,6 @@ const FREE_FEATURES = [
   { label: 'Acces aux promotions', included: false },
   { label: 'Messagerie entre membres', included: false },
   { label: 'Profil enrichi et questionnaire', included: false },
-  { label: 'Filtres avances', included: false },
 ];
 
 const PREMIUM_FEATURES = [
@@ -26,8 +25,6 @@ const PREMIUM_FEATURES = [
   'Acces aux promotions exclusives',
   'Messagerie entre membres Premium',
   'Profil enrichi et questionnaire',
-  'Filtres avances',
-  'Support prioritaire',
 ];
 
 export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSwitchToLogin }: PlanSelectionProps) {

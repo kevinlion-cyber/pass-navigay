@@ -15,8 +15,6 @@ const PREMIUM_FEATURES = [
   'Acces aux promotions exclusives',
   'Messagerie entre membres Premium',
   'Profil enrichi et questionnaire',
-  'Filtres avances',
-  'Support prioritaire',
 ];
 
 export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeModalProps) {
@@ -55,7 +53,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
   };
 
   const yearlyPrice = 69;
-  const monthlyPrice = 7.9;
+  const monthlyPrice = 6.69;
 
   return (
     <div

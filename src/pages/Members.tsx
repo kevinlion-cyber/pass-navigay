@@ -28,6 +28,7 @@ export default function Members() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pronounsFilter, setPronounsFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,9 +65,13 @@ export default function Members() {
   const pronounsList = Array.from(
     new Set(members.map((m) => m.pronouns).filter(Boolean))
   ).sort() as string[];
+  const cities = Array.from(
+    new Set(members.map((m) => m.city).filter(Boolean))
+  ).sort() as string[];
 
   const filtered = members.filter((m) => {
     if (pronounsFilter !== 'all' && m.pronouns !== pronounsFilter) return false;
+    if (cityFilter !== 'all' && m.city !== cityFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     const name = displayName(m).toLowerCase();
@@ -113,6 +118,14 @@ export default function Members() {
             value={pronounsFilter}
             options={[{ value: 'all', label: 'Tous' }, ...pronounsList.map((p) => ({ value: p, label: p }))]}
             onChange={setPronounsFilter}
+          />
+        )}
+        {cities.length > 0 && (
+          <FilterDropdown
+            label="Ville"
+            value={cityFilter}
+            options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
+            onChange={setCityFilter}
           />
         )}
       </div>

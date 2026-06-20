@@ -16,9 +16,7 @@ const PRO_FEATURES = [
 ];
 
 const PREMIUM_FEATURES = [
-  'Acces aux filtres detailles avances',
   'Badge Premium sur le profil',
-  'Support prioritaire',
 ];
 
 export default function Pricing() {
@@ -132,7 +130,7 @@ export default function Pricing() {
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">7,90</span>
+                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
                   <p className="text-xs text-gray-400 mt-0.5">Sans engagement</p>
                 </>

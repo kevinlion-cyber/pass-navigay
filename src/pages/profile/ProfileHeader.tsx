@@ -20,6 +20,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   const [prenom, setPrenom] = useState(profile.prenom || '');
   const [nom, setNom] = useState(profile.nom || '');
   const [phone, setPhone] = useState(profile.phone || '');
+  const [city, setCity] = useState(profile.city || '');
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -115,7 +116,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     setSaving(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ prenom: prenom || null, nom: nom || null, phone: phone || null })
+      .update({ prenom: prenom || null, nom: nom || null, phone: phone || null, city: city || null })
       .eq('id', user.id);
     setSaving(false);
     if (error) {
@@ -129,7 +130,8 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
   const hasInfoChanges =
     (prenom || '') !== (profile.prenom || '') ||
     (nom || '') !== (profile.nom || '') ||
-    (phone || '') !== (profile.phone || '');
+    (phone || '') !== (profile.phone || '') ||
+    (city || '') !== (profile.city || '');
 
   return (
     <>
@@ -293,6 +295,16 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="06 12 34 56 78"
+              className="input-field text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ville</label>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Ta ville"
               className="input-field text-sm"
             />
           </div>

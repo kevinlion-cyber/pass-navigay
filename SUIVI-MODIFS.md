@@ -20,8 +20,8 @@ _Dernière mise à jour : 2026-06-20._
 ## C. Tarifs & contenu Premium
 | # | Demande | Statut |
 |---|---------|--------|
-| C1 | Harmoniser l'affichage du prix Premium partout : **mensuel 7,90 €/mois**, **annuel 69 €/an** (≈ 5,75 €/mois). | ✅ (le « 6,69 » n'existait déjà plus ; format 7,90/5,75 harmonisé 2026-06-20) |
-| C2 | Clarifier/définir « support prioritaire » et « filtres avancés » + revoir la liste des avantages (promos, messagerie, avis qualité/safe place) | 🔵 |
+| C1 | Prix Premium harmonisés : **mensuel 6,69 €/mois** (correction Fred), **annuel 69 €/an** (≈ 5,75 €/mois). Montant Stripe mensuel mis à 669 + front aligné. | ✅ |
+| C2 | « support prioritaire » et « filtres avancés » = inventions Bolt → **supprimés** des listes d'avantages (décision Fred). | ✅ |
 
 ## D. Thème (clair/sombre)
 | # | Demande | Statut |
@@ -51,7 +51,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | H1 | Free user : flouter les données membres + message « réservé aux membres Premium » (comme les promos) | ⬜ |
-| H2 | Filtres recherche membres : par ville, par type (il/elle/iel…) | 🟡 Filtre **type/pronoms** fait. Filtre **Ville** = les profils n'ont pas de champ `city` → nécessite une colonne `city` sur profiles + champ dans les réglages profil (à faire). |
+| H2 | Filtres recherche membres : par ville, par type (il/elle/iel…) | ✅ Filtre type/pronoms + filtre Ville (colonne `city` ajoutée aux profils + champ dans les réglages profil + vue publique mise à jour). |
 
 ## I. Fiche établissement
 | # | Demande | Statut |
@@ -83,12 +83,12 @@ _Dernière mise à jour : 2026-06-20._
 ## M. Filtre Ville transversal
 | # | Demande | Statut |
 |---|---------|--------|
-| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres = bloqué par l'absence de champ ville. Admin : reste à faire. |
+| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres ✅. Admin : reste à faire. |
 
 ## N. Légal
 | # | Demande | Statut |
 |---|---------|--------|
-| N1 | « Made in Bolt » : si obligatoire, le placer avec mentions légales, CGU, RGPD, contact | 🔵 |
+| N1 | « Made in Bolt » : à retirer complètement (décision Fred) | ✅ Aucun badge « Made in Bolt » dans le code (ni index.html ni src) — il n'apparaît que sur l'aperçu bolt.new, PAS sur le site Netlify. Dossier `.bolt` supprimé du repo. Rien à afficher en prod. |
 
 ## O. Contenus éditables / wording
 | # | Demande | Statut |

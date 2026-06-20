@@ -2,7 +2,7 @@ import Stripe from "npm:stripe@14.14.0";
 import { corsHeaders, jsonResponse, getAuthenticatedUser } from "../_shared/auth.ts";
 
 const PREMIUM_YEARLY_PRICE_ID = "price_1Th1iL18e2LOhPJqAlgcaEJ9";
-const MONTHLY_AMOUNT = 790;
+const MONTHLY_AMOUNT = 669;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
