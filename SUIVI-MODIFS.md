@@ -7,7 +7,7 @@ _Dernière mise à jour : 2026-06-20._
 ## A. Mobile / PWA
 | # | Demande | Statut |
 |---|---------|--------|
-| A1 | Icône + nom de l'app (logo au lieu de « PN ») à l'installation sur mobile (PWA) | ⬜ |
+| A1 | Icône + nom de l'app (logo au lieu de « PN ») à l'installation sur mobile (PWA) | ✅ icon.svg régénéré avec le logo embarqué (fond de marque) ; manifest déjà en place |
 | A2 | Logo plus gros dans l'app | ✅ logo header agrandi (h-9 → h-12) |
 
 ## B. Accès & inscription
@@ -93,7 +93,7 @@ _Dernière mise à jour : 2026-06-20._
 ## O. Contenus éditables / wording
 | # | Demande | Statut |
 |---|---------|--------|
-| O1 | Rendre éditable le message « Aucun établissement trouvé… / Enregistre-toi pour être first Safe place » | ⬜ |
+| O1 | Rendre éditable le message « Aucun établissement trouvé… » | ✅ champ éditable dans Admin → Paramètres (`explore_empty_text`), lu par la page Explorer (fallback au texte par défaut) |
 
 ## P. Questions / réponses (pas du dev)
 | # | Question de Kevin | Réponse |

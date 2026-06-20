@@ -7,6 +7,7 @@ interface SettingsMap {
   onboarding_title: string;
   onboarding_text: string;
   maintenance_mode: string;
+  explore_empty_text: string;
 }
 
 const DEFAULTS: SettingsMap = {
@@ -14,6 +15,7 @@ const DEFAULTS: SettingsMap = {
   onboarding_title: '',
   onboarding_text: '',
   maintenance_mode: 'false',
+  explore_empty_text: '',
 };
 
 export default function AdminSettings() {
@@ -95,6 +97,18 @@ export default function AdminSettings() {
             rows={3}
             className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1.5">Message « liste vide » (explorer)</label>
+          <textarea
+            value={settings.explore_empty_text}
+            onChange={(e) => setSettings({ ...settings, explore_empty_text: e.target.value })}
+            rows={2}
+            placeholder="Aucun établissement trouvé. Essaie de modifier tes filtres."
+            className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none"
+          />
+          <p className="text-xs text-gray-500 mt-1">Affiché quand aucun établissement ne correspond aux filtres.</p>
         </div>
 
         <div className="flex items-center justify-between bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">

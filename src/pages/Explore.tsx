@@ -35,6 +35,7 @@ export default function Explore() {
   const [hasMore, setHasMore] = useState(true);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
   const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(null);
+  const [emptyText, setEmptyText] = useState('');
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const listContainerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,11 @@ export default function Explore() {
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setUserLocation(DEFAULT_CENTER)
     );
+  }, []);
+
+  useEffect(() => {
+    supabase.from('app_settings').select('value').eq('key', 'explore_empty_text').maybeSingle()
+      .then(({ data }) => { if (data?.value) setEmptyText(data.value); });
   }, []);
 
   useEffect(() => {
@@ -241,8 +247,14 @@ export default function Explore() {
 
       {!loading && establishments.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <p>Aucun etablissement trouve.</p>
-          <p className="text-sm mt-1">Essaie de modifier tes filtres.</p>
+          {emptyText ? (
+            <p className="whitespace-pre-line">{emptyText}</p>
+          ) : (
+            <>
+              <p>Aucun etablissement trouve.</p>
+              <p className="text-sm mt-1">Essaie de modifier tes filtres.</p>
+            </>
+          )}
         </div>
       )}
 
