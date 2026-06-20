@@ -14,7 +14,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | B1 | Bloquer l'accès au site sans connexion : écran connexion / création de compte avant d'entrer dans l'app | ❌ NON RETENU (décision Fred 2026-06-20 : on garde « explorer sans compte ») |
-| B2 | Inscription : proposer le choix Gratuit / Mensuel / Annuel | ⬜ |
+| B2 | Inscription : proposer le choix Gratuit / Mensuel / Annuel | ✅ sélecteur Mensuel (6,69€) / Annuel (69€) à l'étape plan Premium, transmis au checkout Stripe |
 | B3 | Créer un compte Pro ne doit PAS créer un membre automatiquement | ✅ profils marqués `account_type='pro'` à l'inscription pro → exclus de l'annuaire Membres (migration 34) |
 
 ## C. Tarifs & contenu Premium

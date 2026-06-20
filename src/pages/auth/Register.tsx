@@ -4,7 +4,7 @@ import { Send, Eye, EyeOff, CheckCircle, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import PlanSelection, { type PlanType } from '../../components/ui/PlanSelection';
+import PlanSelection, { type PlanType, type BillingInterval } from '../../components/ui/PlanSelection';
 
 type TunnelStep = 'plan' | 'chat' | 'verify';
 type ChatStep = 'username' | 'email' | 'password' | 'submitting' | 'done';
@@ -29,6 +29,7 @@ const BOT_MESSAGES = {
 export default function Register() {
   const [tunnelStep, setTunnelStep] = useState<TunnelStep>('plan');
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('yearly');
 
   const [chatStep, setChatStep] = useState<ChatStep>('username');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -165,7 +166,7 @@ export default function Register() {
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${session?.access_token ?? ''}`,
           },
-          body: JSON.stringify({ billingInterval: 'yearly' }),
+          body: JSON.stringify({ billingInterval }),
         });
         const data = await res.json();
         if (data?.url) {
@@ -264,6 +265,8 @@ export default function Register() {
               onSelect={setSelectedPlan}
               onContinue={() => setTunnelStep('chat')}
               onSwitchToLogin={() => navigate('/auth/login')}
+              billingInterval={billingInterval}
+              onIntervalChange={setBillingInterval}
             />
           </div>
         )}

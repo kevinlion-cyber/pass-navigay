@@ -2,11 +2,15 @@ import { Check, X } from 'lucide-react';
 
 export type PlanType = 'free' | 'premium';
 
+export type BillingInterval = 'monthly' | 'yearly';
+
 interface PlanSelectionProps {
   selectedPlan: PlanType | null;
   onSelect: (plan: PlanType) => void;
   onContinue: () => void;
   onSwitchToLogin: () => void;
+  billingInterval: BillingInterval;
+  onIntervalChange: (interval: BillingInterval) => void;
 }
 
 const FREE_FEATURES = [
@@ -27,7 +31,7 @@ const PREMIUM_FEATURES = [
   'Profil enrichi et questionnaire',
 ];
 
-export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSwitchToLogin }: PlanSelectionProps) {
+export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSwitchToLogin, billingInterval, onIntervalChange }: PlanSelectionProps) {
   return (
     <div className="px-6 py-6 space-y-6">
       <div className="text-center">
@@ -101,11 +105,20 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             Premium
           </span>
           <div className="mt-3">
-            <span className="text-[36px] font-bold text-white leading-none">69&euro;</span>
-            <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+            {billingInterval === 'yearly' ? (
+              <>
+                <span className="text-[36px] font-bold text-white leading-none">69&euro;</span>
+                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+              </>
+            ) : (
+              <>
+                <span className="text-[36px] font-bold text-white leading-none">6,69&euro;</span>
+                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+              </>
+            )}
           </div>
           <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
-            Sans engagement &middot; Resiliation a tout moment
+            {billingInterval === 'yearly' ? 'Soit 5,75€/mois · ' : ''}Sans engagement &middot; Resiliation a tout moment
           </p>
           <ul className="mt-4 space-y-2">
             {PREMIUM_FEATURES.map((label) => (
@@ -117,6 +130,27 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
           </ul>
         </button>
       </div>
+
+      {selectedPlan === 'premium' && (
+        <div className="flex items-center justify-center gap-1 p-1 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <button
+            type="button"
+            onClick={() => onIntervalChange('monthly')}
+            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+            style={{ background: billingInterval === 'monthly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'monthly' ? '#fff' : '#808090' }}
+          >
+            Mensuel — 6,69&euro;/mois
+          </button>
+          <button
+            type="button"
+            onClick={() => onIntervalChange('yearly')}
+            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+            style={{ background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'yearly' ? '#fff' : '#808090' }}
+          >
+            Annuel — 69&euro;/an <span className="text-[11px] opacity-80">-27%</span>
+          </button>
+        </div>
+      )}
 
       <button
         type="button"
