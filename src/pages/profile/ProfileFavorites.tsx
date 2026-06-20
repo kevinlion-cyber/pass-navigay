@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, HeartOff, MapPin, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import { CATEGORIES } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { Favorite, CategoryKey } from '../../lib/types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
@@ -13,6 +13,7 @@ interface ProfileFavoritesProps {
 
 export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
   const navigate = useNavigate();
+  const { categories } = useCategories();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +71,7 @@ export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
           {favorites.map((fav) => {
             const est = fav.establishment;
             if (!est) return null;
-            const catLabel = CATEGORIES[est.category as CategoryKey]?.label || est.category;
+            const catLabel = categories[est.category as CategoryKey]?.label || est.category;
 
             return (
               <div

@@ -4,7 +4,7 @@ import type { Area } from 'react-easy-crop';
 import { Camera, Trash2, X, Loader2, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, OpeningHours } from '../../lib/types';
 import AdminEditSidebar, {
   SidebarField,
@@ -58,11 +58,6 @@ const initialForm: FormData = {
   subcategory: '',
 };
 
-const categoryOptions = CATEGORY_KEYS.map((k) => ({
-  value: k,
-  label: CATEGORIES[k as CategoryKey].label,
-}));
-
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
   const canvas = document.createElement('canvas');
@@ -77,6 +72,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 
 export default function EstablishmentEditSidebar({ establishmentId, onClose, onRefresh }: Props) {
   const isNew = establishmentId === 'new';
+  const { categories, categoryKeys } = useCategories();
+  const categoryOptions = categoryKeys.map((k) => ({ value: k, label: categories[k as CategoryKey].label }));
   const [form, setForm] = useState<FormData>(initialForm);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);

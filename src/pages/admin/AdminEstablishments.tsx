@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Search, X, Trash2, ExternalLink, Download, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import EstablishmentEditSidebar from './EstablishmentEditSidebar';
@@ -19,6 +19,7 @@ export default function AdminEstablishments() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [cities, setCities] = useState<string[]>([]);
+  const { categories, categoryKeys } = useCategories();
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<Establishment | null>(null);
@@ -125,7 +126,7 @@ export default function AdminEstablishments() {
       <div className="flex flex-wrap items-center gap-2">
         <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(0); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
           <option value="all">Toutes categories</option>
-          {CATEGORY_KEYS.map((k) => <option key={k} value={k}>{CATEGORIES[k as CategoryKey].label}</option>)}
+          {categoryKeys.map((k) => <option key={k} value={k}>{categories[k as CategoryKey].label}</option>)}
         </select>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); setPage(0); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
           <option value="all">Tous statuts</option>

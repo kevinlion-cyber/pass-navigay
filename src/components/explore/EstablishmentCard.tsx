@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
-import { CATEGORIES } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import StarRating from '../ui/StarRating';
 import ShieldRating from '../ui/ShieldRating';
@@ -11,7 +11,8 @@ interface EstablishmentCardProps {
 
 export default function EstablishmentCard({ establishment }: EstablishmentCardProps) {
   const navigate = useNavigate();
-  const categoryLabel = CATEGORIES[establishment.category as CategoryKey]?.label || establishment.category;
+  const { categories } = useCategories();
+  const categoryLabel = categories[establishment.category as CategoryKey]?.label || establishment.category;
 
   return (
     <div

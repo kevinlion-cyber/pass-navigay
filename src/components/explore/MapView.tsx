@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
 import type { Establishment, CategoryKey } from '../../lib/types';
-import { DEFAULT_CENTER, CATEGORIES } from '../../lib/constants';
+import { DEFAULT_CENTER } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import { supabase } from '../../lib/supabase';
 
 interface MapViewProps {
@@ -173,7 +174,8 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
 }
 
 function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment; extras: PopupData; loading: boolean; onNavigate: (id: string) => void }) {
-  const catLabel = CATEGORIES[est.category as CategoryKey]?.label || est.category;
+  const { categories } = useCategories();
+  const catLabel = categories[est.category as CategoryKey]?.label || est.category;
 
   return (
     <div className="w-[240px] font-sans">

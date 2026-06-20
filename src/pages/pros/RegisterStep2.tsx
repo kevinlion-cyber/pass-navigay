@@ -1,23 +1,7 @@
 import { useState } from 'react';
 import { geocodeAddress } from '../../lib/geocode';
-
-const SUBCATEGORIES: Record<string, string[]> = {
-  se_loger: ['Maison d\'h\u00f4tes', 'H\u00f4tel', 'Location particuli\u00e8re'],
-  shopping: ['V\u00eatements', 'D\u00e9co', 'Art', 'Chaussures', 'Sex-shop', 'Jeux'],
-  manger: ['Restaurant', 'Fast-food', 'Brunch', 'Salon de th\u00e9', 'Bar \u00e0 vins'],
-  soiree: ['Bar tranquille', 'Bar musical', 'Bo\u00eete de nuit'],
-  bien_etre: ['Sauna', 'Massage', 'Esth\u00e9tique'],
-  culture: ['Mus\u00e9e', 'Visite guid\u00e9e', 'Concert', 'Cin\u00e9ma', 'Autres'],
-};
-
-const CATEGORY_OPTIONS = [
-  { value: 'se_loger', label: 'Se loger' },
-  { value: 'shopping', label: 'Shopping' },
-  { value: 'manger', label: 'Manger' },
-  { value: 'soiree', label: 'Soir\u00e9e' },
-  { value: 'bien_etre', label: 'Bien-\u00eatre' },
-  { value: 'culture', label: 'Culture' },
-];
+import { useCategories } from '../../contexts/CategoriesContext';
+import type { CategoryKey } from '../../lib/types';
 
 export interface Step2Data {
   name: string;
@@ -41,6 +25,8 @@ interface RegisterStep2Props {
 }
 
 export default function RegisterStep2({ data, onChange, onNext, onPrev }: RegisterStep2Props) {
+  const { categories, categoryKeys } = useCategories();
+  const CATEGORY_OPTIONS = categoryKeys.map((k) => ({ value: k, label: categories[k].label }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [suggestions, setSuggestions] = useState<any[]>([]);
 
@@ -102,7 +88,7 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     border: `1px solid ${errors[field] ? '#ef4444' : '#2a2a3a'}`,
   });
 
-  const subcategories = data.category ? SUBCATEGORIES[data.category] || [] : [];
+  const subcategories = data.category ? (categories[data.category as CategoryKey]?.subcategories || []) : [];
 
   return (
     <div className="space-y-5">

@@ -4,7 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { CATEGORIES, CATEGORY_KEYS } from '../lib/constants';
+import { useCategories } from '../contexts/CategoriesContext';
 import type { CategoryKey, Establishment } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
@@ -14,6 +14,7 @@ export default function EstablishmentForm() {
   const isEdit = !!id;
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { categories, categoryKeys } = useCategories();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -188,8 +189,8 @@ export default function EstablishmentForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categorie</label>
             <select value={category} onChange={(e) => { setCategory(e.target.value as CategoryKey); setSubcategory(''); }} className="input-field">
-              {CATEGORY_KEYS.map((key) => (
-                <option key={key} value={key}>{CATEGORIES[key].label}</option>
+              {categoryKeys.map((key) => (
+                <option key={key} value={key}>{categories[key].label}</option>
               ))}
             </select>
           </div>
@@ -197,7 +198,7 @@ export default function EstablishmentForm() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sous-categorie</label>
             <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} required className="input-field">
               <option value="">Choisir</option>
-              {CATEGORIES[category].subcategories.map((sub) => (
+              {categories[category].subcategories.map((sub) => (
                 <option key={sub} value={sub}>{sub}</option>
               ))}
             </select>

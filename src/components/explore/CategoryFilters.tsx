@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
 import FilterDropdown from '../ui/FilterDropdown';
 
@@ -17,12 +17,13 @@ export default function CategoryFilters({
   onCategoryChange,
   onSubcategoryToggle,
 }: CategoryFiltersProps) {
+  const { categories, categoryKeys } = useCategories();
   const categoryOptions: { value: CategoryOption; label: string }[] = [
     { value: 'all', label: 'Tout' },
-    ...CATEGORY_KEYS.map((key) => ({ value: key as CategoryOption, label: CATEGORIES[key].label })),
+    ...categoryKeys.map((key) => ({ value: key as CategoryOption, label: categories[key].label })),
   ];
 
-  const subcategories = selectedCategory ? CATEGORIES[selectedCategory].subcategories : [];
+  const subcategories = selectedCategory ? categories[selectedCategory].subcategories : [];
 
   const subOptions: { value: string; label: string }[] = [
     { value: 'all', label: 'Tous les types' },

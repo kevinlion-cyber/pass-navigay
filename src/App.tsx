@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 import AppLayout from './components/layout/AppLayout';
 import Landing from './pages/Landing';
 import Register from './pages/auth/Register';
@@ -31,6 +32,7 @@ import AdminMembers from './pages/admin/AdminMembers';
 import AdminPartners from './pages/admin/AdminPartners';
 import AdminGifts from './pages/admin/AdminGifts';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminCategories from './pages/admin/AdminCategories';
 
 import ProsLanding from './pages/pros/ProsLanding';
 import LegalLayout from './pages/legal/LegalLayout';
@@ -53,6 +55,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+        <CategoriesProvider>
           <Toaster
             position="top-center"
             toastOptions={{
@@ -97,6 +100,7 @@ export default function App() {
               <Route path="members" element={<AdminMembers />} />
               <Route path="partners" element={<AdminPartners />} />
               <Route path="gifts" element={<AdminGifts />} />
+              <Route path="categories" element={<AdminCategories />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="legal" element={<AdminLegal />} />
             </Route>
@@ -121,6 +125,7 @@ export default function App() {
             </Route>
           </Routes>
           <PwaInstallPrompt />
+        </CategoriesProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

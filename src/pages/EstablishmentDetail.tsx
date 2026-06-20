@@ -4,7 +4,7 @@ import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit,
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { CATEGORIES } from '../lib/constants';
+import { useCategories } from '../contexts/CategoriesContext';
 import type { Establishment, EstablishmentPhoto, Event, Promotion, Review, CategoryKey, OpeningHours } from '../lib/types';
 import StarRating from '../components/ui/StarRating';
 import ShieldRating from '../components/ui/ShieldRating';
@@ -47,6 +47,7 @@ export default function EstablishmentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { categories } = useCategories();
   const isPremium = profile?.is_premium === true;
 
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
@@ -203,7 +204,7 @@ export default function EstablishmentDetail() {
   const avgSafety = safetyReviews.length > 0
     ? safetyReviews.reduce((s, r) => s + (r.safety_rating || 0), 0) / safetyReviews.length
     : 0;
-  const categoryLabel = CATEGORIES[establishment.category as CategoryKey]?.label || establishment.category;
+  const categoryLabel = categories[establishment.category as CategoryKey]?.label || establishment.category;
   const isOwner = user?.id === establishment.owner_id;
   const openingHours = establishment.opening_hours as OpeningHours | null;
 

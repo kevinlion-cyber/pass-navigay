@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { geocodeAddress } from '../../lib/geocode';
-import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
+import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
 import cropImage from '../../lib/cropImage';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -25,6 +25,7 @@ interface PartnerContext {
 
 export default function PartnerEstablishment() {
   const { establishment, reload } = useOutletContext<PartnerContext>();
+  const { categories, categoryKeys } = useCategories();
 
   const [name, setName] = useState(establishment.name);
   const [address, setAddress] = useState(establishment.address);
@@ -229,7 +230,7 @@ export default function PartnerEstablishment() {
               <label className="block text-sm font-medium text-gray-300 mb-1">Catégorie principale</label>
               <select value={category} onChange={e => { setCategory(e.target.value as CategoryKey); setSubcategory(''); }}
                 className="input-field bg-dark-bg border-dark-border text-white">
-                {CATEGORY_KEYS.map(k => <option key={k} value={k}>{CATEGORIES[k].label}</option>)}
+                {categoryKeys.map(k => <option key={k} value={k}>{categories[k].label}</option>)}
               </select>
             </div>
             <div>
@@ -238,7 +239,7 @@ export default function PartnerEstablishment() {
                 disabled={!category}
                 className="input-field bg-dark-bg border-dark-border text-white disabled:opacity-50">
                 <option value="">Choisir</option>
-                {CATEGORIES[category].subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                {categories[category].subcategories.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
