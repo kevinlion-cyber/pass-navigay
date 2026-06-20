@@ -163,6 +163,8 @@ export interface Review {
   safety_rating: number | null;
   comment: string;
   created_at: string;
+  reply: string | null;
+  reply_at: string | null;
   user?: Profile;
 }
 

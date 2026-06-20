@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, LogOut, BarChart3, Store, CalendarDays, Tag,
-  CreditCard, User,
+  CreditCard, User, MessageSquare,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Establishment } from '../../lib/types';
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { to: '/pros/mon-etablissement', label: 'Mon établissement', icon: Store, group: 'main' },
   { to: '/pros/evenements', label: 'Événements', icon: CalendarDays, group: 'main' },
   { to: '/pros/promotions', label: 'Promotions', icon: Tag, group: 'main' },
+  { to: '/pros/avis', label: 'Avis', icon: MessageSquare, group: 'main' },
   { to: '/pros/abonnement', label: 'Abonnement', icon: CreditCard, group: 'sub' },
 ];
 

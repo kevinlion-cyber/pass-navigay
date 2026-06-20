@@ -68,7 +68,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | K1 | Dashboard Pro : KPI « Promos utilisées » + nb d'utilisations des promotions | ✅ carte « Promos utilisées » (total des validations) ajoutée au dashboard Pro |
-| K2 | Gestion des avis côté partenaire : voir et répondre aux avis | ⬜ (feature à part — colonne reply + page partenaire) |
+| K2 | Gestion des avis côté partenaire : voir et répondre aux avis | ✅ page « Avis » dans l'espace Pro (liste + réponse via RPC sécurisée `set_review_reply`) ; réponses affichées sur la fiche publique (migration 36) |
 | K3 | Remplacer la photo principale / bandeau par un **placeholder** (garder la galerie). (décision Fred 2026-06-20) | ✅ fiche établissement affiche toujours le placeholder (bandeau perso retiré) |
 | K4 | Ajouter un **toggle** style « Même adresse que mon établissement » (capture) — périmètre exact à reconfirmer avec Kevin | ❓ Fred : « un truc du genre » |
 

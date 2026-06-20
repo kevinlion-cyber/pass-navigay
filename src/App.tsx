@@ -44,6 +44,7 @@ import PartnerDashboard from './pages/partner/PartnerDashboard';
 import PartnerEstablishment from './pages/partner/PartnerEstablishment';
 import PartnerEvents from './pages/partner/PartnerEvents';
 import PartnerPromotions from './pages/partner/PartnerPromotions';
+import PartnerReviews from './pages/partner/PartnerReviews';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
 import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
 
@@ -115,6 +116,7 @@ export default function App() {
               <Route path="/pros/mon-etablissement" element={<PartnerEstablishment />} />
               <Route path="/pros/evenements" element={<PartnerEvents />} />
               <Route path="/pros/promotions" element={<PartnerPromotions />} />
+              <Route path="/pros/avis" element={<PartnerReviews />} />
               <Route path="/pros/abonnement" element={<PartnerSubscription />} />
             </Route>
           </Routes>

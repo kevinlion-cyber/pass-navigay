@@ -474,6 +474,12 @@ export default function EstablishmentDetail() {
                   {review.comment && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">{review.comment}</p>
                   )}
+                  {review.reply && (
+                    <div className="mt-3 ml-4 pl-3 border-l-2 border-primary/40">
+                      <p className="text-xs font-semibold text-primary mb-0.5">Réponse de {establishment.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{review.reply}</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
