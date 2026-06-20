@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { geocodeAddress } from '../../lib/geocode';
 
 const SUBCATEGORIES: Record<string, string[]> = {
   se_loger: ['Maison d\'h\u00f4tes', 'H\u00f4tel', 'Location particuli\u00e8re'],
@@ -52,21 +53,7 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     set('address', query);
     if (query.length < 3) { setSuggestions([]); return; }
     try {
-      const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
-      if (!key) return;
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:FR&language=fr&key=${key}`
-      );
-      const json = await res.json();
-      const features = (json.results || []).slice(0, 5).map((r: any) => ({
-        place_name: r.formatted_address,
-        center: [r.geometry.location.lng, r.geometry.location.lat],
-        context: r.address_components.map((c: any) => ({
-          id: c.types.includes('locality') ? 'place.' : c.types.includes('postal_code') ? 'postcode.' : c.types[0] + '.',
-          text: c.long_name,
-        })),
-      }));
-      setSuggestions(features);
+      setSuggestions(await geocodeAddress(query));
     } catch { /* skip */ }
   };
 

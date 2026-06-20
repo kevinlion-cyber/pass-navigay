@@ -23,3 +23,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Supabase CLI artefacts
+supabase/.temp/

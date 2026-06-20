@@ -128,12 +128,12 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
               <span className="text-[36px] font-bold text-white">{yearlyPrice}&euro;</span>
               <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
               <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
-                soit {(yearlyPrice / 12).toFixed(2)}&euro;/mois
+                soit {(yearlyPrice / 12).toFixed(2).replace('.', ',')}&euro;/mois
               </p>
             </>
           ) : (
             <>
-              <span className="text-[36px] font-bold text-white">{monthlyPrice}&euro;</span>
+              <span className="text-[36px] font-bold text-white">{monthlyPrice.toFixed(2).replace('.', ',')}&euro;</span>
               <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
               <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
                 Sans engagement
@@ -158,7 +158,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           style={{ background: '#7B2D8B' }}
         >
           {loading && <Loader2 size={16} className="animate-spin" />}
-          Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC/an` : `${monthlyPrice}\u20AC/mois`}
+          Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC/an` : `${monthlyPrice.toFixed(2).replace('.', ',')}\u20AC/mois`}
         </button>
 
         <button

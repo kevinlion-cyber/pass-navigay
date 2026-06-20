@@ -5,6 +5,7 @@ import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { geocodeAddress } from '../../lib/geocode';
 import { CATEGORIES, CATEGORY_KEYS } from '../../lib/constants';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
 import cropImage from '../../lib/cropImage';
@@ -69,19 +70,7 @@ export default function PartnerEstablishment() {
     setAddress(query);
     if (query.length < 3) { setAddressSuggestions([]); return; }
     try {
-      const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
-      if (!key) return;
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:FR&language=fr&key=${key}`);
-      const data = await res.json();
-      const features = (data.results || []).slice(0, 5).map((r: any) => ({
-        place_name: r.formatted_address,
-        center: [r.geometry.location.lng, r.geometry.location.lat],
-        context: r.address_components.map((c: any) => ({
-          id: c.types.includes('locality') ? 'place.' : c.types.includes('postal_code') ? 'postcode.' : c.types[0] + '.',
-          text: c.long_name,
-        })),
-      }));
-      setAddressSuggestions(features);
+      setAddressSuggestions(await geocodeAddress(query));
     } catch { /* ignore */ }
   };
 

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { geocodeFirst } from '../lib/geocode';
 import { useAuth } from '../contexts/AuthContext';
 import type { Establishment, CategoryKey } from '../lib/types';
 import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
@@ -112,15 +113,19 @@ export default function Explore() {
         data.map(async (est) => {
           const { data: reviews } = await supabase
             .from('reviews')
-            .select('rating')
+            .select('rating, safety_rating')
             .eq('establishment_id', est.id);
 
           const ratings = reviews || [];
           const avg = ratings.length > 0
             ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
             : 0;
+          const safety = ratings.filter((r) => r.safety_rating && r.safety_rating > 0);
+          const avgSafety = safety.length > 0
+            ? safety.reduce((sum, r) => sum + (r.safety_rating || 0), 0) / safety.length
+            : 0;
 
-          return { ...est, avg_rating: avg, review_count: ratings.length };
+          return { ...est, avg_rating: avg, review_count: ratings.length, avg_safety_rating: avgSafety };
         })
       );
 
@@ -132,8 +137,18 @@ export default function Explore() {
       }
       setHasMore(data.length === PAGE_SIZE);
 
-      if (debouncedSearch.trim() && data.length > 0) {
-        setMapFlyTo({ lng: data[0].longitude, lat: data[0].latitude });
+      if (debouncedSearch.trim()) {
+        // Centrer sur le 1er établissement aux coords valides ; sinon géocoder
+        // la recherche (ex. « Paris ») pour afficher la ville même sans résultat.
+        const firstValid = withRatings.find(
+          (e) => Math.abs(e.latitude) > 0.0001 && Math.abs(e.longitude) > 0.0001
+        );
+        if (firstValid) {
+          setMapFlyTo({ lng: firstValid.longitude, lat: firstValid.latitude });
+        } else {
+          const c = await geocodeFirst(debouncedSearch.trim());
+          if (c) setMapFlyTo({ lng: c[0], lat: c[1] });
+        }
       }
     }
     setLoading(false);

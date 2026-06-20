@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X, Check, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { geocodeAddress } from '../../lib/geocode';
 import type { Establishment, Event } from '../../lib/types';
 import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -105,19 +106,7 @@ export default function PartnerEvents() {
     setForm(prev => ({ ...prev, custom_address: query }));
     if (query.length < 3) { setAddressSuggestions([]); return; }
     try {
-      const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
-      if (!key) return;
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:FR&language=fr&key=${key}`);
-      const data = await res.json();
-      const features = (data.results || []).slice(0, 5).map((r: any) => ({
-        place_name: r.formatted_address,
-        center: [r.geometry.location.lng, r.geometry.location.lat],
-        context: r.address_components.map((c: any) => ({
-          id: c.types.includes('locality') ? 'place.' : c.types.includes('postal_code') ? 'postcode.' : c.types[0] + '.',
-          text: c.long_name,
-        })),
-      }));
-      setAddressSuggestions(features);
+      setAddressSuggestions(await geocodeAddress(query));
     } catch { /* ignore */ }
   };
 

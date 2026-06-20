@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react';
 import { CATEGORIES } from '../../lib/constants';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import StarRating from '../ui/StarRating';
+import ShieldRating from '../ui/ShieldRating';
 
 interface EstablishmentCardProps {
   establishment: Establishment;
@@ -45,12 +46,17 @@ export default function EstablishmentCard({ establishment }: EstablishmentCardPr
           <span className="truncate">{establishment.address}, {establishment.city}</span>
         </div>
 
-        {establishment.avg_rating !== undefined && establishment.avg_rating > 0 && (
-          <div className="flex items-center gap-2 mt-1.5">
-            <StarRating rating={Math.round(establishment.avg_rating)} size={12} />
-            <span className="text-xs text-gray-400">
-              ({establishment.review_count})
-            </span>
+        {((establishment.avg_rating ?? 0) > 0 || (establishment.avg_safety_rating ?? 0) > 0) && (
+          <div className="flex items-center gap-3 mt-1.5">
+            {(establishment.avg_rating ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5">
+                <StarRating rating={Math.round(establishment.avg_rating!)} size={12} />
+                <span className="text-xs text-gray-400">({establishment.review_count})</span>
+              </div>
+            )}
+            {(establishment.avg_safety_rating ?? 0) > 0 && (
+              <ShieldRating rating={Math.round(establishment.avg_safety_rating!)} size={12} />
+            )}
           </div>
         )}
       </div>
