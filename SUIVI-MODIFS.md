@@ -26,7 +26,7 @@ _Dernière mise à jour : 2026-06-20._
 ## D. Thème (clair/sombre)
 | # | Demande | Statut |
 |---|---------|--------|
-| D1 | Mode clair : corriger les textes peu lisibles (contraste) | ⬜ |
+| D1 | Mode clair : corriger les textes peu lisibles (contraste) | 🟡 Audit front fait : **ProfilePublic** (entièrement conçu sombre, texte blanc invisible en clair) → fond sombre autonome (lisible 2 thèmes) ; **PremiumBanner** (titre blanc + gris clair invisibles en clair) → theme-aware. Autres `text-white`/gris clairs = boutons colorés ou modales sombres autonomes (OK). Si Kevin a un autre endroit précis, me l'indiquer. |
 | D2 | Proposer le choix sombre/clair aussi sur Admin et Pro | ✅ Admin déjà OK. Pro : palette passée en variables CSS clair/sombre (`.partner-scope`), classes dark-only rendues theme-aware, **bouton bascule** ajouté au header Pro. ⚠️ À QA visuellement en mode clair : quelques contrastes à peaufiner (textes gris très clairs, certains boutons colorés multi-lignes). |
 
 ## E. Carte / Explore

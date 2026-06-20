@@ -147,6 +147,7 @@ export default function ProfilePublic() {
   const showFunFacts = isPremiumProfile && ((vis.if_i_were_vibe && profile.if_i_were_vibe) || (vis.if_i_were_music && profile.if_i_were_music) || (vis.late_truth && profile.late_truth));
 
   return (
+    <div className="min-h-screen" style={{ background: '#0a0a0f' }}>
     <div className="max-w-xl mx-auto pb-28">
       {/* Hero header */}
       <div className="relative px-4 pt-8 pb-6">
@@ -441,6 +442,7 @@ export default function ProfilePublic() {
       />
 
       <PremiumUpgradeModal open={premiumGateOpen} onClose={() => setPremiumGateOpen(false)} />
+    </div>
     </div>
   );
 }

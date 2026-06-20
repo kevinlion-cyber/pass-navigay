@@ -14,10 +14,10 @@ export default function PremiumBanner() {
           border: '1px solid rgba(123,45,139,0.4)',
         }}
       >
-        <p className="text-[15px] font-semibold text-white">
+        <p className="text-[15px] font-semibold text-gray-900 dark:text-white">
           Passe Premium pour debloquer :
         </p>
-        <ul className="space-y-1.5 text-[13px]" style={{ color: '#c0c0d0' }}>
+        <ul className="space-y-1.5 text-[13px] text-gray-600 dark:text-gray-300">
           <li className="flex items-center gap-2">
             <span style={{ color: '#c084f5' }}>&#183;</span>
             La messagerie avec les membres
@@ -40,7 +40,7 @@ export default function PremiumBanner() {
             <Crown size={16} />
             Passer Premium
           </button>
-          <span className="text-[12px]" style={{ color: '#808090' }}>
+          <span className="text-[12px] text-gray-500">
             a partir de 5,75&euro;/mois
           </span>
         </div>
