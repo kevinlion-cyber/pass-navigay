@@ -57,8 +57,6 @@ export default function PartnerEvents() {
   const [deleting, setDeleting] = useState(false);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
 
-  if (!establishment.is_pro) return <ProGate feature="créer des événements" />;
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -73,6 +71,8 @@ export default function PartnerEvents() {
   }, [establishment.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  if (!establishment.is_pro) return <ProGate feature="créer des événements" />;
 
   const openCreate = () => {
     setEditing(null);

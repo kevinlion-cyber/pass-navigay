@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, ArrowRight, Check } from 'lucide-react';
+import { Send, ArrowRight, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { QUESTIONNAIRE_SECTIONS, TOTAL_QUESTIONS, type QuestionDef } from '../../lib/questionnaireData';

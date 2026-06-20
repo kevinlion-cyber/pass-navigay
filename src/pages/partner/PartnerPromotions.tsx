@@ -52,8 +52,6 @@ export default function PartnerPromotions() {
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  if (!establishment.is_pro) return <ProGate feature="créer des promotions" />;
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -68,6 +66,8 @@ export default function PartnerPromotions() {
   }, [establishment.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  if (!establishment.is_pro) return <ProGate feature="créer des promotions" />;
 
   const openCreate = () => {
     setEditing(null);

@@ -451,7 +451,7 @@ export default function PartnerEstablishment() {
 
       {/* Mobile sticky submit */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-4" style={{ background: '#0a0a0f', borderTop: '1px solid #1e1e2e' }}>
-        <button type="button" onClick={e => {
+        <button type="button" onClick={() => {
           const form = document.querySelector('form');
           if (form) form.requestSubmit();
         }} disabled={saving}

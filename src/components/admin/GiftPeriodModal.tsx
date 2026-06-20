@@ -101,8 +101,9 @@ export default function GiftPeriodModal({
       const now = new Date();
       let baseDate: Date;
 
-      const isActive = current?.[activeField];
-      const expiry = current?.[expiryField];
+      const row = current as Record<string, unknown> | null;
+      const isActive = row?.[activeField];
+      const expiry = row?.[expiryField] as string | undefined;
 
       if (isActive && expiry) {
         const currentExpiryDate = new Date(expiry);

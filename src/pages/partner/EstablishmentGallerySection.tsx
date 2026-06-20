@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Trash2, Pencil, Plus, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Plus, Image as ImageIcon } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { EstablishmentPhoto } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const MAX_PHOTOS = 20;
 

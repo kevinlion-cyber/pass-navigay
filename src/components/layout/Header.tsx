@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, Shield, ChevronLeft, Bell, MessageCircle } from 'lucide-react';
+import { Sun, Moon, Shield, ChevronLeft, Bell } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';

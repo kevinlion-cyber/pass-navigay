@@ -60,7 +60,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
         supabase.from('messages').select('*', { count: 'exact', head: true }).eq('sender_id', memberId),
       ]);
       setProfile(profileRes.data as Profile);
-      setFavorites((favRes.data as FavoriteItem[]) || []);
+      setFavorites((favRes.data as unknown as FavoriteItem[]) || []);
       setMessageCount(msgRes.count ?? 0);
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
