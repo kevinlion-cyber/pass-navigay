@@ -1,11 +1,5 @@
 import Stripe from "npm:stripe@14.14.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { corsHeaders, jsonResponse, getAuthenticatedUser } from "../_shared/auth.ts";
 
 const PREMIUM_YEARLY_PRICE_ID = "price_1Th1iL18e2LOhPJqAlgcaEJ9";
 const MONTHLY_AMOUNT = 790;
@@ -18,22 +12,18 @@ Deno.serve(async (req: Request) => {
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      return new Response(
-        JSON.stringify({ error: "Stripe is not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Stripe is not configured" }, 500);
+    }
+
+    // Identité dérivée du JWT, jamais du body.
+    const user = await getAuthenticatedUser(req);
+    if (!user || !user.email) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    const { userId, email, billingInterval } = await req.json();
-
-    if (!email) {
-      return new Response(
-        JSON.stringify({ error: "Email is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { billingInterval } = await req.json().catch(() => ({}));
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
 
@@ -81,21 +71,16 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      customer_email: email,
+      customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/explore?premium=success`,
       cancel_url: `${appUrl}/explore?premium=cancelled`,
-      metadata: { userId: userId || "", billingInterval: billingInterval || "yearly" },
+      metadata: { userId: user.id, billingInterval: billingInterval || "yearly" },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ url: session.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: message }, 500);
   }
 });

@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Check, Lock, Image, CalendarDays, Tag, TrendingUp, Palette, Headphones, Loader2 } from 'lucide-react';
 import type { Establishment } from '../../lib/types';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import toast from 'react-hot-toast';
 
@@ -21,7 +22,6 @@ const PRO_FEATURES = [
 
 export default function PartnerSubscription() {
   const { establishment } = useOutletContext<PartnerContext>();
-  const { user } = useAuth();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [manageLoading, setManageLoading] = useState(false);
 
@@ -78,15 +78,17 @@ export default function PartnerSubscription() {
           }
           setManageLoading(true);
           try {
+            const { data: { session } } = await supabase.auth.getSession();
             const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`;
             const res = await fetch(apiUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${session?.access_token ?? ''}`,
               },
               body: JSON.stringify({
-                customerId: establishment.stripe_customer_id,
+                establishmentId: establishment.id,
                 returnUrl: window.location.href,
               }),
             });
@@ -160,17 +162,17 @@ function FreeView({ establishment }: { establishment: Establishment }) {
     if (!user) return;
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pro-checkout`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
         body: JSON.stringify({
           establishmentId: establishment.id,
-          email: user.email,
-          establishmentName: establishment.name,
           billingInterval,
         }),
       });
@@ -253,7 +255,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 max-w-[500px] mx-auto">
-        {PRO_FEATURES.map(({ icon: Icon, label }) => (
+        {PRO_FEATURES.map(({ label }) => (
           <div key={label} className="flex items-center gap-2.5 p-3 rounded-input"
             style={{ background: '#16161f', border: '1px solid #2a2a35' }}>
             <Check size={14} style={{ color: '#7B2D8B' }} className="shrink-0" />

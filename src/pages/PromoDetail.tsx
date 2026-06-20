@@ -26,7 +26,7 @@ export default function PromoDetail() {
     const load = async () => {
       setLoading(true);
       const { data } = await supabase
-        .from('promotions')
+        .from(isPremium ? 'promotions' : 'public_promotions')
         .select('*, establishment:establishments(id, name, logo_url, city, address)')
         .eq('id', promoId)
         .maybeSingle();
@@ -34,7 +34,7 @@ export default function PromoDetail() {
       setLoading(false);
     };
     load();
-  }, [promoId]);
+  }, [promoId, isPremium]);
 
   useEffect(() => {
     if (!promoId || !user) {
@@ -85,7 +85,7 @@ export default function PromoDetail() {
   const promoTypeLabel = () => {
     if (promo.promo_type === 'percentage') return 'Reduction en pourcentage';
     if (promo.promo_type === 'fixed') return 'Reduction montant fixe';
-    if (promo.promo_type === 'recurring') return 'Offre recurrente';
+    if (promo.is_recurring) return 'Offre recurrente';
     return 'Offre speciale';
   };
 

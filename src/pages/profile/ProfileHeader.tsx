@@ -89,7 +89,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     setSavingUsername(true);
     const trimmed = username.trim().toLowerCase();
     const { data: existing } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id')
       .eq('username', trimmed)
       .neq('id', user.id)

@@ -73,18 +73,17 @@ export default function LegalContact() {
             return <p key={i} className="text-[15px] text-white font-semibold leading-[1.75] mb-2">{line.replace(/\*\*/g, '')}</p>;
           }
           const placeholderRe = /\[([A-ZÀÂÉÈÊËÏÎÔÙÛÜÇ\s']+À COMPLÉTER)\]/g;
-          if (placeholderRe.test(line)) {
-            return (
-              <p
-                key={i}
-                className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-2"
-                dangerouslySetInnerHTML={{
-                  __html: line.replace(placeholderRe, '<span class="legal-placeholder">[$1]</span>'),
-                }}
-              />
-            );
+          const parts: React.ReactNode[] = [];
+          let lastIndex = 0;
+          let match: RegExpExecArray | null;
+          let p = 0;
+          while ((match = placeholderRe.exec(line)) !== null) {
+            if (match.index > lastIndex) parts.push(line.slice(lastIndex, match.index));
+            parts.push(<span key={`ph-${p++}`} className="legal-placeholder">[{match[1]}]</span>);
+            lastIndex = match.index + match[0].length;
           }
-          return <p key={i} className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-2">{line}</p>;
+          if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+          return <p key={i} className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-2">{parts.length ? parts : line}</p>;
         })}
       </div>
 

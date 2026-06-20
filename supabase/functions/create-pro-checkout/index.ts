@@ -1,11 +1,5 @@
 import Stripe from "npm:stripe@14.14.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { corsHeaders, jsonResponse, getAuthenticatedUser, serviceClient } from "../_shared/auth.ts";
 
 const PRO_YEARLY_PRICE_ID = "price_1Th1ix18e2LOhPJqyeE1nmX1";
 const MONTHLY_AMOUNT = 6900;
@@ -18,30 +12,37 @@ Deno.serve(async (req: Request) => {
   try {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
-      return new Response(
-        JSON.stringify({ error: "Stripe is not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: "Stripe is not configured" }, 500);
+    }
+
+    const user = await getAuthenticatedUser(req);
+    if (!user || !user.email) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
+    const { establishmentId, billingInterval } = await req.json().catch(() => ({}));
+    if (!establishmentId) {
+      return jsonResponse({ error: "establishmentId is required" }, 400);
+    }
+
+    // L'appelant doit être propriétaire de l'établissement.
+    const admin = serviceClient();
+    const { data: establishment } = await admin
+      .from("establishments")
+      .select("id, owner_id")
+      .eq("id", establishmentId)
+      .maybeSingle();
+
+    if (!establishment || establishment.owner_id !== user.id) {
+      return jsonResponse({ error: "Forbidden" }, 403);
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
-    const body = await req.json();
-    const { establishmentId, email, billingInterval } = body;
-
-    if (!email || !establishmentId) {
-      return new Response(
-        JSON.stringify({ error: "Email and establishmentId are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
 
     let priceId = PRO_YEARLY_PRICE_ID;
 
     if (billingInterval === "monthly") {
-      // Look for an existing "Pass Pro Mensuel" product
       const products = await stripe.products.search({
         query: "name:'Pass Pro Mensuel'",
       });
@@ -57,7 +58,6 @@ Deno.serve(async (req: Request) => {
         monthlyProductId = newProduct.id;
       }
 
-      // Find existing monthly price on that product
       const existingPrices = await stripe.prices.list({
         product: monthlyProductId,
         active: true,
@@ -84,22 +84,17 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      customer_email: email,
+      customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/partner/subscription?status=success`,
       cancel_url: `${appUrl}/partner/subscription?status=cancelled`,
       metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ url: session.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("create-pro-checkout error:", message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: message }, 500);
   }
 });

@@ -3,6 +3,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
 const PRO_FEATURES = [
   'Bandeau personnalise dans l\'annuaire',
@@ -39,14 +40,16 @@ export default function Pricing() {
 
     setLoading(type);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-premium-checkout`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ userId: user.id, email: user.email, billingInterval: premiumInterval }),
+        body: JSON.stringify({ billingInterval: premiumInterval }),
       });
       const data = await res.json();
       if (data?.url) {

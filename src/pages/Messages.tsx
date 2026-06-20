@@ -54,7 +54,7 @@ export default function Messages() {
     if (userIds.length === 0) { setLoading(false); return; }
 
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id, username, prenom, nom, avatar_url')
       .in('id', userIds);
 

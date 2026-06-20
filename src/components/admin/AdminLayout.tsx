@@ -23,7 +23,6 @@ export default function AdminLayout() {
   const { theme, toggleTheme } = useTheme();
 
   const handleQuit = () => {
-    sessionStorage.removeItem('adminAuth');
     navigate('/explore');
   };
 

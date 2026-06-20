@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, username: string) => {
     const { data: existing } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id')
       .eq('username', username)
       .maybeSingle();

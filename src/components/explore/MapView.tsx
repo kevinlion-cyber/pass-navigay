@@ -25,7 +25,7 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
 
   const [promoRes, eventRes] = await Promise.all([
     supabase
-      .from('promotions')
+      .from('public_promotions')
       .select('title')
       .eq('establishment_id', estId)
       .lte('valid_from', now)
@@ -141,10 +141,14 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
             onClick={() => handleMarkerClick(est)}
           >
             <div
-              className={`w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md transition-transform ${
-                activeMarker === est.id ? 'scale-150' : 'hover:scale-125'
-              }`}
-              style={{ backgroundColor: est.is_sponsor ? '#d4a017' : '#7B2D8B' }}
+              className="w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md"
+              style={{
+                backgroundColor: est.is_sponsor ? '#d4a017' : '#7B2D8B',
+                // Marker actif : halo fixe (pas de scale/transition → le marker ne bouge pas, cf. spec).
+                boxShadow: activeMarker === est.id
+                  ? '0 0 0 4px rgba(123,45,139,0.45)'
+                  : '0 1px 3px rgba(0,0,0,0.3)',
+              }}
             />
           </AdvancedMarker>
         ))}

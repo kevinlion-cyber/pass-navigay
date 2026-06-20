@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Check, Loader2, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 interface PremiumUpgradeModalProps {
   open: boolean;
@@ -30,14 +31,16 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-premium-checkout`;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ userId: user.id, email: user.email, billingInterval }),
+        body: JSON.stringify({ billingInterval }),
       });
       const data = await res.json();
       if (data?.url) {

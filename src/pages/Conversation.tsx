@@ -62,7 +62,7 @@ export default function Conversation() {
 
   const loadConversation = async () => {
     const [profileRes, messagesRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId!).maybeSingle(),
+      supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
       supabase
         .from('messages')
         .select('*')

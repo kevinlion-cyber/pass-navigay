@@ -1,11 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '../../lib/supabase';
 
 const PLACEHOLDER_RE = /\[([A-ZÀÂÉÈÊËÏÎÔÙÛÜÇ\s']+À COMPLÉTER)\]/g;
 
-function highlightPlaceholders(text: string): string {
-  return text.replace(PLACEHOLDER_RE, '<span class="legal-placeholder">[$1]</span>');
+// Met en valeur les placeholders [... À COMPLÉTER] via des éléments React,
+// SANS injecter de HTML brut (pas de dangerouslySetInnerHTML → pas de XSS stockée).
+function highlightNode(node: ReactNode, keyPrefix: string): ReactNode {
+  if (typeof node !== 'string') return node;
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  const re = new RegExp(PLACEHOLDER_RE.source, 'g');
+  let i = 0;
+  while ((match = re.exec(node)) !== null) {
+    if (match.index > lastIndex) parts.push(node.slice(lastIndex, match.index));
+    parts.push(
+      <span key={`${keyPrefix}-${i++}`} className="legal-placeholder">[{match[1]}]</span>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < node.length) parts.push(node.slice(lastIndex));
+  return parts.length ? parts : node;
+}
+
+function renderChildren(children: ReactNode): ReactNode {
+  if (Array.isArray(children)) {
+    return children.map((c, i) => <span key={i}>{highlightNode(c, `p${i}`)}</span>);
+  }
+  return highlightNode(children, 'p');
 }
 
 export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) {
@@ -40,8 +63,6 @@ export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) 
     );
   }
 
-  const processed = highlightPlaceholders(content);
-
   return (
     <div className="legal-content">
       <ReactMarkdown
@@ -49,18 +70,9 @@ export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) 
           h1: ({ children }) => <h1 className="text-[32px] font-extrabold text-white mb-6">{children}</h1>,
           h2: ({ children }) => <h2 className="text-[22px] font-bold text-[#c084f5] mt-10 mb-4">{children}</h2>,
           h3: ({ children }) => <h3 className="text-[18px] font-semibold text-white mt-8 mb-3">{children}</h3>,
-          p: ({ children }) => {
-            const text = String(children);
-            if (PLACEHOLDER_RE.test(text)) {
-              return (
-                <p
-                  className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-4"
-                  dangerouslySetInnerHTML={{ __html: highlightPlaceholders(text) }}
-                />
-              );
-            }
-            return <p className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-4">{children}</p>;
-          },
+          p: ({ children }) => (
+            <p className="text-[15px] text-[#c0c0d0] leading-[1.75] mb-4">{renderChildren(children)}</p>
+          ),
           ul: ({ children }) => <ul className="list-disc list-inside space-y-2 mb-4 text-[15px] text-[#c0c0d0]">{children}</ul>,
           li: ({ children }) => <li className="leading-[1.75]">{children}</li>,
           strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
@@ -73,7 +85,7 @@ export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) 
           hr: () => <hr className="border-[#1e1e2e] my-8" />,
         }}
       >
-        {processed}
+        {content}
       </ReactMarkdown>
     </div>
   );

@@ -46,7 +46,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
     if (rawUses.length === 0) return [];
     const userIds = rawUses.map((u) => u.user_id);
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id, username, avatar_url')
       .in('id', userIds);
     const profileMap = new Map<string, { username: string; avatar_url: string | null }>();

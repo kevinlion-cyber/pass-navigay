@@ -34,7 +34,7 @@ export default function Promos() {
     const load = async () => {
       setLoading(true);
       const { data } = await supabase
-        .from('promotions')
+        .from(isPremium ? 'promotions' : 'public_promotions')
         .select('*, establishment:establishments(name, logo_url, city)')
         .gte('valid_until', new Date().toISOString())
         .order('valid_until');
@@ -42,7 +42,7 @@ export default function Promos() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [isPremium]);
 
   useEffect(() => {
     if (!user || !isPremium || promos.length === 0) return;

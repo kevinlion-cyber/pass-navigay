@@ -13,19 +13,29 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const resendKey = Deno.env.get("RESEND_API_KEY") || "re_ez3u7dos_EkEurnx74NL8cqxTittWpGY";
-
-    const { email, username, type } = await req.json();
-
-    if (!email) {
+    // Jamais de clé en dur : la fonction échoue proprement si l'env n'est pas configuré.
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) {
       return new Response(
-        JSON.stringify({ error: "email is required" }),
+        JSON.stringify({ error: "Email service is not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { email, username, type } = await req.json().catch(() => ({}));
+
+    // Validation basique de l'email (anti-abus de relais).
+    const emailOk = typeof email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+    if (!emailOk) {
+      return new Response(
+        JSON.stringify({ error: "Valid email is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const isPro = type === "pro";
-    const displayName = username || email.split("@")[0];
+    const rawName = (typeof username === "string" && username.trim()) || email.split("@")[0];
+    const displayName = escapeHtml(rawName).slice(0, 80);
 
     const subject = isPro
       ? `Bienvenue sur Pass Navigay, ${displayName} ! Votre espace partenaire est pret`
@@ -69,6 +79,15 @@ Deno.serve(async (req: Request) => {
     });
   }
 });
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function buildUserEmailHtml(name: string): string {
   return `

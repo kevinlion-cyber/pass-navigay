@@ -46,7 +46,8 @@ function OpeningHoursDisplay({ hours }: { hours: OpeningHours }) {
 export default function EstablishmentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isPremium = profile?.is_premium === true;
 
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [photos, setPhotos] = useState<EstablishmentPhoto[]>([]);
@@ -67,7 +68,7 @@ export default function EstablishmentDetail() {
   useEffect(() => {
     if (!id) return;
     loadAll();
-  }, [id, user]);
+  }, [id, user, isPremium]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -75,15 +76,28 @@ export default function EstablishmentDetail() {
       supabase.from('establishments').select('*').eq('id', id!).maybeSingle(),
       supabase.from('establishment_photos').select('*').eq('establishment_id', id!).order('order_index'),
       supabase.from('events').select('*').eq('establishment_id', id!).or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`).order('event_date'),
-      supabase.from('promotions').select('*').eq('establishment_id', id!).gte('valid_until', new Date().toISOString()),
-      supabase.from('reviews').select('*, user:profiles(username, avatar_url)').eq('establishment_id', id!).order('created_at', { ascending: false }),
+      supabase.from(isPremium ? 'promotions' : 'public_promotions').select('*').eq('establishment_id', id!).gte('valid_until', new Date().toISOString()),
+      supabase.from('reviews').select('*').eq('establishment_id', id!).order('created_at', { ascending: false }),
     ]);
 
     if (estRes.data) setEstablishment(estRes.data as Establishment);
     if (photosRes.data) setPhotos(photosRes.data as EstablishmentPhoto[]);
     if (eventsRes.data) setEvents(eventsRes.data as Event[]);
     if (promosRes.data) setPromotions(promosRes.data as Promotion[]);
-    if (reviewsRes.data) setReviews(reviewsRes.data as unknown as Review[]);
+    if (reviewsRes.data) {
+      const reviewsData = reviewsRes.data as unknown as Review[];
+      // Auteurs récupérés via la vue publique (la table profiles n'est plus lisible en direct).
+      const authorIds = [...new Set(reviewsData.map((r) => r.user_id).filter(Boolean))];
+      let authorsMap: Record<string, any> = {};
+      if (authorIds.length) {
+        const { data: authors } = await supabase
+          .from('public_profiles')
+          .select('id, username, avatar_url')
+          .in('id', authorIds);
+        authorsMap = Object.fromEntries((authors || []).map((a: any) => [a.id, { username: a.username, avatar_url: a.avatar_url }]));
+      }
+      setReviews(reviewsData.map((r) => ({ ...r, user: authorsMap[r.user_id] })));
+    }
 
     if (user) {
       const { data: fav } = await supabase

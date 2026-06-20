@@ -72,7 +72,7 @@ export default function ProfilePublic() {
   const loadData = async () => {
     setLoading(true);
     const [profileRes, favRes, reviewsRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId!).maybeSingle(),
+      supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
       supabase
         .from('favorites')
         .select('establishment:establishments(id, name, city, category, logo_url)')
