@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, Building2, CalendarDays, Tag, Crown, TrendingUp, ShieldCheck, Percent } from 'lucide-react';
+import { Users, Building2, CalendarDays, Tag, Crown, TrendingUp, Percent } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Stats {
@@ -10,6 +10,7 @@ interface Stats {
   establishments: { total: number; pro: number; sponsors: number };
   upcomingEvents: number;
   activePromos: number;
+  promoUses: number;
   newThisWeek: number;
   premiumConversion: string;
   proConversion: string;
@@ -50,17 +51,18 @@ export default function AdminDashboard() {
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [membersRes, premiumRes, verifiedRes, estRes, eventsRes, promosRes, chartRes, weekRes, rmRes, reRes] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_verified', true),
+        const [membersRes, premiumRes, verifiedRes, estRes, eventsRes, promosRes, chartRes, weekRes, rmRes, reRes, promoUsesRes] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('account_type', 'pro'),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true).neq('account_type', 'pro'),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_verified', true).neq('account_type', 'pro'),
           supabase.from('establishments').select('id, is_pro, is_sponsor'),
           supabase.from('events').select('*', { count: 'exact', head: true }).gte('event_date', now),
           supabase.from('promotions').select('*', { count: 'exact', head: true }).gte('valid_until', now),
-          supabase.from('profiles').select('created_at').gte('created_at', thirtyDaysAgo),
-          supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
-          supabase.from('profiles').select('id, username, avatar_url, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('profiles').select('created_at').gte('created_at', thirtyDaysAgo).neq('account_type', 'pro'),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo).neq('account_type', 'pro'),
+          supabase.from('profiles').select('id, username, avatar_url, created_at').neq('account_type', 'pro').order('created_at', { ascending: false }).limit(5),
           supabase.from('establishments').select('id, name, category, is_pro, is_sponsor, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('promotion_uses').select('*', { count: 'exact', head: true }),
         ]);
 
         const estData = estRes.data || [];
@@ -84,6 +86,7 @@ export default function AdminDashboard() {
           },
           upcomingEvents: eventsRes.count ?? 0,
           activePromos: promosRes.count ?? 0,
+          promoUses: promoUsesRes.count ?? 0,
           newThisWeek: weekRes.count ?? 0,
           premiumConversion,
           proConversion,
@@ -143,7 +146,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={Users} label="Membres inscrits" value={String(stats?.members ?? 0)} sub={`+${stats?.newThisWeek ?? 0} cette semaine`} />
         <MetricCard icon={Crown} label="Membres Premium" value={String(stats?.premiumMembers ?? 0)} sub={`${conversionRate}% de conversion`} />
-        <MetricCard icon={ShieldCheck} label="Comptes verifies" value={String(stats?.verifiedMembers ?? 0)} />
+        <MetricCard icon={Tag} label="Promos utilisees" value={String(stats?.promoUses ?? 0)} sub="total des validations" />
         <MetricCard icon={Percent} label="Taux de conversion" value={`${stats?.premiumConversion ?? 0}% Premium`} sub={`${stats?.proConversion ?? 0}% des etablissements sont Pro`} />
         <MetricCard
           icon={Building2}

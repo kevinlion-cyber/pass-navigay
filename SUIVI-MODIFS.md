@@ -75,8 +75,8 @@ _Dernière mise à jour : 2026-06-20._
 ## L. Admin
 | # | Demande | Statut |
 |---|---------|--------|
-| L1 | Tableau de bord : Membres inscrits / Premium / promos actives / promos utilisées ; Établissements inscrits / Premium / Événements à venir / taux de conversion | ⬜ |
-| L2 | Admin peut gérer lui-même les filtres & catégories de pros (sur l'app et l'admin) | ⬜ |
+| L1 | Tableau de bord : Membres inscrits / Premium / promos actives / promos utilisées ; Établissements inscrits / Premium / Événements à venir / taux de conversion | ✅ KPI « Promos utilisées » ajouté (les autres existaient) ; comptage membres exclut désormais les comptes Pro |
+| L2 | Admin peut gérer lui-même les filtres & catégories de pros (sur l'app et l'admin) | ⬜ **gros chantier** : les catégories sont en dur (`lib/constants.ts`) ; les rendre éditables = les passer en base + CRUD admin + remplacer tous les usages. À faire en passe dédiée. |
 | L3 | Paramètres admin / changer le mot de passe | ⚠️ Note : l'accès admin est désormais un vrai compte Supabase (`is_admin`), il n'y a plus de mot de passe `admin2025`. À expliquer à Kevin. |
 | L4 | Offrir une période Pro depuis l'admin (Kevin dit ne pas l'avoir) | ✅ existe déjà : Admin → Établissements → ✏️ Modifier → bouton « Offrir une période Pro ». (à montrer à Kevin) |
 
