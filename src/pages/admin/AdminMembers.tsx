@@ -11,6 +11,8 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [premiumFilter, setPremiumFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('all');
+  const [cities, setCities] = useState<string[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [premiumCount, setPremiumCount] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export default function AdminMembers() {
       let query = supabase.from('profiles').select('*', { count: 'exact' }).order('created_at', { ascending: false });
       if (premiumFilter === 'premium') query = query.eq('is_premium', true);
       if (premiumFilter === 'free') query = query.eq('is_premium', false);
+      if (cityFilter !== 'all') query = query.eq('city', cityFilter);
       if (search) query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,prenom.ilike.%${search}%,nom.ilike.%${search}%`);
 
       const { data, count } = await query;
@@ -36,7 +39,13 @@ export default function AdminMembers() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [premiumFilter, search]);
+  useEffect(() => { load(); }, [premiumFilter, cityFilter, search]);
+
+  useEffect(() => {
+    supabase.from('profiles').select('city').then(({ data }) => {
+      setCities([...new Set((data || []).map((r: { city: string | null }) => r.city).filter(Boolean) as string[])].sort());
+    });
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -88,6 +97,12 @@ export default function AdminMembers() {
           <option value="premium">Premium</option>
           <option value="free">Gratuit</option>
         </select>
+        {cities.length > 0 && (
+          <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les villes</option>
+            {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, prenom ou email..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />

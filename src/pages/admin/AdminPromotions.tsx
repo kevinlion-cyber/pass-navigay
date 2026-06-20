@@ -8,11 +8,12 @@ import PromotionEditSidebar from './PromotionEditSidebar';
 
 export default function AdminPromotions() {
   const [promos, setPromos] = useState<Promotion[]>([]);
-  const [establishments, setEstablishments] = useState<{ id: string; name: string }[]>([]);
+  const [establishments, setEstablishments] = useState<{ id: string; name: string; city: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [estFilter, setEstFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -23,6 +24,10 @@ export default function AdminPromotions() {
       let query = supabase.from('promotions').select('*, establishment:establishments(id, name)').order('valid_until', { ascending: false });
       if (typeFilter !== 'all') query = query.eq('promo_type', typeFilter);
       if (estFilter !== 'all') query = query.eq('establishment_id', estFilter);
+      if (cityFilter !== 'all') {
+        const ids = establishments.filter((e) => e.city === cityFilter).map((e) => e.id);
+        query = query.in('establishment_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+      }
       if (search) query = query.ilike('title', `%${search}%`);
 
       const { data } = await query;
@@ -32,12 +37,12 @@ export default function AdminPromotions() {
   };
 
   useEffect(() => {
-    supabase.from('establishments').select('id, name').order('name').then(({ data }) => {
+    supabase.from('establishments').select('id, name, city').order('name').then(({ data }) => {
       setEstablishments((data as any) || []);
     });
   }, []);
 
-  useEffect(() => { load(); }, [typeFilter, estFilter, search]);
+  useEffect(() => { load(); }, [typeFilter, estFilter, cityFilter, search, establishments]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -82,6 +87,12 @@ export default function AdminPromotions() {
           <option value="all">Tous les etablissements</option>
           {establishments.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
+        {(() => { const cs = [...new Set(establishments.map((e) => e.city).filter(Boolean))].sort(); return cs.length > 0 && (
+          <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les villes</option>
+            {cs.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ); })()}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />

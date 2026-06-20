@@ -8,10 +8,11 @@ import EventEditSidebar from './EventEditSidebar';
 
 export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [establishments, setEstablishments] = useState<{ id: string; name: string }[]>([]);
+  const [establishments, setEstablishments] = useState<{ id: string; name: string; city: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [estFilter, setEstFilter] = useState('all');
+  const [cityFilter, setCityFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<Event | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -22,6 +23,10 @@ export default function AdminEvents() {
     try {
       let query = supabase.from('events').select('*, establishment:establishments(id, name)').order('event_date', { ascending: false });
       if (estFilter !== 'all') query = query.eq('establishment_id', estFilter);
+      if (cityFilter !== 'all') {
+        const ids = establishments.filter((e) => e.city === cityFilter).map((e) => e.id);
+        query = query.in('establishment_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+      }
       if (priceFilter === 'free') query = query.eq('is_free', true);
       if (priceFilter === 'paid') query = query.eq('is_free', false);
       if (search) query = query.ilike('title', `%${search}%`);
@@ -33,12 +38,12 @@ export default function AdminEvents() {
   };
 
   useEffect(() => {
-    supabase.from('establishments').select('id, name').order('name').then(({ data }) => {
+    supabase.from('establishments').select('id, name, city').order('name').then(({ data }) => {
       setEstablishments((data as any) || []);
     });
   }, []);
 
-  useEffect(() => { load(); }, [estFilter, priceFilter, search]);
+  useEffect(() => { load(); }, [estFilter, cityFilter, priceFilter, search, establishments]);
 
 
   const handleDelete = async () => {
@@ -77,6 +82,12 @@ export default function AdminEvents() {
           <option value="free">Gratuit</option>
           <option value="paid">Payant</option>
         </select>
+        {(() => { const cs = [...new Set(establishments.map((e) => e.city).filter(Boolean))].sort(); return cs.length > 0 && (
+          <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les villes</option>
+            {cs.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ); })()}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />

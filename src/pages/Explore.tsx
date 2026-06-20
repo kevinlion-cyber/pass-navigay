@@ -34,6 +34,7 @@ export default function Explore() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(null);
   const [emptyText, setEmptyText] = useState('');
 
@@ -229,6 +230,8 @@ export default function Explore() {
           key={est.id}
           ref={(el) => registerCardRef(est.id, el)}
           onClick={() => handleCardClick(est)}
+          onMouseEnter={() => setHoveredId(est.id)}
+          onMouseLeave={() => setHoveredId(null)}
           className={`rounded-card transition-all duration-300 cursor-pointer ${
             selectedPinId === est.id
               ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-dark-bg'
@@ -307,7 +310,7 @@ export default function Explore() {
               onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
-              selectedId={selectedPinId}
+              selectedId={selectedPinId} highlightId={hoveredId}
             />
           </div>
         </div>
@@ -330,7 +333,7 @@ export default function Explore() {
             onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
-            selectedId={selectedPinId}
+            selectedId={selectedPinId} highlightId={hoveredId}
           />
         </div>
 

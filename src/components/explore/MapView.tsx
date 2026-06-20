@@ -13,6 +13,7 @@ interface MapViewProps {
   onPinSelect?: (id: string | null) => void;
   flyTo?: { lng: number; lat: number } | null;
   selectedId?: string | null;
+  highlightId?: string | null;
 }
 
 interface PopupData {
@@ -55,7 +56,7 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
   return result;
 }
 
-function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId }: MapViewProps) {
+function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId }: MapViewProps) {
   const map = useMap();
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<PopupData>({});
@@ -145,10 +146,12 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
               className="w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md"
               style={{
                 backgroundColor: est.is_sponsor ? '#d4a017' : '#7B2D8B',
-                // Marker actif : halo fixe (pas de scale/transition → le marker ne bouge pas, cf. spec).
-                boxShadow: activeMarker === est.id
+                // Halo si actif (clic) ou survolé depuis la liste ; zoom uniquement au survol liste (E2).
+                boxShadow: (activeMarker === est.id || highlightId === est.id)
                   ? '0 0 0 4px rgba(123,45,139,0.45)'
                   : '0 1px 3px rgba(0,0,0,0.3)',
+                transform: highlightId === est.id ? 'scale(1.4)' : 'scale(1)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             />
           </AdvancedMarker>

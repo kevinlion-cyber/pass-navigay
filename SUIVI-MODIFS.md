@@ -33,7 +33,7 @@ _Dernière mise à jour : 2026-06-20._
 | # | Demande | Statut |
 |---|---------|--------|
 | E1 | Recherche par ville KO + carte ne s'affiche pas (Paris) ; afficher la ville même sans établissement | ✅ La recherche géocode désormais la ville (Edge Function OSM) et centre la carte même sans résultat ; ne vole plus vers des coords (0,0). |
-| E2 | Popup aperçu établissement sur le pin + highlight/zoom du pin au survol de la liste | 🟡 Popup au clic sur le pin = déjà là. Highlight du pin au survol de la liste = enhancement à ajouter (mineur). |
+| E2 | Popup aperçu établissement sur le pin + highlight/zoom du pin au survol de la liste | ✅ popup au clic (déjà là) + le pin correspondant se met en surbrillance et zoome quand on survole sa carte dans la liste. |
 | E3 | Établissement créé (Paris 02) n'apparaît pas sur la carte | ✅ **Cause racine** : clé Google restreinte par référent → géocodage refusé → établissements créés à (0,0). Corrigé : géocodage déplacé côté serveur (Edge Function `geocode` OSM, déployée) + tunnel pro branché dessus + les 2 établissements existants (Paris, Montpellier) recoordonnés en base. |
 
 ## F. Événements
@@ -83,7 +83,7 @@ _Dernière mise à jour : 2026-06-20._
 ## M. Filtre Ville transversal
 | # | Demande | Statut |
 |---|---------|--------|
-| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres ✅. Admin : établissements ✅ ; events/promos/membres admin = même pattern, à ajouter. |
+| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | ✅ App : events, promos, membres. Admin : établissements, membres, événements, promotions (events/promos filtrés via la ville de l'établissement). |
 
 ## N. Légal
 | # | Demande | Statut |
