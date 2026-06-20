@@ -17,6 +17,8 @@ export default function AdminEstablishments() {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [cityFilter, setCityFilter] = useState('all');
+  const [cities, setCities] = useState<string[]>([]);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<Establishment | null>(null);
@@ -29,6 +31,7 @@ export default function AdminEstablishments() {
       let query = supabase.from('establishments').select('*', { count: 'exact' });
 
       if (catFilter !== 'all') query = query.eq('category', catFilter);
+      if (cityFilter !== 'all') query = query.eq('city', cityFilter);
       if (statusFilter === 'free') query = query.eq('is_pro', false);
       if (statusFilter === 'pro') query = query.eq('is_pro', true);
       if (search) query = query.ilike('name', `%${search}%`);
@@ -42,7 +45,13 @@ export default function AdminEstablishments() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [catFilter, statusFilter, search, page]);
+  useEffect(() => { load(); }, [catFilter, cityFilter, statusFilter, search, page]);
+
+  useEffect(() => {
+    supabase.from('establishments').select('city').then(({ data }) => {
+      setCities([...new Set((data || []).map((r: { city: string }) => r.city).filter(Boolean))].sort());
+    });
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -123,6 +132,12 @@ export default function AdminEstablishments() {
           <option value="free">Gratuit</option>
           <option value="pro">Pro</option>
         </select>
+        {cities.length > 0 && (
+          <select value={cityFilter} onChange={(e) => { setCityFilter(e.target.value); setPage(0); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les villes</option>
+            {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input

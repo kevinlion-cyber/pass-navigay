@@ -83,7 +83,7 @@ _Dernière mise à jour : 2026-06-20._
 ## M. Filtre Ville transversal
 | # | Demande | Statut |
 |---|---------|--------|
-| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres ✅. Admin : reste à faire. |
+| M1 | Filtre par Ville PARTOUT : événements, promos, membres — sur l'app ET l'admin | 🟡 App : events ✅, promos ✅, membres ✅. Admin : établissements ✅ ; events/promos/membres admin = même pattern, à ajouter. |
 
 ## N. Légal
 | # | Demande | Statut |
