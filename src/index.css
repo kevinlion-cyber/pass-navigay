@@ -188,6 +188,29 @@
   --pn-border2: #2a2a35;
 }
 
+/* Page profil public : design sombre rendu adaptable clair/sombre via variables */
+.profile-public {
+  --pp-bg: #f7f5f0;
+  --pp-card: #ffffff;
+  --pp-card-border: #e5e0da;
+  --pp-text: #111827;
+  --pp-muted: #6b7280;
+  --pp-fade: #f7f5f0;
+  background: var(--pp-bg);
+}
+.dark .profile-public {
+  --pp-bg: #0a0a0f;
+  --pp-card: rgba(255, 255, 255, 0.02);
+  --pp-card-border: rgba(255, 255, 255, 0.06);
+  --pp-text: #ffffff;
+  --pp-muted: #9ca3af;
+  --pp-fade: #0a0a0f;
+}
+/* le texte blanc/clair devient sombre en thème clair (les boutons colorés gardent leur blanc via style inline) */
+.profile-public .text-white { color: var(--pp-text); }
+.profile-public .text-gray-300,
+.profile-public .text-gray-400 { color: var(--pp-muted); }
+
 .legal-placeholder {
   color: #d4a017;
   font-weight: 600;

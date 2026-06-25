@@ -37,7 +37,7 @@ function Tag({ children, variant = 'default' }: { children: React.ReactNode; var
 
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 ${className}`}>
+    <div className={`rounded-2xl border p-5 ${className}`} style={{ background: 'var(--pp-card)', borderColor: 'var(--pp-card-border)' }}>
       {children}
     </div>
   );
@@ -147,7 +147,7 @@ export default function ProfilePublic() {
   const showFunFacts = isPremiumProfile && ((vis.if_i_were_vibe && profile.if_i_were_vibe) || (vis.if_i_were_music && profile.if_i_were_music) || (vis.late_truth && profile.late_truth));
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0f' }}>
+    <div className="profile-public min-h-screen">
     <div className="max-w-xl mx-auto pb-28">
       {/* Hero header */}
       <div className="relative px-4 pt-8 pb-6">
@@ -167,7 +167,7 @@ export default function ProfilePublic() {
               )}
             </div>
             {profile.last_active_at && (
-              <div className="absolute -bottom-1 -right-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a1a24] border border-white/10 text-[10px] text-gray-400">
+              <div className="absolute -bottom-1 -right-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-white dark:bg-[#1a1a24] border border-black/10 dark:border-white/10 text-[10px] text-gray-400">
                 <Clock size={9} />
                 {timeAgo(profile.last_active_at)}
               </div>
@@ -219,7 +219,7 @@ export default function ProfilePublic() {
             <button
               onClick={handleMessage}
               className="mt-5 flex items-center gap-2 px-6 py-2.5 text-[13px] font-semibold rounded-full text-white transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #7B2D8B, #a855f7)' }}
+              style={{ background: 'linear-gradient(135deg, #7B2D8B, #a855f7)', color: '#fff' }}
             >
               <MessageCircle size={15} />
               Envoyer un message
@@ -316,14 +316,14 @@ export default function ProfilePublic() {
 
             <div className="space-y-3">
               {vis.if_i_were_vibe && profile.if_i_were_vibe && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.04]">
                   <span className="text-[11px] uppercase tracking-wider text-gray-500 shrink-0 w-28">Si j'etais une vibe</span>
                   <span className="text-sm font-medium text-white">{profile.if_i_were_vibe}</span>
                 </div>
               )}
 
               {vis.if_i_were_music && profile.if_i_were_music && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.04]">
                   <span className="text-[11px] uppercase tracking-wider text-gray-500 shrink-0 w-28">Si j'etais une musique</span>
                   <span className="text-sm font-medium text-white">{profile.if_i_were_music}</span>
                 </div>
@@ -351,7 +351,7 @@ export default function ProfilePublic() {
                 <button
                   key={est.id}
                   onClick={() => navigate(`/establishment/${est.id}`)}
-                  className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:border-[#7B2D8B]/40 transition-all text-left group"
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.05] hover:border-[#7B2D8B]/40 transition-all text-left group"
                 >
                   {est.logo_url ? (
                     <img src={est.logo_url} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
@@ -381,7 +381,7 @@ export default function ProfilePublic() {
               {reviews.map((review, i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]"
+                  className="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.04]"
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <button
@@ -421,12 +421,12 @@ export default function ProfilePublic() {
 
       {/* Fixed bottom CTA */}
       {(!user || user.id !== userId) && (
-        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/95 to-transparent">
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 p-4" style={{ background: 'linear-gradient(to top, var(--pp-fade), transparent)' }}>
           <div className="max-w-xl mx-auto">
             <button
               onClick={handleMessage}
               className="w-full flex items-center justify-center gap-2 py-3 text-[13px] font-semibold rounded-xl text-white shadow-lg shadow-[#7B2D8B]/20 transition-all hover:shadow-[#7B2D8B]/30"
-              style={{ background: 'linear-gradient(135deg, #7B2D8B, #a855f7)' }}
+              style={{ background: 'linear-gradient(135deg, #7B2D8B, #a855f7)', color: '#fff' }}
             >
               <MessageCircle size={16} />
               Envoyer un message a {firstName}
