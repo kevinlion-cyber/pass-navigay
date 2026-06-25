@@ -8,6 +8,7 @@ interface SettingsMap {
   onboarding_text: string;
   maintenance_mode: string;
   explore_empty_text: string;
+  require_signup: string;
 }
 
 const DEFAULTS: SettingsMap = {
@@ -16,6 +17,7 @@ const DEFAULTS: SettingsMap = {
   onboarding_text: '',
   maintenance_mode: 'false',
   explore_empty_text: '',
+  require_signup: 'true',
 };
 
 export default function AdminSettings() {
@@ -109,6 +111,19 @@ export default function AdminSettings() {
             className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white resize-none"
           />
           <p className="text-xs text-gray-500 mt-1">Affiché quand aucun établissement ne correspond aux filtres.</p>
+        </div>
+
+        <div className="flex items-center justify-between bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Inscription obligatoire</p>
+            <p className="text-xs text-gray-500 mt-0.5">Si activé, l'accès au site nécessite un compte (bouton « S'inscrire »). Sinon, navigation libre (« Explorer »).</p>
+          </div>
+          <button
+            onClick={() => setSettings({ ...settings, require_signup: settings.require_signup === 'true' ? 'false' : 'true' })}
+            className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${settings.require_signup === 'true' ? 'bg-primary' : 'bg-dark-border'}`}
+          >
+            <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${settings.require_signup === 'true' ? 'left-7' : 'left-1'}`} />
+          </button>
         </div>
 
         <div className="flex items-center justify-between bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">

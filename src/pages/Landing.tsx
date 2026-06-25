@@ -15,6 +15,12 @@ export default function Landing() {
   const { user, profile } = useAuth();
   const [countdown, setCountdown] = useState(5);
   const [showCheckbox, setShowCheckbox] = useState(false);
+  const [requireSignup, setRequireSignup] = useState(true);
+
+  useEffect(() => {
+    supabase.from('app_settings').select('value').eq('key', 'require_signup').maybeSingle()
+      .then(({ data }) => setRequireSignup(data ? data.value === 'true' : true));
+  }, []);
 
   useEffect(() => {
     if (user && profile && !profile.show_onboarding) {
@@ -72,9 +78,15 @@ export default function Landing() {
         </div>
 
         <div className="space-y-4 pt-4">
-          <button onClick={handleExplore} className="btn-primary w-full text-lg py-4">
-            Explorer
-          </button>
+          {!user && requireSignup ? (
+            <button onClick={() => navigate('/auth/register')} className="btn-primary w-full text-lg py-4">
+              S'inscrire
+            </button>
+          ) : (
+            <button onClick={handleExplore} className="btn-primary w-full text-lg py-4">
+              Explorer
+            </button>
+          )}
 
           {!showCheckbox && (
             <p className="text-sm text-gray-400 dark:text-gray-500">
