@@ -264,7 +264,7 @@ export default function ProfilePublic() {
                 <div className="flex items-start gap-2.5 pt-1">
                   <Zap size={14} className="text-amber-400 mt-0.5 shrink-0" />
                   <p className="text-sm text-gray-300">
-                    Mon vibe : <span className="font-medium text-white">{profile.vibe}</span>
+                    Ma vibe : <span className="font-medium text-white">{profile.vibe}</span>
                   </p>
                 </div>
               )}

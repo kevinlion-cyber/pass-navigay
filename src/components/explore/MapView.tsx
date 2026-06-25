@@ -200,14 +200,27 @@ function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment
       <p className="text-[11px] text-gray-500 mt-0.5">{catLabel} · {est.subcategory}</p>
       <p className="text-[11px] text-gray-500 mt-0.5 truncate">{est.address}, {est.city}</p>
 
-      {(est.avg_rating ?? 0) > 0 && (
-        <div className="flex items-center gap-0.5 mt-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : 'none'} stroke={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : '#ccc'} strokeWidth="2">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-          ))}
-          <span className="text-[10px] text-gray-400 ml-1">({est.review_count || 0})</span>
+      {((est.avg_rating ?? 0) > 0 || (est.avg_safety_rating ?? 0) > 0) && (
+        <div className="flex items-center gap-2 mt-1">
+          {(est.avg_rating ?? 0) > 0 && (
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : 'none'} stroke={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : '#ccc'} strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ))}
+              <span className="text-[10px] text-gray-400 ml-0.5">({est.review_count || 0})</span>
+            </div>
+          )}
+          {(est.avg_safety_rating ?? 0) > 0 && (
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_safety_rating || 0) ? '#10b981' : 'none'} stroke={i <= Math.round(est.avg_safety_rating || 0) ? '#10b981' : '#ccc'} strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

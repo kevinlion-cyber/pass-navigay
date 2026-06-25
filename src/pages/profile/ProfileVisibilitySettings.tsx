@@ -14,7 +14,7 @@ const VISIBILITY_FIELDS: { key: keyof ProfileVisibility; label: string }[] = [
   { key: 'pronouns', label: 'Pronoms' },
   { key: 'orientation', label: 'Orientation' },
   { key: 'looking_for', label: 'Ce que je cherche' },
-  { key: 'vibe', label: 'Mon vibe' },
+  { key: 'vibe', label: 'Ma vibe' },
   { key: 'evening_energy', label: 'Energie en soiree' },
   { key: 'green_flags', label: 'Green flags' },
   { key: 'what_i_bring', label: 'Ce que j\'apporte' },
