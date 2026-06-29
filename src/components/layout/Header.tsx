@@ -71,7 +71,7 @@ export default function Header() {
             </button>
           )}
           <Link to="/explore" className="flex items-center gap-2">
-            <img src="/logo-pass-navigay.png" alt="" className="h-10" />
+            <img src="/logo.png?v=2" alt="" className="h-10" />
             <span className="text-lg font-extrabold leading-none">
               <span className="text-gray-900 dark:text-white">Pass</span>
               <span style={{ color: '#7B2D8B' }}>Navigay</span>
