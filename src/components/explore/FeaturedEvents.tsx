@@ -20,7 +20,7 @@ export default function FeaturedEvents() {
         .or(`event_date.gte.${now},end_date.gte.${now}`)
         .order('is_featured', { ascending: false })
         .order('event_date', { ascending: true })
-        .limit(15);
+        .limit(40);
       if (data) setEvents(data as unknown as Event[]);
     };
     load();

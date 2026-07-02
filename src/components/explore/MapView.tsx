@@ -150,7 +150,7 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
                 boxShadow: (activeMarker === est.id || highlightId === est.id)
                   ? '0 0 0 4px rgba(123,45,139,0.45)'
                   : '0 1px 3px rgba(0,0,0,0.3)',
-                transform: highlightId === est.id ? 'scale(1.4)' : 'scale(1)',
+                transform: (highlightId === est.id || activeMarker === est.id) ? 'scale(1.4)' : 'scale(1)',
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
             />

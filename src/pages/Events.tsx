@@ -160,7 +160,7 @@ export default function Events() {
           <p className="text-gray-500 dark:text-gray-400">Aucun evenement trouve</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((event) => {
             const est = event.establishment as any;
             return (
