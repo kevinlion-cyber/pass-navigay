@@ -155,6 +155,11 @@ export default function EstablishmentDetail() {
       showAuthGate('Cree ton compte pour laisser un avis.');
       return;
     }
+    if (!isPremium) {
+      toast.error('Les avis sont reserves aux membres Premium.');
+      navigate('/pricing');
+      return;
+    }
     if (newRating === 0) { toast.error('Choisis une note qualite.'); return; }
     setSubmittingReview(true);
 
@@ -411,38 +416,50 @@ export default function EstablishmentDetail() {
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Avis ({reviews.length})</h2>
 
-          <div className="card p-4 space-y-4 mb-4">
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Qualite</p>
-                <StarRating rating={newRating} interactive onChange={(r) => {
-                  if (!user) { showAuthGate('Cree ton compte pour noter cet etablissement.'); return; }
-                  setNewRating(r);
-                }} />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Safe place (optionnel)</p>
-                <ShieldRating rating={newSafetyRating} interactive onChange={(r) => {
-                  if (!user) { showAuthGate('Cree ton compte pour noter cet etablissement.'); return; }
-                  setNewSafetyRating(r);
-                }} />
-              </div>
+          {!user ? (
+            <div className="card p-4 mb-4 text-center space-y-2">
+              <p className="text-sm text-gray-600 dark:text-gray-300">Cree ton compte pour laisser un avis.</p>
+              <button onClick={() => showAuthGate('Cree ton compte pour laisser un avis.')} className="btn-primary text-sm">
+                Creer un compte
+              </button>
             </div>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onFocus={() => {
-                if (!user) showAuthGate('Cree ton compte pour laisser un avis.');
-              }}
-              placeholder="Ton avis..."
-              rows={3}
-              className="input-field resize-none"
-            />
-            <button onClick={submitReview} disabled={submittingReview} className="btn-primary text-sm flex items-center gap-2">
-              {submittingReview && <LoadingSpinner size={16} />}
-              Envoyer
-            </button>
-          </div>
+          ) : !isPremium ? (
+            <div className="card p-5 mb-4 text-center space-y-2">
+              <p className="text-sm text-gray-700 dark:text-gray-200">
+                Les avis sont reserves aux membres <span className="text-primary font-semibold">Premium</span>.
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Passe Premium pour noter la qualite et le cote « Safe place » des etablissements.
+              </p>
+              <button onClick={() => navigate('/pricing')} className="btn-primary text-sm">
+                Passer Premium
+              </button>
+            </div>
+          ) : (
+            <div className="card p-4 space-y-4 mb-4">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Qualite</p>
+                  <StarRating rating={newRating} interactive onChange={(r) => setNewRating(r)} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Safe place (optionnel)</p>
+                  <ShieldRating rating={newSafetyRating} interactive onChange={(r) => setNewSafetyRating(r)} />
+                </div>
+              </div>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Ton avis..."
+                rows={3}
+                className="input-field resize-none"
+              />
+              <button onClick={submitReview} disabled={submittingReview} className="btn-primary text-sm flex items-center gap-2">
+                {submittingReview && <LoadingSpinner size={16} />}
+                Envoyer
+              </button>
+            </div>
+          )}
 
           <div className="space-y-3">
             {reviews.map((review) => {

@@ -17,7 +17,18 @@ const PRO_FEATURES = [
 
 const PREMIUM_FEATURES = [
   'Badge Premium sur le profil',
+  'Laisse des avis (qualite & Safe place) sur les etablissements',
 ];
+
+// Prix reels (doivent correspondre a create-premium-checkout : mensuel 669, annuel 69 EUR).
+const PREMIUM_MONTHLY = 6.69;
+const PREMIUM_YEARLY = 69;
+// Reduction annuelle calculee (jamais fausse) : vs 12 mois au tarif mensuel.
+const PREMIUM_YEARLY_DISCOUNT = Math.round((1 - PREMIUM_YEARLY / (PREMIUM_MONTHLY * 12)) * 100);
+const PREMIUM_YEARLY_PER_MONTH = (PREMIUM_YEARLY / 12).toLocaleString('fr-FR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 export default function Pricing() {
   const { user } = useAuth();
@@ -117,22 +128,22 @@ export default function Pricing() {
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
-                Annuel <span className="text-[11px] opacity-70">-27%</span>
+                Annuel <span className="text-[11px] opacity-70">-{PREMIUM_YEARLY_DISCOUNT}%</span>
               </button>
             </div>
 
             <div className="mt-3">
               {premiumInterval === 'yearly' ? (
                 <>
-                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">69</span>
+                  <span className="text-3xl font-semibold text-gray-900 dark:text-white">{PREMIUM_YEARLY}</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
-                  <p className="text-xs text-gray-400 mt-0.5">soit 5,75 EUR/mois</p>
+                  <p className="text-xs text-gray-400 mt-0.5">soit {PREMIUM_YEARLY_PER_MONTH} EUR/mois</p>
                 </>
               ) : (
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
-                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement, resiliable a tout moment</p>
                 </>
               )}
             </div>

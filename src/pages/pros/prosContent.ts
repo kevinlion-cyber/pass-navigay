@@ -130,6 +130,7 @@ export const DEFAULT_PROS_CONTENT: ProsContent = {
       'Galerie photos',
       'Création d’événements',
       'Système de promotions / couponing',
+      'Avis de membres Premium (qualité & Safe place)',
       'Visibilité renforcée dans les résultats',
       'Support prioritaire',
     ],
