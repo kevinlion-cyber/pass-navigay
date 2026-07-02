@@ -13,7 +13,7 @@ interface PartnerContext {
 
 const PRO_FEATURES = [
   { icon: Palette, label: 'Bannière personnalisée dans l\'annuaire' },
-  { icon: Image, label: 'Galerie photos illimitée' },
+  { icon: Image, label: 'Galerie photos' },
   { icon: CalendarDays, label: 'Création d\'événements' },
   { icon: Tag, label: 'Système de promotions / couponing' },
   { icon: TrendingUp, label: 'Visibilité renforcée dans les résultats' },

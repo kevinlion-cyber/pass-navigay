@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 
 const PRO_FEATURES = [
   'Bandeau personnalise dans l\'annuaire',
-  'Galerie photos illimitee',
+  'Galerie photos',
   'Description complete',
   'Creation d\'evenements',
   'Systeme de promotions / couponing',
