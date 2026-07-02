@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Pencil, Trash2, X, Check, Copy, Power } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Check, Copy, Power, Repeat } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Promotion } from '../../lib/types';
@@ -15,6 +15,13 @@ interface PartnerContext {
 }
 
 type PromoType = 'percentage' | 'fixed' | 'offer';
+type Recurrence = 'none' | 'weekly' | 'monthly';
+
+const RECURRENCE_LABEL: Record<Recurrence, string> = {
+  none: 'Ponctuelle',
+  weekly: 'Chaque semaine',
+  monthly: 'Chaque mois',
+};
 
 interface PromoForm {
   title: string;
@@ -23,6 +30,7 @@ interface PromoForm {
   value: number;
   offer_text: string;
   is_permanent: boolean;
+  recurrence: Recurrence;
   valid_from: string;
   valid_until: string;
   image_url: string;
@@ -35,6 +43,7 @@ const EMPTY_FORM: PromoForm = {
   value: 0,
   offer_text: '',
   is_permanent: false,
+  recurrence: 'none',
   valid_from: '',
   valid_until: '',
   image_url: '',
@@ -85,6 +94,7 @@ export default function PartnerPromotions() {
       value: p.value || 0,
       offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
       is_permanent: p.is_permanent ?? false,
+      recurrence: p.is_recurring ? (p.recurrence_rule === 'monthly' ? 'monthly' : 'weekly') : 'none',
       valid_from: p.valid_from ? p.valid_from.slice(0, 16) : '',
       valid_until: p.valid_until ? p.valid_until.slice(0, 16) : '',
       image_url: p.image_url || '',
@@ -102,6 +112,7 @@ export default function PartnerPromotions() {
       value: p.value || 0,
       offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
       is_permanent: p.is_permanent ?? false,
+      recurrence: p.is_recurring ? (p.recurrence_rule === 'monthly' ? 'monthly' : 'weekly') : 'none',
       valid_from: '',
       valid_until: '',
       image_url: p.image_url || '',
@@ -155,8 +166,8 @@ export default function PartnerPromotions() {
         is_permanent: form.is_permanent,
         valid_from: form.is_permanent ? new Date().toISOString() : new Date(form.valid_from).toISOString(),
         valid_until: form.is_permanent ? '2099-12-31T23:59:59' : new Date(form.valid_until).toISOString(),
-        is_recurring: false,
-        recurrence_rule: '',
+        is_recurring: form.recurrence !== 'none',
+        recurrence_rule: form.recurrence === 'none' ? '' : form.recurrence,
         max_uses: null,
         image_url,
         is_active: true,
@@ -326,6 +337,27 @@ export default function PartnerPromotions() {
                 </div>
               )}
 
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-gray-500 mb-2">Récurrence</label>
+                <div className="flex gap-2">
+                  {(['none', 'weekly', 'monthly'] as Recurrence[]).map((r) => (
+                    <button key={r} type="button" onClick={() => setForm({ ...form, recurrence: r })}
+                      className="flex-1 py-2.5 rounded-[8px] text-sm font-medium transition-colors"
+                      style={form.recurrence === r
+                        ? { background: 'rgba(123,45,139,0.2)', border: '1px solid #7B2D8B', color: '#7B2D8B' }
+                        : { background: '#1a1a24', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }
+                      }>
+                      {RECURRENCE_LABEL[r]}
+                    </button>
+                  ))}
+                </div>
+                {form.recurrence !== 'none' && (
+                  <p className="text-xs text-gray-600 mt-1.5">
+                    La promotion reste affichée et indique « {RECURRENCE_LABEL[form.recurrence].toLowerCase()} » aux membres.
+                  </p>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setFormOpen(false)}
                   className="flex-1 btn-ghost py-2.5 text-sm">
@@ -457,6 +489,12 @@ function PromoCard({
         {!isPermanent && (
           <p className="text-xs text-gray-500 mb-2">
             Du {formatDate(promo.valid_from)} au {formatDate(promo.valid_until)}
+          </p>
+        )}
+
+        {promo.is_recurring && promo.recurrence_rule && (
+          <p className="text-xs mb-2 inline-flex items-center gap-1 font-medium" style={{ color: '#7B2D8B' }}>
+            <Repeat size={12} /> {promo.recurrence_rule === 'monthly' ? 'Chaque mois' : 'Chaque semaine'}
           </p>
         )}
 

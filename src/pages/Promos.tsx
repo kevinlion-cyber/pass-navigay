@@ -277,6 +277,11 @@ export default function Promos() {
                           ? `Plus que ${remaining}j !`
                           : `Jusqu'au ${formatDate(promo.valid_until)}`}
                       </span>
+                      {promo.is_recurring && promo.recurrence_rule && (
+                        <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#7B2D8B' }}>
+                          🔁 {promo.recurrence_rule === 'monthly' ? 'Chaque mois' : 'Chaque semaine'}
+                        </span>
+                      )}
                       {isUsed && (
                         <span className="flex items-center gap-1 text-xs font-medium" style={{ color: '#27ae60' }}>
                           <Check size={12} />
