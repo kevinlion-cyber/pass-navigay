@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin, Zap, Music, Quote, ShieldCheck } from 'lucide-react';
+import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin, Zap, Music, Quote, ShieldCheck, Images } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Profile, ProfileVisibility, Establishment } from '../lib/types';
@@ -230,6 +230,22 @@ export default function ProfilePublic() {
 
       {/* Content sections */}
       <div className="px-4 space-y-4">
+        {/* Galerie photos (Premium) */}
+        {profile.gallery_urls && profile.gallery_urls.length > 0 && (
+          <SectionCard>
+            <SectionTitle icon={<Images size={16} className="text-[#a855f7]" />}>
+              Galerie
+            </SectionTitle>
+            <div className="grid grid-cols-3 gap-2">
+              {profile.gallery_urls.map((url) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer" className="block aspect-square rounded-lg overflow-hidden">
+                  <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                </a>
+              ))}
+            </div>
+          </SectionCard>
+        )}
+
         {/* Qui je suis */}
         {showIdentity && (
           <SectionCard>

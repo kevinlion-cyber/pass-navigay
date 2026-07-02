@@ -17,7 +17,8 @@ const PRO_FEATURES = [
 
 const PREMIUM_FEATURES = [
   'Badge Premium sur le profil',
-  'Laisse des avis (qualite & Safe place) sur les etablissements',
+  'Galerie photos sur ton profil',
+  'Laisse des avis (qualité & Safe place) sur les établissements',
 ];
 
 // Prix reels (doivent correspondre a create-premium-checkout : mensuel 669, annuel 69 EUR).

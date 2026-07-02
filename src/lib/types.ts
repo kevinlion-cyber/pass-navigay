@@ -20,6 +20,7 @@ export interface Profile {
   id: string;
   username: string;
   avatar_url: string | null;
+  gallery_urls?: string[];
   bio: string;
   is_premium: boolean;
   is_admin: boolean;

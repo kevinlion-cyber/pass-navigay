@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import ProfileHeader from './profile/ProfileHeader';
+import ProfileGallery from './profile/ProfileGallery';
 import ProfileFavorites from './profile/ProfileFavorites';
 import ProfileEvents from './profile/ProfileEvents';
 import ProfileAccountSettings from './profile/ProfileAccountSettings';
@@ -92,6 +93,8 @@ export default function ProfileSettings() {
           Modifier mon questionnaire
         </button>
       )}
+
+      {profile.is_premium && <ProfileGallery profile={profile} />}
 
       <ProfileFavorites userId={user.id} />
       <ProfileEvents userId={user.id} />
