@@ -138,7 +138,7 @@ export default function Members() {
       {filtered.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <Users size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucun membre trouve</p>
+          <p className="text-gray-500 dark:text-gray-400">Aucun membre trouvé</p>
         </div>
       ) : (
         <div className="relative">
@@ -231,7 +231,7 @@ export default function Members() {
               <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
                 <Lock size={24} style={{ color: '#7B2D8B' }} />
               </div>
-              <p className="text-base font-semibold text-gray-900 dark:text-white">Reserve aux membres Premium</p>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">Réservé aux membres Premium</p>
               <button
                 onClick={() => setUpgradeOpen(true)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"

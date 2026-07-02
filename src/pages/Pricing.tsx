@@ -6,13 +6,13 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
 const PRO_FEATURES = [
-  'Bandeau personnalise dans l\'annuaire',
+  'Bandeau personnalisé dans l\'annuaire',
   'Galerie photos',
-  'Description complete',
-  'Creation d\'evenements',
-  'Systeme de promotions / couponing',
+  'Description complète',
+  'Création d\'événements',
+  'Système de promotions / couponing',
   'Boutons de partage',
-  'Visibilite renforcee',
+  'Visibilité renforcée',
 ];
 
 const PREMIUM_FEATURES = [
@@ -143,7 +143,7 @@ export default function Pricing() {
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
-                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement, resiliable a tout moment</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement, résiliable à tout moment</p>
                 </>
               )}
             </div>

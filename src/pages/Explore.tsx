@@ -221,7 +221,7 @@ export default function Explore() {
     <div className="space-y-3">
       {activeSearch && !loading && (
         <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
-          {establishments.length} resultat{establishments.length !== 1 ? 's' : ''} pour &laquo;&nbsp;{activeSearch}&nbsp;&raquo;
+          {establishments.length} résultat{establishments.length !== 1 ? 's' : ''} pour &laquo;&nbsp;{activeSearch}&nbsp;&raquo;
         </p>
       )}
 

@@ -85,9 +85,9 @@ export default function Events() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Evenements</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Événements</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {filtered.length} evenement{filtered.length !== 1 ? 's' : ''} a venir
+          {filtered.length} événement{filtered.length !== 1 ? 's' : ''} à venir
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function Events() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un evenement..."
+            placeholder="Rechercher un événement..."
             className="input-field pl-9 text-xs w-full"
             style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
           />
@@ -157,7 +157,7 @@ export default function Events() {
       {filtered.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <Calendar size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucun evenement trouve</p>
+          <p className="text-gray-500 dark:text-gray-400">Aucun événement trouvé</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -185,7 +185,7 @@ export default function Events() {
                   <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {formatDate(event.event_date)} a {formatTime(event.event_date)}
+                      {formatDate(event.event_date)} à {formatTime(event.event_date)}
                     </span>
                   </div>
 

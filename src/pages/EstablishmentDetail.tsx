@@ -152,7 +152,7 @@ export default function EstablishmentDetail() {
 
   const submitReview = async () => {
     if (!user) {
-      showAuthGate('Cree ton compte pour laisser un avis.');
+      showAuthGate('Crée ton compte pour laisser un avis.');
       return;
     }
     if (!isPremium) {
@@ -160,7 +160,7 @@ export default function EstablishmentDetail() {
       navigate('/pricing');
       return;
     }
-    if (newRating === 0) { toast.error('Choisis une note qualite.'); return; }
+    if (newRating === 0) { toast.error('Choisis une note qualité.'); return; }
     setSubmittingReview(true);
 
     const { error } = await supabase.from('reviews').upsert({
@@ -174,7 +174,7 @@ export default function EstablishmentDetail() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Avis envoye !');
+      toast.success('Avis envoyé !');
       setNewRating(0);
       setNewSafetyRating(0);
       setNewComment('');
@@ -194,7 +194,7 @@ export default function EstablishmentDetail() {
   if (!establishment) {
     return (
       <div className="text-center py-20 text-gray-500">
-        <p>Etablissement non trouve.</p>
+        <p>Établissement non trouvé.</p>
         <button onClick={() => navigate('/explore')} className="btn-primary mt-4">
           Retour
         </button>
@@ -418,8 +418,8 @@ export default function EstablishmentDetail() {
 
           {!user ? (
             <div className="card p-4 mb-4 text-center space-y-2">
-              <p className="text-sm text-gray-600 dark:text-gray-300">Cree ton compte pour laisser un avis.</p>
-              <button onClick={() => showAuthGate('Cree ton compte pour laisser un avis.')} className="btn-primary text-sm">
+              <p className="text-sm text-gray-600 dark:text-gray-300">Crée ton compte pour laisser un avis.</p>
+              <button onClick={() => showAuthGate('Crée ton compte pour laisser un avis.')} className="btn-primary text-sm">
                 Creer un compte
               </button>
             </div>
@@ -439,7 +439,7 @@ export default function EstablishmentDetail() {
             <div className="card p-4 space-y-4 mb-4">
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Qualite</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Qualité</p>
                   <StarRating rating={newRating} interactive onChange={(r) => setNewRating(r)} />
                 </div>
                 <div>
