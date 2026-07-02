@@ -35,7 +35,7 @@ export default function CategoryFilters({
   return (
     <div className="flex gap-2">
       <FilterDropdown
-        label="Categorie"
+        label="Catégorie"
         value={selectedCategory ?? 'all'}
         options={categoryOptions}
         onChange={(val) => onCategoryChange(val === 'all' ? null : val as CategoryKey)}

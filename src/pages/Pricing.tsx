@@ -84,7 +84,7 @@ export default function Pricing() {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="card p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil Pro Etablissement</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil Pro Établissement</h2>
             <div className="mt-2">
               <span className="text-3xl font-semibold text-gray-900 dark:text-white">690</span>
               <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>

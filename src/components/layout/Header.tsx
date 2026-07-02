@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 
 const NAV_TABS = [
   { path: '/explore', label: 'Lieux' },
-  { path: '/events', label: 'Evenements' },
+  { path: '/events', label: 'Événements' },
   { path: '/promos', label: 'Promos' },
   { path: '/members', label: 'Membres' },
   { path: '/messages', label: 'Messages', authOnly: true },

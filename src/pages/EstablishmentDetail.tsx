@@ -342,7 +342,7 @@ export default function EstablishmentDetail() {
 
         {events.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Evenements a venir</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Événements à venir</h2>
             <div className="space-y-3">
               {events.map((event) => (
                 <div

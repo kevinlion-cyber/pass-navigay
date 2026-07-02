@@ -37,9 +37,9 @@ export default function EventDetail() {
   if (!event) {
     return (
       <div className="text-center py-20 text-gray-500">
-        <p>Evenement non trouve.</p>
+        <p>Événement non trouvé.</p>
         <button onClick={() => navigate('/events')} className="btn-primary mt-4">
-          Retour aux evenements
+          Retour aux événements
         </button>
       </div>
     );

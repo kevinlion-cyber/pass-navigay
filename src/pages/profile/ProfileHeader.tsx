@@ -69,7 +69,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
     await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
     await refreshProfile();
-    toast.success('Photo mise a jour !');
+    toast.success('Photo mise à jour !');
     setUploading(false);
   };
 
@@ -82,7 +82,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     }
     await refreshProfile();
     setEditingBio(false);
-    toast.success('Bio mise a jour');
+    toast.success('Bio mise à jour');
   };
 
   const saveUsername = async () => {
@@ -96,7 +96,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
       .neq('id', user.id)
       .maybeSingle();
     if (existing) {
-      toast.error('Ce pseudo est deja pris.');
+      toast.error('Ce pseudo est déjà pris.');
       setSavingUsername(false);
       return;
     }
@@ -108,7 +108,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
     }
     await refreshProfile();
     setEditingUsername(false);
-    toast.success('Pseudo mis a jour');
+    toast.success('Pseudo mis à jour');
   };
 
   const saveInfos = async () => {
@@ -198,7 +198,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             {(profile as any).is_verified && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <ShieldCheck size={12} />
-                Verifie
+                Vérifié
               </span>
             )}
             {profile.is_premium && (

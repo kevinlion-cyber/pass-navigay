@@ -7,16 +7,16 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const NAV_ITEMS = [
   { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
-  { to: '/admin/establishments', icon: Building2, label: 'Etablissements' },
-  { to: '/admin/events', icon: CalendarDays, label: 'Evenements' },
+  { to: '/admin/establishments', icon: Building2, label: 'Établissements' },
+  { to: '/admin/events', icon: CalendarDays, label: 'Événements' },
   { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
   { to: '/admin/members', icon: Users, label: 'Membres' },
   { to: '/admin/partners', icon: Handshake, label: 'Partenaires' },
   { to: '/admin/gifts', icon: Gift, label: 'Cadeaux offerts' },
-  { to: '/admin/categories', icon: Layers, label: 'Categories' },
+  { to: '/admin/categories', icon: Layers, label: 'Catégories' },
   { to: '/admin/pros-landing', icon: Megaphone, label: 'Landing Pros' },
-  { to: '/admin/settings', icon: Settings, label: 'Parametres' },
-  { to: '/admin/legal', icon: FileText, label: 'Contenu legal' },
+  { to: '/admin/settings', icon: Settings, label: 'Paramètres' },
+  { to: '/admin/legal', icon: FileText, label: 'Contenu légal' },
 ];
 
 export default function AdminLayout() {

@@ -180,7 +180,7 @@ export default function ProfilePublic() {
               {(profile as any).is_verified && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
                   <ShieldCheck size={11} />
-                  Verifie
+                  Vérifié
                 </span>
               )}
               {profile.is_premium && (

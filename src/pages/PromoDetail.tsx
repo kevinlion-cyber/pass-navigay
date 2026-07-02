@@ -212,7 +212,7 @@ export default function PromoDetail() {
 
         {est && (
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Etablissement</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Établissement</h2>
             <div
               onClick={() => navigate(`/establishment/${est.id}`)}
               className="card p-4 flex items-center gap-4 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow"

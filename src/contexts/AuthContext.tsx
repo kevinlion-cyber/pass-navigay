@@ -13,22 +13,22 @@ function translateAuthError(error: AuthError): string {
     return 'Email ou mot de passe incorrect.';
   }
   if (msg.includes('email not confirmed')) {
-    return "Ton email n'a pas encore ete confirme. Verifie ta boite de reception.";
+    return "Ton email n'a pas encore été confirmé. Vérifie ta boîte de réception.";
   }
   if (msg.includes('too many requests') || msg.includes('rate limit')) {
-    return 'Trop de tentatives. Reessaie dans quelques minutes.';
+    return 'Trop de tentatives. Réessaie dans quelques minutes.';
   }
   if (msg.includes('password') && msg.includes('least')) {
-    return 'Le mot de passe doit contenir au moins 6 caracteres.';
+    return 'Le mot de passe doit contenir au moins 6 caractères.';
   }
   if (msg.includes('invalid email')) {
     return "L'adresse email n'est pas valide.";
   }
   if (msg.includes('signup is disabled')) {
-    return "L'inscription est temporairement desactivee.";
+    return "L'inscription est temporairement désactivée.";
   }
   if (msg.includes('network') || msg.includes('fetch')) {
-    return 'Erreur de connexion. Verifie ta connexion internet.';
+    return 'Erreur de connexion. Vérifie ta connexion internet.';
   }
 
   return error.message;

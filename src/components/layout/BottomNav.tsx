@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 
 const NAV_ITEMS = [
   { path: '/explore', icon: MapPin, label: 'Lieux' },
-  { path: '/events', icon: Calendar, label: 'Evenements' },
+  { path: '/events', icon: Calendar, label: 'Événements' },
   { path: '/promos', icon: Tag, label: 'Promos' },
   { path: '/members', icon: Users, label: 'Membres' },
   { path: '/messages', icon: MessageCircle, label: 'Messages', authOnly: true },

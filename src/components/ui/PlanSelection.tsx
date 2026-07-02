@@ -169,7 +169,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
       </button>
 
       <p className="text-center text-[13px]" style={{ color: '#606070' }}>
-        Deja un compte ?{' '}
+        Déjà un compte ?{' '}
         <button
           type="button"
           onClick={onSwitchToLogin}
