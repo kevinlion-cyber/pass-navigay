@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
@@ -97,6 +97,16 @@ export default function ProfileSettings() {
       <ProfileEvents userId={user.id} />
       <ProfileVisibilitySettings profile={profile} />
       <ProfileAccountSettings profile={profile} />
+
+      <div className="pt-4 border-t border-light-border dark:border-dark-border">
+        <p className="text-xs font-medium text-gray-400 dark:text-gray-500 mb-2">Informations légales</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+          <Link to="/legal/cgu" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Conditions d'utilisation</Link>
+          <Link to="/legal/confidentialite" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Confidentialité</Link>
+          <Link to="/legal/mentions" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Mentions légales</Link>
+          <Link to="/legal/contact" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Contact</Link>
+        </div>
+      </div>
 
       {questionnaireOpen && profile.is_premium && (
         <PremiumQuestionnaireModal

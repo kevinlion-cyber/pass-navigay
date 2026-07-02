@@ -249,15 +249,13 @@ export default function Explore() {
       )}
 
       {!loading && establishments.length === 0 && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          {emptyText ? (
-            <p className="whitespace-pre-line">{emptyText}</p>
-          ) : (
-            <>
-              <p>Aucun etablissement trouve.</p>
-              <p className="text-sm mt-1">Essaie de modifier tes filtres.</p>
-            </>
-          )}
+        <div className="text-center py-12 px-4 text-gray-500 dark:text-gray-400 space-y-3">
+          <p className="whitespace-pre-line">
+            {emptyText || 'Aucun établissement ici pour le moment.\nEnregistre-toi pour être la première Safe place du coin.'}
+          </p>
+          <button onClick={() => navigate('/pros')} className="btn-primary text-sm">
+            Référencer mon établissement
+          </button>
         </div>
       )}
 

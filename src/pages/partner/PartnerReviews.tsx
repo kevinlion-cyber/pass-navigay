@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { MessageSquare, Star, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Review } from '../../lib/types';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import StarRating from '../../components/ui/StarRating';
+import ShieldRating from '../../components/ui/ShieldRating';
 
 interface PartnerContext {
   establishment: Establishment;
@@ -94,11 +96,11 @@ export default function PartnerReviews() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{r.user?.username || 'Anonyme'}</p>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={12}
-                        className={s <= r.rating ? 'fill-sponsor text-sponsor' : 'fill-none text-gray-600'} />
-                    ))}
+                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                    <StarRating rating={r.rating} size={13} />
+                    {r.safety_rating != null && r.safety_rating > 0 && (
+                      <ShieldRating rating={r.safety_rating} size={13} />
+                    )}
                   </div>
                 </div>
                 <span className="text-xs text-gray-500 ml-auto">
