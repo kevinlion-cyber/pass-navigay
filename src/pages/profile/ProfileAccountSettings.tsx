@@ -33,7 +33,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
     <section>
       <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
         <Settings size={18} className="text-primary" />
-        Parametres
+        Paramètres
       </h2>
 
       <div className="card p-4 space-y-4">

@@ -147,14 +147,14 @@ export default function AdminDashboard() {
         <MetricCard icon={Users} label="Membres inscrits" value={String(stats?.members ?? 0)} sub={`+${stats?.newThisWeek ?? 0} cette semaine`} />
         <MetricCard icon={Crown} label="Membres Premium" value={String(stats?.premiumMembers ?? 0)} sub={`${conversionRate}% de conversion`} />
         <MetricCard icon={Tag} label="Promos utilisees" value={String(stats?.promoUses ?? 0)} sub="total des validations" />
-        <MetricCard icon={Percent} label="Taux de conversion" value={`${stats?.premiumConversion ?? 0}% Premium`} sub={`${stats?.proConversion ?? 0}% des etablissements sont Pro`} />
+        <MetricCard icon={Percent} label="Taux de conversion" value={`${stats?.premiumConversion ?? 0}% Premium`} sub={`${stats?.proConversion ?? 0}% des établissements sont Pro`} />
         <MetricCard
           icon={Building2}
-          label="Etablissements"
+          label="Établissements"
           value={`${stats?.establishments.total ?? 0} total`}
           sub={`${stats?.establishments.pro ?? 0} Pro · ${stats?.establishments.sponsors ?? 0} sponsors`}
         />
-        <MetricCard icon={CalendarDays} label="Evenements a venir" value={String(stats?.upcomingEvents ?? 0)} />
+        <MetricCard icon={CalendarDays} label="Événements à venir" value={String(stats?.upcomingEvents ?? 0)} />
         <MetricCard icon={Tag} label="Promos actives" value={String(stats?.activePromos ?? 0)} />
         <MetricCard icon={TrendingUp} label="Nouveaux (7j)" value={String(stats?.newThisWeek ?? 0)} />
       </div>

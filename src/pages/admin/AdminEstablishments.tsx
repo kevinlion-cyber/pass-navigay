@@ -60,7 +60,7 @@ export default function AdminEstablishments() {
     try {
       const { error } = await supabase.from('establishments').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      toast.success('Etablissement supprime');
+      toast.success('Établissement supprimé');
       setDeleteTarget(null);
       load();
     } catch (err: any) {
@@ -112,10 +112,10 @@ export default function AdminEstablishments() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Etablissements</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Établissements</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
-            <Plus size={16} /> Creer
+            <Plus size={16} /> Créer
           </button>
           <button onClick={exportCSV} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
             <Download size={16} /> Exporter CSV
@@ -125,7 +125,7 @@ export default function AdminEstablishments() {
 
       <div className="flex flex-wrap items-center gap-2">
         <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(0); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
-          <option value="all">Toutes categories</option>
+          <option value="all">Toutes catégories</option>
           {categoryKeys.map((k) => <option key={k} value={k}>{categories[k as CategoryKey].label}</option>)}
         </select>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); setPage(0); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
@@ -158,7 +158,7 @@ export default function AdminEstablishments() {
       {loading ? (
         <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
       ) : establishments.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun etablissement trouve.</p>
+        <p className="text-center text-gray-500 py-12">Aucun établissement trouvé.</p>
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
@@ -167,7 +167,7 @@ export default function AdminEstablishments() {
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Logo</th>
                   <th className="py-3 px-3">Nom</th>
-                  <th className="py-3 px-3">Categorie</th>
+                  <th className="py-3 px-3">Catégorie</th>
                   <th className="py-3 px-3">Ville</th>
                   <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Date</th>

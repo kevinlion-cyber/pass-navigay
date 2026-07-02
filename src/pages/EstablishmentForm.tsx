@@ -122,7 +122,7 @@ export default function EstablishmentForm() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success(isEdit ? 'Etablissement modifie !' : 'Etablissement cree !');
+      toast.success(isEdit ? 'Établissement modifié !' : 'Établissement créé !');
       navigate('/explore');
     }
     setSaving(false);
@@ -141,7 +141,7 @@ export default function EstablishmentForm() {
       <AuthGateModal
         open={authGateOpen}
         onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
-        message="Cree ton compte pour ajouter ton etablissement."
+        message="Crée ton compte pour ajouter ton établissement."
       />
 
       <button onClick={() => navigate(-1)} className="btn-ghost flex items-center gap-2">
@@ -150,7 +150,7 @@ export default function EstablishmentForm() {
       </button>
 
       <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-        {isEdit ? 'Modifier' : 'Creer'} un etablissement
+        {isEdit ? 'Modifier' : 'Créer'} un établissement
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -187,7 +187,7 @@ export default function EstablishmentForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categorie</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catégorie</label>
             <select value={category} onChange={(e) => { setCategory(e.target.value as CategoryKey); setSubcategory(''); }} className="input-field">
               {categoryKeys.map((key) => (
                 <option key={key} value={key}>{categories[key].label}</option>
@@ -195,7 +195,7 @@ export default function EstablishmentForm() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sous-categorie</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sous-catégorie</label>
             <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} required className="input-field">
               <option value="">Choisir</option>
               {categories[category].subcategories.map((sub) => (
@@ -212,7 +212,7 @@ export default function EstablishmentForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telephone</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Téléphone</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input-field" />
           </div>
           <div>
@@ -228,7 +228,7 @@ export default function EstablishmentForm() {
 
         <button type="submit" disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2">
           {saving && <LoadingSpinner size={18} />}
-          {isEdit ? 'Enregistrer' : 'Creer'}
+          {isEdit ? 'Enregistrer' : 'Créer'}
         </button>
       </form>
     </div>

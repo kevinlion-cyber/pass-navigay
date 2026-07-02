@@ -52,7 +52,7 @@ export default function AdminEvents() {
     try {
       const { error } = await supabase.from('events').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      toast.success('Evenement supprime');
+      toast.success('Événement supprimé');
       setDeleteTarget(null);
       load();
     } catch (err: any) {
