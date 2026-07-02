@@ -1,10 +1,12 @@
 import { ArrowRight } from 'lucide-react';
+import { ProsContent } from './prosContent';
 
 interface ProsCtaProps {
+  content: ProsContent['cta'];
   onRegister: () => void;
 }
 
-export default function ProsCta({ onRegister }: ProsCtaProps) {
+export default function ProsCta({ content, onRegister }: ProsCtaProps) {
   return (
     <section
       className="relative py-[120px] px-6 text-center overflow-hidden"
@@ -20,16 +22,16 @@ export default function ProsCta({ onRegister }: ProsCtaProps) {
 
       <div className="relative z-10 max-w-2xl mx-auto">
         <h2 className="text-[36px] md:text-[48px] font-black text-white leading-[1.2]">
-          Prêt à rejoindre la communauté ?
+          {content.title}
         </h2>
         <p className="text-[16px] text-[#a0a0b0] mt-4">
-          Inscription gratuite &middot; Aucun engagement &middot; Passez Pro quand vous voulez
+          {content.subtitle}
         </p>
         <button
           onClick={onRegister}
           className="mt-8 inline-flex items-center gap-2 px-10 py-[18px] bg-white text-[#7B2D8B] rounded-xl text-[17px] font-bold transition-all duration-200 hover:bg-[#f0e8ff] hover:-translate-y-0.5"
         >
-          Créer mon profil maintenant <ArrowRight size={18} />
+          {content.button} <ArrowRight size={18} />
         </button>
         <p className="text-[12px] text-[#606070] mt-5">
           &#128274; Paiement sécurisé par Stripe &middot; SSL &middot; Données protégées

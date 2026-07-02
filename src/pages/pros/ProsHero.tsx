@@ -1,20 +1,22 @@
 import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ProsContent } from './prosContent';
 
 const PILLS = [
-  { emoji: '\uD83C\uDF7D', label: 'Restaurants' },
-  { emoji: '\uD83C\uDF89', label: 'Soirées' },
-  { emoji: '\uD83D\uDECD', label: 'Shopping' },
-  { emoji: '\uD83D\uDC86', label: 'Bien-être' },
-  { emoji: '\uD83C\uDFE8', label: 'Hébergement' },
-  { emoji: '\uD83C\uDFAD', label: 'Culture' },
+  { emoji: '🍽', label: 'Restaurants' },
+  { emoji: '🎉', label: 'Soirées' },
+  { emoji: '🛍', label: 'Shopping' },
+  { emoji: '💆', label: 'Bien-être' },
+  { emoji: '🏨', label: 'Hébergement' },
+  { emoji: '🎭', label: 'Culture' },
 ];
 
 interface ProsHeroProps {
+  content: ProsContent['hero'];
   onRegister: () => void;
   onLogin: () => void;
 }
 
-export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
+export default function ProsHero({ content, onRegister, onLogin }: ProsHeroProps) {
   return (
     <section className="pros-hero relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <div
@@ -25,6 +27,7 @@ export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
 
       <div className="relative z-10 max-w-[800px] mx-auto px-6 text-center pros-fade-in">
         <div className="flex items-center justify-center gap-2 mb-10" style={{ letterSpacing: '2px' }}>
+          <img src="/logo.png?v=2" alt="" className="h-12" />
           <span className="text-[32px] font-bold">
             <span className="text-white">Pass</span>{' '}
             <span className="text-[#7B2D8B]">Navigay</span>
@@ -32,13 +35,12 @@ export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
         </div>
 
         <h1 className="text-[36px] md:text-[56px] font-black text-white leading-[1.15]">
-          Rejoignez le réseau des lieux{'\n'}
-          <br className="hidden md:block" />
-          LGBT-friendly de <span className="text-[#c084f5]">France</span>
+          {content.title}{' '}
+          <span className="text-[#c084f5]">{content.highlight}</span>
         </h1>
 
         <p className="mt-5 text-[16px] md:text-[18px] text-[#a0a0b0] max-w-[600px] mx-auto leading-relaxed">
-          Référencez votre établissement, publiez vos événements et touchez des milliers d'utilisateurs qui cherchent des lieux sûrs et bienveillants près de chez eux.
+          {content.subtitle}
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-[10px] mt-8">
@@ -58,14 +60,14 @@ export default function ProsHero({ onRegister, onLogin }: ProsHeroProps) {
             onClick={onRegister}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#7B2D8B] text-white rounded-xl text-base font-semibold transition-all duration-200 hover:bg-[#9b3dab] hover:-translate-y-0.5"
           >
-            Créer mon profil gratuit <ArrowRight size={18} />
+            {content.ctaPrimary} <ArrowRight size={18} />
           </button>
           <button
             onClick={onLogin}
             className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl text-base font-semibold text-white transition-all duration-200 hover:border-white"
             style={{ border: '1px solid rgba(255,255,255,0.3)' }}
           >
-            Déjà partenaire ? Se connecter
+            {content.ctaSecondary}
           </button>
         </div>
       </div>

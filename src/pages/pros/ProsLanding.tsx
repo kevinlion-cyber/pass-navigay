@@ -9,21 +9,31 @@ import ProsCta from './ProsCta';
 import ProsFooter from './ProsFooter';
 import ProsRegisterModal from './ProsRegisterModal';
 import ProsLoginModal from './ProsLoginModal';
+import { useProsContent, resolveStatValue } from './useProsContent';
 
 export default function ProsLanding() {
   const [modal, setModal] = useState<'none' | 'register' | 'login'>('none');
+  const { content, counts } = useProsContent();
 
   const openRegister = () => setModal('register');
   const openLogin = () => setModal('login');
   const closeModal = () => setModal('none');
 
+  const resolvedStats = content.stats.items.map((item) => ({
+    ...item,
+    display: resolveStatValue(item, content.stats.mode, counts),
+  }));
+
   return (
     <div className="pros-page" style={{ fontFamily: "'Inter', sans-serif" }}>
       <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-6" style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
         <div className="max-w-[1200px] w-full mx-auto flex items-center justify-between">
-          <Link to="/explore" className="text-[20px] font-bold">
-            <span className="text-white">Pass</span>{' '}
-            <span className="text-[#7B2D8B]">Navigay</span>
+          <Link to="/explore" className="flex items-center gap-2">
+            <img src="/logo.png?v=2" alt="" className="h-9" />
+            <span className="text-[20px] font-bold">
+              <span className="text-white">Pass</span>{' '}
+              <span className="text-[#7B2D8B]">Navigay</span>
+            </span>
           </Link>
           <div className="flex items-center gap-3">
             <button
@@ -44,12 +54,14 @@ export default function ProsLanding() {
       </header>
 
       <main className="pt-16">
-        <ProsHero onRegister={openRegister} onLogin={openLogin} />
-        <ProsStats />
-        <ProsBenefits />
-        <ProsPricing onRegister={openRegister} />
-        <ProsTestimonials />
-        <ProsCta onRegister={openRegister} />
+        <ProsHero content={content.hero} onRegister={openRegister} onLogin={openLogin} />
+        {content.stats.show && <ProsStats items={resolvedStats} />}
+        <ProsBenefits content={content.benefits} />
+        {content.pricing.show && <ProsPricing content={content.pricing} onRegister={openRegister} />}
+        {content.testimonials.show && content.testimonials.items.length > 0 && (
+          <ProsTestimonials content={content.testimonials} />
+        )}
+        <ProsCta content={content.cta} onRegister={openRegister} />
       </main>
 
       <ProsFooter />

@@ -1,34 +1,21 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
-
-const FREE_FEATURES = [
-  { label: 'Apparition dans l\u2019annuaire', included: true },
-  { label: 'Fiche avec nom, adresse, catégorie', included: true },
-  { label: 'Bannière personnalisée', included: false },
-  { label: 'Galerie photos', included: false },
-  { label: 'Création d\u2019événements', included: false },
-  { label: 'Système de promotions', included: false },
-  { label: 'Visibilité renforcée dans les résultats', included: false },
-  { label: 'Support prioritaire', included: false },
-];
-
-const PRO_FEATURES = [
-  'Apparition dans l\u2019annuaire',
-  'Fiche avec nom, adresse, catégorie',
-  'Bannière personnalisée',
-  'Galerie photos illimitée',
-  'Création d\u2019événements',
-  'Système de promotions / couponing',
-  'Visibilité renforcée dans les résultats',
-  'Support prioritaire',
-];
+import { ProsContent, yearlySavings, monthsFree } from './prosContent';
 
 interface ProsPricingProps {
+  content: ProsContent['pricing'];
   onRegister: () => void;
 }
 
-export default function ProsPricing({ onRegister }: ProsPricingProps) {
+export default function ProsPricing({ content, onRegister }: ProsPricingProps) {
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
+
+  const { proMonthly, proYearly, freeFeatures, proFeatures } = content;
+  const savings = yearlySavings(proMonthly, proYearly);
+  const nbMonthsFree = monthsFree(proMonthly, proYearly);
+  const perMonthYearly = proYearly / 12;
+  const fmtEur = (n: number) =>
+    Number.isInteger(n) ? `${n}€` : `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`;
 
   return (
     <section className="py-[100px] px-6" style={{ background: '#0f0f17' }}>
@@ -61,9 +48,11 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
             }`}
           >
             Annuel
-            <span className="absolute -top-2.5 -right-12 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              -20%
-            </span>
+            {nbMonthsFree > 0 && (
+              <span className="absolute -top-2.5 -right-16 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                {nbMonthsFree} mois offert{nbMonthsFree > 1 ? 's' : ''}
+              </span>
+            )}
           </button>
         </div>
 
@@ -79,8 +68,8 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
             <p className="text-[14px] text-[#a0a0b0] mt-2">Pour démarrer et être visible sur l&rsquo;annuaire.</p>
 
             <ul className="mt-8 space-y-3.5 flex-1">
-              {FREE_FEATURES.map((f) => (
-                <li key={f.label} className="flex items-start gap-3 text-[14px]">
+              {freeFeatures.map((f, i) => (
+                <li key={f.label + i} className="flex items-start gap-3 text-[14px]">
                   {f.included ? (
                     <Check size={16} className="text-[#7B2D8B] mt-0.5 shrink-0" strokeWidth={2.5} />
                   ) : (
@@ -115,27 +104,29 @@ export default function ProsPricing({ onRegister }: ProsPricingProps) {
             <div className="mt-5">
               {billingInterval === 'yearly' ? (
                 <>
-                  <span className="text-[56px] font-bold text-white leading-none">690&euro;</span>
+                  <span className="text-[56px] font-bold text-white leading-none">{fmtEur(proYearly)}</span>
                   <span className="text-[18px] text-[#606070] ml-1">/an</span>
                 </>
               ) : (
                 <>
-                  <span className="text-[56px] font-bold text-white leading-none">69&euro;</span>
+                  <span className="text-[56px] font-bold text-white leading-none">{fmtEur(proMonthly)}</span>
                   <span className="text-[18px] text-[#606070] ml-1">/mois</span>
                 </>
               )}
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Tout ce qu&rsquo;il faut pour développer votre visibilité.</p>
-            {billingInterval === 'yearly' && (
-              <p className="text-[13px] text-emerald-400 mt-1 font-medium">Soit 57,50&euro;/mois — vous économisez 138&euro;/an</p>
+            {billingInterval === 'yearly' && savings > 0 && (
+              <p className="text-[13px] text-emerald-400 mt-1 font-medium">
+                Soit {fmtEur(perMonthYearly)}/mois — vous économisez {fmtEur(savings)}/an
+              </p>
             )}
             {billingInterval === 'monthly' && (
               <p className="text-[13px] text-[#a0a0b0] mt-1">Sans engagement, résiliable à tout moment</p>
             )}
 
             <ul className="mt-8 space-y-3.5 flex-1">
-              {PRO_FEATURES.map((label) => (
-                <li key={label} className="flex items-start gap-3 text-[14px]">
+              {proFeatures.map((label, i) => (
+                <li key={label + i} className="flex items-start gap-3 text-[14px]">
                   <Check size={16} className="text-[#c084f5] mt-0.5 shrink-0" strokeWidth={2.5} />
                   <span className="text-[#e0e0f0] font-semibold">{label}</span>
                 </li>

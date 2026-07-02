@@ -33,6 +33,7 @@ import AdminPartners from './pages/admin/AdminPartners';
 import AdminGifts from './pages/admin/AdminGifts';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminCategories from './pages/admin/AdminCategories';
+import AdminProsLanding from './pages/admin/AdminProsLanding';
 
 import ProsLanding from './pages/pros/ProsLanding';
 import LegalLayout from './pages/legal/LegalLayout';
@@ -101,6 +102,7 @@ export default function App() {
               <Route path="partners" element={<AdminPartners />} />
               <Route path="gifts" element={<AdminGifts />} />
               <Route path="categories" element={<AdminCategories />} />
+              <Route path="pros-landing" element={<AdminProsLanding />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="legal" element={<AdminLegal />} />
             </Route>
