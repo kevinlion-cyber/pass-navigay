@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { LEGAL_CUSTOM_KEY, parseLegalPages } from './legalPages';
 
-const TABS = [
+const BASE_TABS = [
   { to: '/legal/mentions', label: 'Mentions légales' },
   { to: '/legal/cgu', label: 'CGU' },
   { to: '/legal/confidentialite', label: 'Politique de confidentialité' },
@@ -9,6 +12,16 @@ const TABS = [
 ];
 
 export default function LegalLayout() {
+  const [tabs, setTabs] = useState(BASE_TABS);
+
+  useEffect(() => {
+    supabase.from('app_settings').select('value').eq('key', LEGAL_CUSTOM_KEY).maybeSingle()
+      .then(({ data }) => {
+        const custom = parseLegalPages(data?.value).map((p) => ({ to: `/legal/p/${p.slug}`, label: p.title }));
+        if (custom.length) setTabs([...BASE_TABS, ...custom]);
+      });
+  }, []);
+
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: '#0a0a0f' }} className="min-h-screen">
       <header className="sticky top-0 z-50 h-14 flex items-center px-6" style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
@@ -26,10 +39,11 @@ export default function LegalLayout() {
 
       <nav className="border-b border-[#1e1e2e] overflow-x-auto">
         <div className="max-w-[800px] mx-auto px-6 flex items-center gap-6 h-11">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <NavLink
               key={t.to}
               to={t.to}
+              end
               className={({ isActive }) =>
                 `whitespace-nowrap text-[13px] font-medium transition-colors pb-2.5 border-b-2 ${
                   isActive

@@ -31,11 +31,16 @@ function renderChildren(children: ReactNode): ReactNode {
   return highlightNode(children, 'p');
 }
 
-export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) {
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(true);
+export default function LegalMarkdown({ settingsKey, content: contentProp }: { settingsKey?: string; content?: string }) {
+  const [content, setContent] = useState(contentProp ?? '');
+  const [loading, setLoading] = useState(!!settingsKey);
 
   useEffect(() => {
+    if (!settingsKey) {
+      setContent(contentProp ?? '');
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       setLoading(true);
       const { data } = await supabase
@@ -47,7 +52,7 @@ export default function LegalMarkdown({ settingsKey }: { settingsKey: string }) 
       setLoading(false);
     };
     load();
-  }, [settingsKey]);
+  }, [settingsKey, contentProp]);
 
   if (loading) {
     return (

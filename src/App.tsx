@@ -41,6 +41,7 @@ import LegalMentions from './pages/legal/LegalMentions';
 import LegalCgu from './pages/legal/LegalCgu';
 import LegalConfidentialite from './pages/legal/LegalConfidentialite';
 import LegalContact from './pages/legal/LegalContact';
+import LegalCustomPage from './pages/legal/LegalCustomPage';
 import AdminLegal from './pages/admin/AdminLegal';
 import PartnerLayout from './components/partner/PartnerLayout';
 import PartnerDashboard from './pages/partner/PartnerDashboard';
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="cgu" element={<LegalCgu />} />
               <Route path="confidentialite" element={<LegalConfidentialite />} />
               <Route path="contact" element={<LegalContact />} />
+              <Route path="p/:slug" element={<LegalCustomPage />} />
             </Route>
 
             <Route path="/pros" element={<ProsLanding />} />
