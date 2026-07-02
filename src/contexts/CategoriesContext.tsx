@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { CATEGORIES as DEFAULT_CATEGORIES, CATEGORY_KEYS } from '../lib/constants';
+import { CATEGORIES as DEFAULT_CATEGORIES } from '../lib/constants';
 import type { CategoryKey } from '../lib/types';
 import { supabase } from '../lib/supabase';
 
@@ -14,20 +14,20 @@ interface CategoriesState {
 
 const CategoriesContext = createContext<CategoriesState | undefined>(undefined);
 
-// Fusionne une config (issue de la base) au-dessus des valeurs par défaut du code,
-// en garantissant que les 6 clés de catégories existent toujours.
-function mergeConfig(raw: unknown): CategoriesMap {
-  const merged = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)) as CategoriesMap;
-  if (raw && typeof raw === 'object') {
-    for (const k of CATEGORY_KEYS) {
-      const c = (raw as any)[k];
-      if (c) {
-        if (typeof c.label === 'string' && c.label.trim()) merged[k].label = c.label;
-        if (Array.isArray(c.subcategories)) merged[k].subcategories = c.subcategories.filter((s: any) => typeof s === 'string' && s.trim());
-      }
-    }
+// Normalise une config stockée : elle devient la source de vérité (l'admin peut
+// ajouter/supprimer/renommer des catégories). Retourne null si vide/invalide -> défauts.
+function normalizeConfig(raw: unknown): CategoriesMap | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const out: CategoriesMap = {};
+  for (const [k, c] of Object.entries(raw as Record<string, any>)) {
+    if (!k || !c || typeof c !== 'object') continue;
+    const label = typeof c.label === 'string' && c.label.trim() ? c.label.trim() : k;
+    const subcategories = Array.isArray(c.subcategories)
+      ? c.subcategories.filter((s: any) => typeof s === 'string' && s.trim())
+      : [];
+    out[k] = { label, subcategories };
   }
-  return merged;
+  return Object.keys(out).length ? out : null;
 }
 
 export function CategoriesProvider({ children }: { children: ReactNode }) {
@@ -41,7 +41,10 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
         .select('value')
         .eq('key', 'categories_config')
         .maybeSingle();
-      if (data?.value) setCategories(mergeConfig(JSON.parse(data.value)));
+      if (data?.value) {
+        const norm = normalizeConfig(JSON.parse(data.value));
+        if (norm) setCategories(norm);
+      }
     } catch {
       /* on garde les valeurs par défaut */
     }
@@ -51,7 +54,9 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   useEffect(() => { load(); }, []);
 
   return (
-    <CategoriesContext.Provider value={{ categories, categoryKeys: CATEGORY_KEYS, loading, reload: load }}>
+    <CategoriesContext.Provider
+      value={{ categories, categoryKeys: Object.keys(categories) as CategoryKey[], loading, reload: load }}
+    >
       {children}
     </CategoriesContext.Provider>
   );
