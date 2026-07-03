@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
         Authorization: `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
-        from: "Pass Navigay <onboarding@resend.dev>",
+        from: "Pass Navigay <bonjour@passnavigay.com>",
         to: [email],
         subject,
         html: htmlBody,

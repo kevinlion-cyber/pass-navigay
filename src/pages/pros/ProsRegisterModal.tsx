@@ -26,6 +26,9 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [loaderStep, setLoaderStep] = useState(0);
+  const [phase, setPhase] = useState<'form' | 'verify'>('form');
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const [step1, setStep1] = useState<Step1Data>({
     prenom: '', nom: '', email: '', phone: '', password: '',
@@ -58,19 +61,42 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
     return () => window.removeEventListener('keydown', handleEsc);
   }, [handleClose]);
 
-  const handleSubmit = async () => {
+  // Étape 1 : créer le compte auth. Avec la confirmation email active, aucune session
+  // n'est ouverte ici → on demande le code à 6 chiffres avant de créer l'établissement.
+  const handleSignup = async () => {
     setSubmitting(true);
-    setLoaderStep(0);
-
     try {
-      setLoaderStep(0);
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: step1.email,
         password: step1.password,
       });
       if (authError) throw new Error(authError.message);
       if (!authData.user) throw new Error('Erreur lors de la création du compte.');
-      const userId = authData.user.id;
+      setSubmitting(false);
+      setPhase('verify');
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la création du compte.');
+      setSubmitting(false);
+    }
+  };
+
+  // Étape 2 : valider le code → une session s'ouvre → on crée profil + établissement + photos.
+  const handleVerify = async () => {
+    if (code.length !== 6) { toast.error('Le code doit contenir 6 chiffres.'); return; }
+    setVerifying(true);
+    try {
+      const { data: vData, error: vErr } = await supabase.auth.verifyOtp({
+        email: step1.email,
+        token: code,
+        type: 'signup',
+      });
+      if (vErr) throw new Error(vErr.message);
+      const userId = vData.user?.id;
+      if (!userId) throw new Error('Session non établie. Réessaie.');
+
+      setVerifying(false);
+      setSubmitting(true);
+      setLoaderStep(0);
 
       await supabase.from('profiles').upsert({
         id: userId,
@@ -150,6 +176,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de la création.');
       setSubmitting(false);
+      setVerifying(false);
     }
   };
 
@@ -176,6 +203,48 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
               />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'verify') {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4" style={{ zIndex: 1000, background: 'rgba(0,0,0,0.75)' }}>
+        <div
+          className="relative w-full h-full md:w-full md:max-w-[460px] md:h-auto md:rounded-2xl overflow-hidden flex flex-col justify-center p-8 md:p-10"
+          style={{ background: '#0f0f17', border: '1px solid #1e1e2e', boxShadow: '0 25px 60px rgba(0,0,0,0.7)' }}
+        >
+          <button onClick={handleClose} className="absolute top-4 right-5 p-1" style={{ color: '#606070' }} aria-label="Fermer">
+            <X size={20} />
+          </button>
+          <div className="text-center mb-6">
+            <h2 className="text-[20px] font-bold text-white">Vérification</h2>
+            <p className="text-[13px] text-[#a0a0b0] mt-2">
+              Un code à 6 chiffres a été envoyé à<br />
+              <strong className="text-white">{step1.email}</strong>
+            </p>
+          </div>
+          <form onSubmit={(e) => { e.preventDefault(); handleVerify(); }} className="space-y-4">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="000000"
+              className="w-full text-center text-[28px] tracking-[0.5em] font-mono rounded-lg py-3 text-white outline-none"
+              style={{ background: '#14141e', border: '1px solid #2a2a3a' }}
+            />
+            <button
+              type="submit"
+              disabled={verifying}
+              className="w-full py-3 rounded-lg bg-[#7B2D8B] text-white text-[15px] font-semibold hover:bg-[#9b3dab] transition-colors disabled:opacity-50"
+            >
+              {verifying ? 'Vérification…' : 'Valider et créer mon établissement'}
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -250,7 +319,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
             <RegisterStep2 data={step2} onChange={setStep2} onNext={() => setStep(3)} onPrev={() => setStep(1)} />
           )}
           {step === 3 && (
-            <RegisterStep3 data={step3} onChange={setStep3} onPrev={() => setStep(2)} onSubmit={handleSubmit} submitting={submitting} />
+            <RegisterStep3 data={step3} onChange={setStep3} onPrev={() => setStep(2)} onSubmit={handleSignup} submitting={submitting} />
           )}
 
           {step === 1 && (
