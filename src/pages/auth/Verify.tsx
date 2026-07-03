@@ -43,9 +43,9 @@ export default function Verify() {
           <div className="w-12 h-12 rounded-full bg-primary mx-auto flex items-center justify-center mb-4">
             <span className="text-white text-lg font-semibold">P</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Verification</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Vérification</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Un code a 6 chiffres a ete envoye a <strong className="text-gray-700 dark:text-gray-300">{email}</strong>
+            Un code à 6 chiffres a été envoyé à <strong className="text-gray-700 dark:text-gray-300">{email}</strong>
           </p>
         </div>
 

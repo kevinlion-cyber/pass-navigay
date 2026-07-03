@@ -176,7 +176,7 @@ export default function PromoDetail() {
               >
                 <Lock size={18} style={{ color: '#7B2D8B' }} />
                 <div className="flex-1">
-                  <p className="text-[13px] text-gray-300">Reserve aux membres Premium</p>
+                  <p className="text-[13px] text-gray-300">Réservé aux membres Premium</p>
                 </div>
                 <button
                   onClick={() => setUpgradeOpen(true)}

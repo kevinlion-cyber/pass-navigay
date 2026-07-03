@@ -49,7 +49,7 @@ export default function Favorites() {
         <AuthGateModal
           open={authGateOpen}
           onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
-          message="Cree ton compte pour sauvegarder tes lieux favoris."
+          message="Crée ton compte pour sauvegarder tes lieux favoris."
         />
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <Heart size={20} className="text-primary" />

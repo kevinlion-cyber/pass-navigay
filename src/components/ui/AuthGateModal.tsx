@@ -28,10 +28,10 @@ export default function AuthGateModal({ open, onClose, message }: AuthGateModalP
             <UserPlus size={22} className="text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Rejoins la communaute
+            Rejoins la communauté
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            {message || "Cree ton compte pour profiter de toutes les fonctionnalites."}
+            {message || "Crée ton compte pour profiter de toutes les fonctionnalités."}
           </p>
         </div>
 

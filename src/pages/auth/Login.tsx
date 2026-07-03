@@ -48,7 +48,7 @@ export default function Login() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Un email de reinitialisation a ete envoye !');
+      toast.success('Un email de réinitialisation a été envoyé !');
       setForgotMode(false);
     }
   };
@@ -138,7 +138,7 @@ export default function Login() {
                   onClick={() => setForgotMode(true)}
                   className="text-xs text-primary hover:underline"
                 >
-                  Mot de passe oublie ?
+                  Mot de passe oublié ?
                 </button>
               </div>
 
@@ -162,9 +162,9 @@ export default function Login() {
                 <span className="text-xl font-bold text-gray-900 dark:text-white">Pass</span>
                 <span className="text-xl font-bold" style={{ color: '#7B2D8B' }}>Navigay</span>
               </div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Mot de passe oublie</h1>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Mot de passe oublié</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Entre ton email pour recevoir un lien de reinitialisation.
+                Entre ton email pour recevoir un lien de réinitialisation.
               </p>
             </div>
 

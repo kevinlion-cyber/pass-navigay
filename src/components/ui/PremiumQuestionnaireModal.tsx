@@ -84,7 +84,7 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
         if (user) {
           await supabase.from('profiles').update({ questionnaire_completed: true }).eq('id', user.id);
         }
-        await addBot("C'est tout ! Ton profil est maintenant cree. Tu peux modifier toutes ces infos a tout moment et choisir ce que tu veux montrer aux autres membres.");
+        await addBot("C'est tout ! Ton profil est maintenant créé. Tu peux modifier toutes ces infos à tout moment et choisir ce que tu veux montrer aux autres membres.");
         setFinished(true);
       }
     }

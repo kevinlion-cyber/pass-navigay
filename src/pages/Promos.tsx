@@ -186,7 +186,7 @@ export default function Promos() {
                 <Lock size={24} style={{ color: '#7B2D8B' }} />
               </div>
               <p className="text-base font-semibold text-gray-900 dark:text-white">
-                Reserve aux membres Premium
+                Réservé aux membres Premium
               </p>
               <button
                 onClick={() => setUpgradeOpen(true)}
@@ -204,14 +204,14 @@ export default function Promos() {
       {!isPremium && filtered.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvee</p>
+          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvée</p>
         </div>
       )}
 
       {isPremium && filtered.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvee</p>
+          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvée</p>
         </div>
       )}
 

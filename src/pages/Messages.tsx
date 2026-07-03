@@ -96,7 +96,7 @@ export default function Messages() {
         <AuthGateModal
           open={authGateOpen}
           onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
-          message="Cree ton compte pour envoyer et recevoir des messages."
+          message="Crée ton compte pour envoyer et recevoir des messages."
         />
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <MessageCircle size={20} className="text-primary" />

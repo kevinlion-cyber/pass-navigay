@@ -19,11 +19,11 @@ const BOT_MESSAGES = {
   welcome: "Salut ! Bienvenue sur Pass Navigay.",
   askUsername: "Pour commencer, comment veux-tu qu'on t'appelle ? Choisis un pseudo unique.",
   usernameOk: "Super pseudo !",
-  askEmail: "Maintenant, quelle est ton adresse email ? On en aura besoin pour securiser ton compte.",
+  askEmail: "Maintenant, quelle est ton adresse email ? On en aura besoin pour sécuriser ton compte.",
   emailOk: "Parfait !",
-  askPassword: "Derniere etape : choisis un mot de passe (6 caracteres minimum).",
-  creating: "C'est parti, je cree ton compte...",
-  done: "Ton compte est cree ! Verifie ton email pour activer ton acces.",
+  askPassword: "Dernière étape : choisis un mot de passe (6 caractères minimum).",
+  creating: "C'est parti, je crée ton compte...",
+  done: "Ton compte est créé ! Vérifie ton email pour activer ton accès.",
 };
 
 export default function Register() {
@@ -84,7 +84,7 @@ export default function Register() {
 
     if (chatStep === 'username') {
       if (value.length < 3) {
-        toast.error('Le pseudo doit contenir au moins 3 caracteres.');
+        toast.error('Le pseudo doit contenir au moins 3 caractères.');
         return;
       }
       addUserMessage(value);
@@ -105,7 +105,7 @@ export default function Register() {
       setChatStep('password');
     } else if (chatStep === 'password') {
       if (value.length < 6) {
-        toast.error('Le mot de passe doit contenir au moins 6 caracteres.');
+        toast.error('Le mot de passe doit contenir au moins 6 caractères.');
         return;
       }
       addUserMessage('\u2022'.repeat(value.length));
@@ -119,10 +119,10 @@ export default function Register() {
         toast.error(error);
         if (isEmailError) {
           setChatStep('email');
-          await addBotMessage("Cette adresse email est deja utilisee ou invalide. Essaie avec une autre adresse.");
+          await addBotMessage("Cette adresse email est déjà utilisée ou invalide. Essaie avec une autre adresse.");
         } else {
           setChatStep('password');
-          await addBotMessage("Hmm, quelque chose n'a pas fonctionne. Reessaie.");
+          await addBotMessage("Hmm, quelque chose n'a pas fonctionné. Réessaie.");
         }
       } else {
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
@@ -188,7 +188,7 @@ export default function Register() {
     switch (chatStep) {
       case 'username': return 'Ton pseudo...';
       case 'email': return 'ton@email.com';
-      case 'password': return '6 caracteres minimum';
+      case 'password': return '6 caractères minimum';
       default: return '';
     }
   };
@@ -383,7 +383,7 @@ export default function Register() {
                 </div>
 
                 <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
-                  Deja un compte ?{' '}
+                  Déjà un compte ?{' '}
                   <Link to="/auth/login" className="text-primary hover:underline font-medium">
                     Connecte-toi
                   </Link>
@@ -399,9 +399,9 @@ export default function Register() {
               <div className="w-12 h-12 rounded-full bg-primary mx-auto flex items-center justify-center mb-4">
                 <span className="text-white text-lg font-semibold">P</span>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Verification</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Vérification</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Un code a 6 chiffres a ete envoye a{' '}
+                Un code à 6 chiffres a été envoyé à{' '}
                 <strong className="text-gray-700 dark:text-gray-300">{email}</strong>
               </p>
             </div>
@@ -409,7 +409,7 @@ export default function Register() {
             <form onSubmit={handleVerifySubmit} className="space-y-4">
               <div>
                 <label htmlFor="verify-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Code de verification
+                  Code de vérification
                 </label>
                 <input
                   id="verify-code"

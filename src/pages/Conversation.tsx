@@ -116,7 +116,7 @@ export default function Conversation() {
       <AuthGateModal
         open={authGateOpen}
         onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
-        message="Cree ton compte pour envoyer des messages."
+        message="Crée ton compte pour envoyer des messages."
       />
     );
   }
