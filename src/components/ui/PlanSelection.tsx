@@ -1,4 +1,5 @@
 import { Check, X } from 'lucide-react';
+import { useUserPlans } from '../../lib/userPlans';
 
 export type PlanType = 'free' | 'premium';
 
@@ -13,25 +14,8 @@ interface PlanSelectionProps {
   onIntervalChange: (interval: BillingInterval) => void;
 }
 
-const FREE_FEATURES = [
-  { label: 'Profil avec nom, prenom, photo', included: true },
-  { label: 'Visualisation des evenements', included: true },
-  { label: "Acces a l'annuaire des lieux", included: true },
-  { label: 'Acces aux promotions', included: false },
-  { label: 'Messagerie entre membres', included: false },
-  { label: 'Profil enrichi et questionnaire', included: false },
-];
-
-const PREMIUM_FEATURES = [
-  'Profil avec nom, prenom, photo',
-  'Visualisation des evenements',
-  "Acces a l'annuaire des lieux",
-  'Acces aux promotions exclusives',
-  'Messagerie entre membres Premium',
-  'Profil enrichi et questionnaire',
-];
-
 export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSwitchToLogin, billingInterval, onIntervalChange }: PlanSelectionProps) {
+  const { freeFeatures, premiumFeatures } = useUserPlans();
   return (
     <div className="px-6 py-6 space-y-6">
       <div className="text-center">
@@ -68,7 +52,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
           </div>
           <ul className="mt-4 space-y-2">
-            {FREE_FEATURES.map((f) => (
+            {freeFeatures.map((f) => (
               <li key={f.label} className="flex items-start gap-2 text-[13px]">
                 {f.included ? (
                   <Check size={14} className="mt-0.5 shrink-0" style={{ color: '#a0a0b0' }} strokeWidth={2.5} />
@@ -121,7 +105,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             {billingInterval === 'yearly' ? 'Soit 5,75€/mois · ' : ''}Sans engagement &middot; Resiliation a tout moment
           </p>
           <ul className="mt-4 space-y-2">
-            {PREMIUM_FEATURES.map((label) => (
+            {premiumFeatures.map((label) => (
               <li key={label} className="flex items-start gap-2 text-[13px]">
                 <Check size={14} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} strokeWidth={2.5} />
                 <span className="font-medium" style={{ color: '#c084f5' }}>{label}</span>
@@ -147,7 +131,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
             style={{ background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'yearly' ? '#fff' : '#808090' }}
           >
-            Annuel — 69&euro;/an <span className="text-[11px] opacity-80">-27%</span>
+            Annuel — 69&euro;/an <span className="text-[11px] opacity-80">-14%</span>
           </button>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { useUserPlans } from '../lib/userPlans';
 
 const PRO_FEATURES = [
   'Bandeau personnalisé dans l\'annuaire',
@@ -13,12 +14,6 @@ const PRO_FEATURES = [
   'Système de promotions / couponing',
   'Boutons de partage',
   'Visibilité renforcée',
-];
-
-const PREMIUM_FEATURES = [
-  'Badge Premium sur le profil',
-  'Galerie photos sur ton profil',
-  'Laisse des avis (qualité & Safe place) sur les établissements',
 ];
 
 // Prix reels (doivent correspondre a create-premium-checkout : mensuel 669, annuel 69 EUR).
@@ -33,6 +28,7 @@ const PREMIUM_YEARLY_PER_MONTH = (PREMIUM_YEARLY / 12).toLocaleString('fr-FR', {
 
 export default function Pricing() {
   const { user } = useAuth();
+  const { premiumFeatures } = useUserPlans();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<'pro' | 'premium' | null>(null);
   const [premiumInterval, setPremiumInterval] = useState<'monthly' | 'yearly'>('yearly');
@@ -151,7 +147,7 @@ export default function Pricing() {
           </div>
 
           <ul className="space-y-3">
-            {PREMIUM_FEATURES.map((feature) => (
+            {premiumFeatures.map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
                 <Check size={16} className="text-success shrink-0 mt-0.5" />
                 {feature}
