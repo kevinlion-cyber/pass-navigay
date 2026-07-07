@@ -115,7 +115,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
         </button>
       </div>
 
-      {selectedPlan === 'premium' && (
+      {(
         <div className="flex items-center justify-center gap-1 p-1 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <button
             type="button"
