@@ -16,15 +16,8 @@ const PRO_FEATURES = [
   'Visibilité renforcée',
 ];
 
-// Prix reels (doivent correspondre a create-premium-checkout : mensuel 669, annuel 69 EUR).
-const PREMIUM_MONTHLY = 6.69;
+// Prix reel affiche (annuel). Mensuel = 6,69 EUR. Textes valides par Kevin.
 const PREMIUM_YEARLY = 69;
-// Reduction annuelle calculee (jamais fausse) : vs 12 mois au tarif mensuel.
-const PREMIUM_YEARLY_DISCOUNT = Math.round((1 - PREMIUM_YEARLY / (PREMIUM_MONTHLY * 12)) * 100);
-const PREMIUM_YEARLY_PER_MONTH = (PREMIUM_YEARLY / 12).toLocaleString('fr-FR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export default function Pricing() {
   const { user } = useAuth();
@@ -125,7 +118,7 @@ export default function Pricing() {
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
-                Annuel <span className="text-[11px] opacity-70">-{PREMIUM_YEARLY_DISCOUNT}%</span>
+                Annuel <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">2 mois offerts</span>
               </button>
             </div>
 
@@ -134,13 +127,13 @@ export default function Pricing() {
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">{PREMIUM_YEARLY}</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
-                  <p className="text-xs text-gray-400 mt-0.5">soit {PREMIUM_YEARLY_PER_MONTH} EUR/mois</p>
+                  <p className="text-xs mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">soit 5,75€/mois — vous économisez 13,38€/an</p>
                 </>
               ) : (
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
-                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement, résiliable à tout moment</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Sans engagement · Résiliation à tout moment</p>
                 </>
               )}
             </div>

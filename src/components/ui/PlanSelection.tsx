@@ -101,9 +101,15 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
               </>
             )}
           </div>
-          <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
-            {billingInterval === 'yearly' ? 'Soit 5,75€/mois · ' : ''}Sans engagement &middot; Resiliation a tout moment
-          </p>
+          {billingInterval === 'yearly' ? (
+            <p className="text-[11px] mt-1 font-medium" style={{ color: '#34d399' }}>
+              Soit 5,75&euro;/mois &mdash; vous &eacute;conomisez 13,38&euro;/an
+            </p>
+          ) : (
+            <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
+              Sans engagement &middot; R&eacute;siliation &agrave; tout moment
+            </p>
+          )}
           <ul className="mt-4 space-y-2">
             {premiumFeatures.map((label) => (
               <li key={label} className="flex items-start gap-2 text-[13px]">
@@ -123,15 +129,18 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
             style={{ background: billingInterval === 'monthly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'monthly' ? '#fff' : '#808090' }}
           >
-            Mensuel — 6,69&euro;/mois
+            Mensuel
           </button>
           <button
             type="button"
             onClick={() => onIntervalChange('yearly')}
-            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all inline-flex items-center justify-center gap-1.5"
             style={{ background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'yearly' ? '#fff' : '#808090' }}
           >
-            Annuel — 69&euro;/an <span className="text-[11px] opacity-80">-14%</span>
+            Annuel
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+              2 mois offerts
+            </span>
           </button>
         </div>
       )}
