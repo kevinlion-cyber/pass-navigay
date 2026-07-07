@@ -25,6 +25,28 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
         </p>
       </div>
 
+      <div className="flex items-center justify-center gap-1 p-1 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <button
+          type="button"
+          onClick={() => onIntervalChange('monthly')}
+          className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
+          style={{ background: billingInterval === 'monthly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'monthly' ? '#fff' : '#808090' }}
+        >
+          Mensuel
+        </button>
+        <button
+          type="button"
+          onClick={() => onIntervalChange('yearly')}
+          className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all inline-flex items-center justify-center gap-1.5"
+          style={{ background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'yearly' ? '#fff' : '#808090' }}
+        >
+          Annuel
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+            2 mois offerts
+          </span>
+        </button>
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           type="button"
@@ -103,7 +125,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
           </div>
           {billingInterval === 'yearly' ? (
             <p className="text-[11px] mt-1 font-medium" style={{ color: '#34d399' }}>
-              Soit 5,75&euro;/mois &mdash; vous &eacute;conomisez 13,38&euro;/an
+              Soit 5,75&euro;/mois &mdash; vous &eacute;conomisez 11,28&euro;/an
             </p>
           ) : (
             <p className="text-[11px] mt-1" style={{ color: '#606070' }}>
@@ -120,30 +142,6 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
           </ul>
         </button>
       </div>
-
-      {(
-        <div className="flex items-center justify-center gap-1 p-1 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.05)' }}>
-          <button
-            type="button"
-            onClick={() => onIntervalChange('monthly')}
-            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all"
-            style={{ background: billingInterval === 'monthly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'monthly' ? '#fff' : '#808090' }}
-          >
-            Mensuel
-          </button>
-          <button
-            type="button"
-            onClick={() => onIntervalChange('yearly')}
-            className="flex-1 py-2 px-3 rounded-[8px] text-[13px] font-medium transition-all inline-flex items-center justify-center gap-1.5"
-            style={{ background: billingInterval === 'yearly' ? '#7B2D8B' : 'transparent', color: billingInterval === 'yearly' ? '#fff' : '#808090' }}
-          >
-            Annuel
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
-              2 mois offerts
-            </span>
-          </button>
-        </div>
-      )}
 
       <button
         type="button"

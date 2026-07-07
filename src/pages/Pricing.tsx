@@ -127,7 +127,7 @@ export default function Pricing() {
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">{PREMIUM_YEARLY}</span>
                   <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
-                  <p className="text-xs mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">soit 5,75€/mois — vous économisez 13,38€/an</p>
+                  <p className="text-xs mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">soit 5,75€/mois — vous économisez 11,28€/an</p>
                 </>
               ) : (
                 <>
