@@ -215,10 +215,20 @@ export default function Explore() {
     setMapFlyTo({ lng: est.longitude, lat: est.latitude });
   }, []);
 
+  // Mobile : pas de survol souris. Au toucher/glissement dans la liste, on met en avant
+  // l'établissement sous le doigt → son pin zoome sur la carte (comme le hover sur PC).
+  const handleListTouch = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null;
+    const id = el?.closest('[data-est-id]')?.getAttribute('data-est-id');
+    if (id) setHoveredId(id);
+  }, []);
+
   const activeSearch = debouncedSearch.trim();
 
   const establishmentList = (
-    <div className="space-y-3">
+    <div className="space-y-3" onTouchStart={handleListTouch} onTouchMove={handleListTouch}>
       {activeSearch && !loading && (
         <p className="text-xs text-gray-500 dark:text-gray-400 px-1">
           {establishments.length} résultat{establishments.length !== 1 ? 's' : ''} pour &laquo;&nbsp;{activeSearch}&nbsp;&raquo;
@@ -228,6 +238,7 @@ export default function Explore() {
       {establishments.map((est) => (
         <div
           key={est.id}
+          data-est-id={est.id}
           ref={(el) => registerCardRef(est.id, el)}
           onClick={() => handleCardClick(est)}
           onMouseEnter={() => setHoveredId(est.id)}
@@ -235,7 +246,9 @@ export default function Explore() {
           className={`rounded-card transition-all duration-300 cursor-pointer ${
             selectedPinId === est.id
               ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-dark-bg'
-              : ''
+              : hoveredId === est.id
+                ? 'ring-2 ring-primary/50'
+                : ''
           }`}
         >
           <EstablishmentCard establishment={est} />
