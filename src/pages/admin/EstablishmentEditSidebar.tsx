@@ -4,6 +4,7 @@ import type { Area } from 'react-easy-crop';
 import { Camera, Trash2, X, Loader2, Gift } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { geocodeFirst } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, OpeningHours } from '../../lib/types';
 import AdminEditSidebar, {
@@ -259,6 +260,11 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
     try {
       let targetId = establishmentId;
 
+      // Coordonnées GPS depuis l'adresse (colonnes latitude/longitude NOT NULL en base).
+      let coords: [number, number] | null = null;
+      const geoQuery = `${form.address} ${form.postal_code} ${form.city}`.trim();
+      if (geoQuery) coords = await geocodeFirst(geoQuery);
+
       if (isNew) {
         const { data: created, error } = await supabase.from('establishments').insert({
           name: form.name,
@@ -270,6 +276,8 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           postal_code: form.postal_code,
           category: form.category,
           subcategory: form.subcategory,
+          latitude: coords ? coords[1] : 0,
+          longitude: coords ? coords[0] : 0,
           opening_hours: openingHours,
         }).select('id').single();
         if (error) throw error;
@@ -328,6 +336,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             banner_url: newBannerUrl,
             logo_url: newLogoUrl,
             opening_hours: openingHours,
+            ...(coords ? { latitude: coords[1], longitude: coords[0] } : {}),
           })
           .eq('id', targetId);
         if (error) throw error;
