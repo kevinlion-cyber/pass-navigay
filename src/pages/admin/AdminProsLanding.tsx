@@ -34,6 +34,7 @@ const STAT_SOURCES: { value: ProsStatSource; label: string }[] = [
   { value: 'events', label: 'Événements (live)' },
   { value: 'members', label: 'Membres (live)' },
   { value: 'reviews', label: 'Avis (live)' },
+  { value: 'promotions', label: 'Promotions en cours (live)' },
   { value: 'custom', label: 'Valeur libre' },
 ];
 

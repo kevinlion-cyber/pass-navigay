@@ -11,9 +11,12 @@ interface ProsStatsProps {
 export default function ProsStats({ items }: ProsStatsProps) {
   if (!items.length) return null;
 
+  // Colonnes adaptées au nombre de chiffres (2, 3 ou 4).
+  const cols = items.length >= 4 ? 'sm:grid-cols-4' : items.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3';
+
   return (
     <section className="pt-20 pb-10 px-6" style={{ background: '#0f0f17' }}>
-      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3">
+      <div className={`max-w-4xl mx-auto grid grid-cols-1 ${cols}`}>
         {items.map((s, i) => (
           <div
             key={s.label + i}

@@ -16,7 +16,7 @@ export interface ProsTestimonial {
   stars: number;
 }
 
-export type ProsStatSource = 'establishments' | 'events' | 'members' | 'reviews' | 'custom';
+export type ProsStatSource = 'establishments' | 'events' | 'members' | 'reviews' | 'promotions' | 'custom';
 
 export interface ProsStatItem {
   source: ProsStatSource; // 'custom' => on affiche `value` tel quel ; sinon compteur live
@@ -85,6 +85,7 @@ export const DEFAULT_PROS_CONTENT: ProsContent = {
     items: [
       { source: 'establishments', value: '', label: 'ÉTABLISSEMENTS', desc: 'Adresses inclusives référencées' },
       { source: 'events', value: '', label: 'ÉVÉNEMENTS', desc: 'Publiés sur la plateforme' },
+      { source: 'promotions', value: '', label: 'PROMOTIONS', desc: 'Offres en cours' },
       { source: 'members', value: '', label: 'MEMBRES', desc: 'Une communauté qui grandit' },
     ],
   },

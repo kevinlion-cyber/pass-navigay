@@ -13,6 +13,7 @@ type LiveCounts = {
   events: number | null;
   members: number | null;
   reviews: number | null;
+  promotions: number | null;
 };
 
 // Formate un compteur pour l'affichage (ex. 1234 -> "1 234").
@@ -38,6 +39,7 @@ export function useProsContent() {
     events: null,
     members: null,
     reviews: null,
+    promotions: null,
   });
 
   useEffect(() => {
@@ -64,18 +66,26 @@ export function useProsContent() {
     const head = (table: string) =>
       supabase.from(table).select('id', { count: 'exact', head: true });
 
+    // Promotions « en cours » = encore valides (comme la page Promos).
+    const promosHead = supabase
+      .from('public_promotions')
+      .select('id', { count: 'exact', head: true })
+      .gte('valid_until', new Date().toISOString());
+
     Promise.all([
       head('establishments'),
       head('events'),
       head('public_profiles'),
       head('reviews'),
-    ]).then(([e, ev, m, r]) => {
+      promosHead,
+    ]).then(([e, ev, m, r, p]) => {
       if (!alive) return;
       setCounts({
         establishments: e.count ?? null,
         events: ev.count ?? null,
         members: m.count ?? null,
         reviews: r.count ?? null,
+        promotions: p.count ?? null,
       });
     });
 
