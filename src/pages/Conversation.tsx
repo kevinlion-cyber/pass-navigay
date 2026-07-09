@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { notifyNewMessage } from '../lib/push';
 import { useAuth } from '../contexts/AuthContext';
 import type { Message, Profile } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -94,11 +95,15 @@ export default function Conversation() {
 
     setSending(true);
 
-    await supabase.from('messages').insert({
+    const content = newMessage.trim();
+    const { error } = await supabase.from('messages').insert({
       sender_id: user!.id,
       receiver_id: userId,
-      content: newMessage.trim(),
+      content,
     });
+
+    // Notification push au destinataire (best-effort, ne bloque pas l'envoi).
+    if (!error && userId) notifyNewMessage(userId, content);
 
     setNewMessage('');
     setSending(false);

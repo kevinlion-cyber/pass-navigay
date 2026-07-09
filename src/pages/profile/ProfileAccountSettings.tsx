@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Sun, Moon, LogOut, Trash2, Crown, Building2 } from 'lucide-react';
+import { Settings, Sun, Moon, LogOut, Trash2, Crown, Building2, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { enablePush, disablePush } from '../../lib/push';
 import type { Profile } from '../../lib/types';
 
 interface ProfileAccountSettingsProps {
@@ -11,9 +13,38 @@ interface ProfileAccountSettingsProps {
 }
 
 export default function ProfileAccountSettings({ profile }: ProfileAccountSettingsProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [notify, setNotify] = useState(profile.notify_messages !== false);
+  const [notifyBusy, setNotifyBusy] = useState(false);
+
+  const toggleNotify = async () => {
+    if (!user || notifyBusy) return;
+    setNotifyBusy(true);
+    if (!notify) {
+      // Activer : demander la permission + s'abonner.
+      const res = await enablePush(user.id);
+      if (!res.ok) {
+        setNotifyBusy(false);
+        if (res.reason === 'denied') toast.error('Notifications refusées dans le navigateur. Autorise-les pour les activer.');
+        else if (res.reason === 'unsupported') toast.error('Ton navigateur ne supporte pas les notifications (sur iPhone, installe l’app sur l’écran d’accueil).');
+        else toast.error('Impossible d’activer les notifications.');
+        return;
+      }
+      await supabase.from('profiles').update({ notify_messages: true }).eq('id', user.id);
+      setNotify(true);
+      toast.success('Notifications de messages activées');
+    } else {
+      // Désactiver.
+      await supabase.from('profiles').update({ notify_messages: false }).eq('id', user.id);
+      await disablePush(user.id);
+      setNotify(false);
+      toast.success('Notifications de messages désactivées');
+    }
+    await refreshProfile();
+    setNotifyBusy(false);
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -47,6 +78,22 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
           <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
             {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
             {theme === 'dark' ? 'Mode sombre' : 'Mode clair'}
+          </span>
+        </button>
+
+        <div className="border-t border-light-border dark:border-dark-border" />
+
+        <button
+          onClick={toggleNotify}
+          disabled={notifyBusy}
+          className="flex items-center gap-3 w-full text-left"
+        >
+          <div className={`w-10 h-6 rounded-full relative transition-colors ${notify ? 'bg-primary' : 'bg-gray-300 dark:bg-dark-border'}`}>
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${notify ? 'translate-x-4' : 'translate-x-0.5'}`} />
+          </div>
+          <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <Bell size={14} />
+            Notifications de messages
           </span>
         </button>
 

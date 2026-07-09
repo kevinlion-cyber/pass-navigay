@@ -22,6 +22,7 @@ export interface Profile {
   avatar_url: string | null;
   gallery_urls?: string[];
   bio: string;
+  notify_messages?: boolean;
   is_premium: boolean;
   is_admin: boolean;
   premium_expires_at: string | null;
