@@ -87,8 +87,18 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
     if (!profile) return;
     setDeleting(true);
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({ userId: profile.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la suppression');
       toast.success('Compte supprimé.');
       setDeleteOpen(false);
       onClose();
