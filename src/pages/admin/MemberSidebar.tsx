@@ -319,8 +319,9 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
       <ConfirmModal
         open={deleteOpen}
         title={`Supprimer le compte de ${profile?.username} ?`}
-        message="Cette action est irréversible. Toutes les données de ce membre seront définitivement supprimées."
+        message="Action irréversible. Tout ce qui est rattaché à ce compte sera supprimé définitivement : ses établissements (et leurs photos, événements, promotions, avis), ses avis, ses favoris et ses messages."
         confirmLabel="Supprimer définitivement"
+        requireText="CONFIRMER"
         onCancel={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
         loading={deleting}
