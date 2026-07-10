@@ -62,10 +62,12 @@ const initialForm: FormData = {
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
   const canvas = document.createElement('canvas');
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  canvas.width = Math.round(pixelCrop.width);
+  canvas.height = Math.round(pixelCrop.height);
   const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(image, -pixelCrop.x, -pixelCrop.y);
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/jpeg', 0.9);
   });
@@ -587,7 +589,9 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
               image={galleryCropSrc}
               crop={galleryCrop}
               zoom={galleryZoom}
+              minZoom={0.4}
               aspect={4 / 3}
+              restrictPosition={false}
               onCropChange={setGalleryCrop}
               onZoomChange={setGalleryZoom}
               onCropComplete={onGalleryCropComplete}
@@ -598,7 +602,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           <div className="shrink-0 px-5 py-4 space-y-4" style={{ background: '#14141e', borderTop: '1px solid #1e1e2e' }}>
             <div className="flex items-center gap-3">
               <span className="text-[13px] text-[#a0a0b0] shrink-0">Zoom</span>
-              <input type="range" min={1} max={3} step={0.01} value={galleryZoom} onChange={(e) => setGalleryZoom(Number(e.target.value))} className="flex-1" style={{ accentColor: '#7B2D8B' }} />
+              <input type="range" min={0.4} max={3} step={0.01} value={galleryZoom} onChange={(e) => setGalleryZoom(Number(e.target.value))} className="flex-1" style={{ accentColor: '#7B2D8B' }} />
             </div>
             <div className="flex gap-3">
               <button onClick={() => { setGalleryCropSrc(null); setGalleryCropQueue([]); }} className="flex-1 py-2.5 rounded-lg text-[14px] transition-colors hover:opacity-90" style={{ background: 'transparent', border: '1px solid #2a2a3a', color: '#a0a0b0' }}>

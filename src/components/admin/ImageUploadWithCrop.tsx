@@ -14,20 +14,15 @@ interface ImageUploadWithCropProps {
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
   const canvas = document.createElement('canvas');
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  canvas.width = Math.round(pixelCrop.width);
+  canvas.height = Math.round(pixelCrop.height);
   const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
+  // Fond blanc : quand on réduit l'image pour la faire tenir entièrement dans le cadre,
+  // les zones non couvertes sont remplies en blanc (sinon noir en JPEG).
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Dessine l'image entière décalée selon l'origine du crop -> gère zoom avant ET arrière.
+  ctx.drawImage(image, -pixelCrop.x, -pixelCrop.y);
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
@@ -144,7 +139,9 @@ export default function ImageUploadWithCrop({
               image={cropSrc}
               crop={crop}
               zoom={zoom}
+              minZoom={0.4}
               aspect={aspectRatio}
+              restrictPosition={false}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
@@ -161,7 +158,7 @@ export default function ImageUploadWithCrop({
               <span className="text-[13px] text-[#a0a0b0] shrink-0">Zoom</span>
               <input
                 type="range"
-                min={1}
+                min={0.4}
                 max={3}
                 step={0.01}
                 value={zoom}
