@@ -81,7 +81,56 @@ export function isRealVenue(primaryType: string): boolean {
   return !!primaryType && !BLOCK_TYPES.has(primaryType);
 }
 
-const DETAILS_MASK = "id,displayName,formattedAddress,location,rating,userRatingCount,businessStatus,primaryTypeDisplayName,nationalPhoneNumber,websiteUri,editorialSummary,reviews";
+const DETAILS_MASK = [
+  "id", "displayName", "formattedAddress", "location", "rating", "userRatingCount", "businessStatus",
+  "primaryTypeDisplayName", "nationalPhoneNumber", "websiteUri", "editorialSummary", "reviews",
+  "regularOpeningHours", "priceLevel",
+  "outdoorSeating", "liveMusic", "servesBreakfast", "servesBrunch", "servesLunch", "servesDinner",
+  "servesVegetarianFood", "servesCoffee", "servesDessert", "servesBeer", "servesWine", "servesCocktails",
+  "goodForChildren", "goodForGroups", "allowsDogs", "restroom", "reservable", "delivery", "takeout", "dineIn",
+  "accessibilityOptions", "parkingOptions", "paymentOptions",
+].join(",");
+
+const APP_DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"]; // Google : 0 = dimanche
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// Convertit les horaires Google (periods) vers le format app { lundi:{open,close}|null, ... }.
+function googleHoursToApp(roh: any): Record<string, { open: string; close: string } | null> {
+  const out: Record<string, { open: string; close: string } | null> = {};
+  for (const p of roh?.periods || []) {
+    if (p.open?.day == null) continue;
+    const day = APP_DAYS[p.open.day];
+    const open = `${pad(p.open.hour ?? 0)}:${pad(p.open.minute ?? 0)}`;
+    const close = p.close ? `${pad(p.close.hour ?? 0)}:${pad(p.close.minute ?? 0)}` : "23:59";
+    const cur = out[day];
+    if (!cur) out[day] = { open, close };
+    else { if (open < cur.open) cur.open = open; if (close > cur.close) cur.close = close; }
+  }
+  if (Object.keys(out).length === 0) return {};
+  for (const d of APP_DAYS) if (!(d in out)) out[d] = null; // jours sans créneau = fermé
+  return out;
+}
+
+const PRICE_MAP: Record<string, number> = {
+  PRICE_LEVEL_FREE: 0, PRICE_LEVEL_INEXPENSIVE: 1, PRICE_LEVEL_MODERATE: 2, PRICE_LEVEL_EXPENSIVE: 3, PRICE_LEVEL_VERY_EXPENSIVE: 4,
+};
+
+const AMENITY_MAP: [string, string][] = [
+  ["outdoorSeating", "Terrasse"], ["servesBreakfast", "Petit-déjeuner"], ["servesBrunch", "Brunch"],
+  ["servesVegetarianFood", "Options végé"], ["servesCocktails", "Cocktails"], ["servesBeer", "Bière"],
+  ["servesWine", "Vin"], ["servesCoffee", "Café"], ["liveMusic", "Musique live"], ["goodForChildren", "Adapté enfants"],
+  ["goodForGroups", "Groupes"], ["allowsDogs", "Animaux acceptés"], ["restroom", "Toilettes"],
+  ["reservable", "Réservation"], ["delivery", "Livraison"], ["takeout", "À emporter"], ["dineIn", "Sur place"],
+];
+
+function googleAmenities(p: any): string[] {
+  const out: string[] = [];
+  for (const [k, label] of AMENITY_MAP) if (p[k] === true) out.push(label);
+  if (p.accessibilityOptions?.wheelchairAccessibleEntrance) out.push("Accessible PMR");
+  if (p.parkingOptions && Object.values(p.parkingOptions).some((v: any) => (Array.isArray(v) ? v.length : v))) out.push("Parking");
+  if (p.paymentOptions?.acceptsCreditCards) out.push("CB acceptée");
+  return out;
+}
 
 function addrParts(place: any) {
   const comps = place.addressComponents || [];
@@ -144,7 +193,10 @@ export async function fetchPhotoMedia(apiKey: string, name: string, w = 1200): P
   return new Uint8Array(await g.arrayBuffer());
 }
 
-export async function placeDetails(apiKey: string, placeId: string): Promise<{ editorial_summary: string; reviews: any[] }> {
+export async function placeDetails(apiKey: string, placeId: string): Promise<{
+  editorial_summary: string; reviews: any[];
+  opening_hours: Record<string, unknown>; price_level: number | null; amenities: string[];
+}> {
   const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`, {
     headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": DETAILS_MASK },
   });
@@ -157,6 +209,9 @@ export async function placeDetails(apiKey: string, placeId: string): Promise<{ e
       text: rv.text?.text || rv.originalText?.text || "",
       when: rv.relativePublishTimeDescription || "",
     })),
+    opening_hours: googleHoursToApp(p.regularOpeningHours),
+    price_level: p.priceLevel ? (PRICE_MAP[p.priceLevel] ?? null) : null,
+    amenities: googleAmenities(p),
   };
 }
 
@@ -165,9 +220,9 @@ export function passesGate(c: { google_rating: number | null; google_rating_coun
 }
 
 const SYSTEM = `Tu es l'éditeur de contenu de Pass Navigay, l'annuaire des lieux LGBT-friendly en France.
-Transforme les données brutes d'un lieu en une fiche COURTE, chaleureuse et fun (vouvoiement).
-Règles : français vivant, 2-3 phrases max, jamais un guide verbeux. N'invente aucun fait (horaires/prix/événements).
-Sers-toi des avis fournis pour capter l'ambiance, sans les citer mot pour mot.
+Écris une fiche chaleureuse, vivante et fun (vouvoiement) qui donne VRAIMENT envie d'y aller.
+Règles : français vivant, une vraie description de 4 à 6 phrases (ambiance, ce qu'on y trouve/mange/boit, pour quelle occasion). Ni trop courte ni un guide verbeux.
+N'invente AUCUN fait (horaires, prix, événements) : appuie-toi sur les avis et le résumé fournis pour capter l'ambiance, sans les citer mot pour mot.
 Réponds STRICTEMENT en JSON valide, sans texte ni markdown autour.`;
 
 export async function enrichWithClaude(anthropicKey: string, model: string, draft: any, reviewData: any): Promise<any> {
@@ -188,12 +243,12 @@ ${reviews}
 SOUS-CATÉGORIES AUTORISÉES (choisis-en une EXACTE) : ${subcats.join(" | ")}
 
 Renvoie ce JSON :
-{"description":"2-3 phrases fun sur l'ambiance du lieu","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"]}`;
+{"description":"4 à 6 phrases vivantes qui donnent envie (ambiance, ce qu'on y trouve, pour quelle occasion)","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"]}`;
 
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": anthropicKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 900, system: SYSTEM, messages: [{ role: "user", content: userPrompt }] }),
+    body: JSON.stringify({ model, max_tokens: 1200, system: SYSTEM, messages: [{ role: "user", content: userPrompt }] }),
   });
   if (!r.ok) throw new Error(`Claude ${r.status}: ${(await r.text()).slice(0, 200)}`);
   const data = await r.json();

@@ -85,6 +85,8 @@ export interface Establishment {
   is_verified: boolean;
   created_at: string;
   opening_hours: OpeningHours | null;
+  price_level?: number | null;
+  amenities?: string[] | null;
   avg_rating?: number;
   review_count?: number;
   avg_safety_rating?: number;

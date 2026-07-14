@@ -255,6 +255,9 @@ export default function EstablishmentDetail() {
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {categoryLabel} &middot; {establishment.subcategory}
+                {typeof establishment.price_level === 'number' && establishment.price_level > 0 && (
+                  <span className="ml-2 text-primary font-medium">{'€'.repeat(establishment.price_level)}</span>
+                )}
               </p>
               <div className="flex items-center gap-4 mt-1.5">
                 {avgRating > 0 && (
@@ -324,6 +327,17 @@ export default function EstablishmentDetail() {
                 <Globe size={14} /> Site web
               </a>
             )}
+          </div>
+        )}
+
+        {establishment.is_pro && establishment.amenities && establishment.amenities.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Bon à savoir</h2>
+            <div className="flex flex-wrap gap-2">
+              {establishment.amenities.map((a) => (
+                <span key={a} className="text-sm text-gray-700 dark:text-gray-300 bg-primary/5 border border-primary/20 px-3 py-1 rounded-full">{a}</span>
+              ))}
+            </div>
           </div>
         )}
 

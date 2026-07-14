@@ -18,7 +18,12 @@ export interface FichePreviewData {
   website?: string;
   google_rating?: number | null;
   google_rating_count?: number | null;
+  price_level?: number | null;
+  amenities?: string[] | null;
+  opening_hours?: Record<string, { open: string; close: string } | null> | null;
 }
+
+const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
 const PHOTO_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fiches-photo`;
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -77,6 +82,9 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{data.name}</h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {categoryLabel}{data.ai_subcategory ? ` · ${data.ai_subcategory}` : ''}
+                  {typeof data.price_level === 'number' && data.price_level > 0 && (
+                    <span className="ml-2 text-primary font-medium">{'€'.repeat(data.price_level)}</span>
+                  )}
                 </p>
                 {rating > 0 && (
                   <div className="flex items-center gap-1.5 mt-1.5">
@@ -110,6 +118,34 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
             <div className="flex flex-wrap gap-4 text-sm">
               {data.phone && <span className="flex items-center gap-2 text-primary"><Phone size={14} /> {data.phone}</span>}
               {data.website && <span className="flex items-center gap-2 text-primary"><Globe size={14} /> Site web</span>}
+            </div>
+          )}
+
+          {data.amenities && data.amenities.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Bon à savoir</h2>
+              <div className="flex flex-wrap gap-2">
+                {data.amenities.map((a) => (
+                  <span key={a} className="text-xs text-gray-700 dark:text-gray-300 bg-primary/5 border border-primary/20 px-3 py-1 rounded-full">{a}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.opening_hours && Object.keys(data.opening_hours).length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Horaires d'ouverture</h2>
+              <div className="text-sm space-y-1">
+                {DAYS_ORDER.map((day) => {
+                  const slot = data.opening_hours?.[day];
+                  return (
+                    <div key={day} className="flex items-center justify-between">
+                      <span className="capitalize text-gray-700 dark:text-gray-300">{day}</span>
+                      <span className="text-gray-500 dark:text-gray-400">{slot ? `${slot.open} - ${slot.close}` : 'Fermé'}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

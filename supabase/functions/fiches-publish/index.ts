@@ -40,6 +40,9 @@ Deno.serve(async (req: Request) => {
       latitude: d.latitude ?? 0,
       longitude: d.longitude ?? 0,
       place_id: d.place_id,
+      opening_hours: d.opening_hours || {},
+      price_level: d.price_level,
+      amenities: d.amenities || [],
     }).select("id").single();
     if (eErr) return jsonResponse({ error: eErr.message }, 500);
     const estId = est.id;

@@ -28,6 +28,9 @@ interface Draft {
   ai_description: string | null;
   ai_subcategory: string | null;
   ai_tags: string[] | null;
+  price_level: number | null;
+  amenities: string[] | null;
+  opening_hours: Record<string, { open: string; close: string } | null> | null;
   status: 'pending' | 'enriched' | 'approved' | 'rejected';
   created_at: string;
 }
