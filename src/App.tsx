@@ -8,6 +8,7 @@ import Landing from './pages/Landing';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Verify from './pages/auth/Verify';
+import ResetPassword from './pages/auth/ResetPassword';
 import Explore from './pages/Explore';
 import EstablishmentDetail from './pages/EstablishmentDetail';
 import EstablishmentForm from './pages/EstablishmentForm';
@@ -78,6 +79,7 @@ export default function App() {
             <Route path="/auth/register" element={<Register />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/verify" element={<Verify />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
 
             <Route element={<AppLayout />}>
               <Route path="/explore" element={<Explore />} />
