@@ -48,7 +48,6 @@ Deno.serve(async (req: Request) => {
         inTok += usage?.input_tokens || 0;
         outTok += usage?.output_tokens || 0;
         const subcategory = validSubcat(it.category, parsed.subcategory);
-        const gf = parsed.gay_friendly || {};
 
         const { error } = await svc.from("establishment_drafts").upsert({
           place_id: it.place_id,
@@ -69,7 +68,6 @@ Deno.serve(async (req: Request) => {
           ai_description: parsed.description || "",
           ai_subcategory: subcategory,
           ai_tags: parsed.tags || [],
-          gay_friendly: { ...gf, provider: "google5", total_reviews_read: det.reviews.length },
           ai_model: model,
           ai_generated_at: new Date().toISOString(),
           status: "enriched",

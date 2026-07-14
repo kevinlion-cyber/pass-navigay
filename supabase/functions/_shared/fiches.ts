@@ -1,58 +1,51 @@
 // Logique partagée du moteur de fiches (Module 1) côté Edge Functions.
-// Catégories PN + requêtes de découverte (LGBT-ciblées EN TÊTE), appels Google Places,
-// appel Claude d'enrichissement, gate qualité. Aligné avec src/lib/constants.ts.
+// On découvre de VRAIS établissements par ville × catégorie (pas de guide touristique,
+// pas de signal gay-friendly : ça, c'est la communauté de l'app qui le définira dans le temps).
+// Aligné avec src/lib/constants.ts.
 
-export const PN_CATEGORIES: Record<string, { label: string; subcategories: string[]; lgbt: string[]; generic: string[] }> = {
+export const PN_CATEGORIES: Record<string, { label: string; subcategories: string[]; queries: string[] }> = {
   se_loger: {
     label: "Se loger",
     subcategories: ["Maison d'hotes", "Hotel", "Location particuliere"],
-    lgbt: ["hôtel gay friendly", "maison d'hôtes lgbt"],
-    generic: ["hôtels", "maisons d'hôtes"],
+    queries: ["hôtels", "maisons d'hôtes", "chambres d'hôtes"],
   },
   shopping: {
     label: "Shopping",
     subcategories: ["Vetements", "Deco", "Art", "Chaussures", "Sex-shop", "Jeux"],
-    lgbt: ["sex-shop gay", "boutique lgbt", "concept store queer"],
-    generic: ["boutique de vêtements", "concept store", "galerie d'art"],
+    queries: ["boutique de vêtements", "concept store", "boutique déco", "sex-shop", "galerie d'art"],
   },
   manger: {
     label: "Manger",
     subcategories: ["Restaurant", "Fast-food", "Brunch", "Salon de the", "Bar a vins"],
-    lgbt: ["restaurant gay friendly", "cantine queer"],
-    generic: ["restaurants", "brunch", "bar à vins"],
+    queries: ["restaurants", "brunch", "salon de thé", "bar à vins"],
   },
   soiree: {
     label: "Soiree",
     subcategories: ["Bar tranquille", "Bar musical", "Boite de nuit"],
-    lgbt: ["bar gay", "bar lgbt", "club gay", "bar queer", "cabaret drag"],
-    generic: ["bars", "bar à cocktails", "boîte de nuit"],
+    queries: ["bars", "bar à cocktails", "boîte de nuit"],
   },
   bien_etre: {
     label: "Bien-etre",
     subcategories: ["Sauna", "Massage", "Esthetique"],
-    lgbt: ["sauna gay", "sauna lgbt"],
-    generic: ["sauna", "spa", "institut de massage"],
+    queries: ["sauna", "spa", "institut de massage", "institut de beauté"],
   },
   culture: {
     label: "Culture",
     subcategories: ["Musee", "Visite guidee", "Concert", "Cinema", "Autres"],
-    lgbt: ["lieu culturel lgbt", "association lgbt", "centre lgbt"],
-    generic: ["musées", "cinéma", "salle de concert", "théâtre"],
+    queries: ["cinéma", "salle de concert", "théâtre", "galerie d'art"],
   },
 };
 
 export const CATEGORY_KEYS = Object.keys(PN_CATEGORIES);
 
-// Construit les requêtes pour une ville : LGBT-ciblées d'abord (remontent les lieux
-// communautaires en tête), puis génériques. `lgbtOnly` limite aux requêtes ciblées.
-export function buildQueries(city: string, category: string | null, lgbtOnly = false): { category: string; query: string; textQuery: string; targeted: boolean }[] {
+// Requêtes de découverte pour une ville × catégorie(s).
+export function buildQueries(city: string, category: string | null): { category: string; query: string; textQuery: string }[] {
   const cats = category ? [category] : CATEGORY_KEYS;
-  const out: { category: string; query: string; textQuery: string; targeted: boolean }[] = [];
+  const out: { category: string; query: string; textQuery: string }[] = [];
   for (const cat of cats) {
     const def = PN_CATEGORIES[cat];
     if (!def) continue;
-    for (const q of def.lgbt) out.push({ category: cat, query: q, textQuery: `${q} ${city}`, targeted: true });
-    if (!lgbtOnly) for (const q of def.generic) out.push({ category: cat, query: q, textQuery: `${q} ${city}`, targeted: false });
+    for (const q of def.queries) out.push({ category: cat, query: q, textQuery: `${q} ${city}` });
   }
   return out;
 }
@@ -86,12 +79,6 @@ export const BLOCK_TYPES = new Set([
 // Vrai établissement accueillant du public (≠ POI touristique / service) ?
 export function isRealVenue(primaryType: string): boolean {
   return !!primaryType && !BLOCK_TYPES.has(primaryType);
-}
-
-// Signal LGBT HONNÊTE : uniquement si le nom l'indique explicitement (pas de badge à l'aveugle).
-const LGBT_NAME = /\b(gay|lgbtq?|queer|rainbow|arc[- ]?en[- ]?ciel|drag|pride|homos?)\b/i;
-export function isLgbtName(name: string): boolean {
-  return LGBT_NAME.test(name || "");
 }
 
 const DETAILS_MASK = "id,displayName,formattedAddress,location,rating,userRatingCount,businessStatus,primaryTypeDisplayName,nationalPhoneNumber,websiteUri,editorialSummary,reviews";
@@ -163,8 +150,7 @@ export function passesGate(c: { google_rating: number | null; google_rating_coun
 const SYSTEM = `Tu es l'éditeur de contenu de Pass Navigay, l'annuaire des lieux LGBT-friendly en France.
 Transforme les données brutes d'un lieu en une fiche COURTE, chaleureuse et fun (vouvoiement).
 Règles : français vivant, 2-3 phrases max, jamais un guide verbeux. N'invente aucun fait (horaires/prix/événements).
-Le "signal gay-friendly" est un INDICE INTERNE d'aide à la validation humaine, JAMAIS un badge public auto.
-Base-toi UNIQUEMENT sur les avis fournis ; si rien, signal="neutre". Signale toute VIGILANCE (homophobie, racisme, videurs violents, "pas safe") mentionnée.
+Sers-toi des avis fournis pour capter l'ambiance, sans les citer mot pour mot.
 Réponds STRICTEMENT en JSON valide, sans texte ni markdown autour.`;
 
 export async function enrichWithClaude(anthropicKey: string, model: string, draft: any, reviewData: any): Promise<any> {
@@ -179,13 +165,13 @@ Ville : ${draft.city}
 Note : ${draft.google_rating ?? "?"} (${draft.google_rating_count ?? 0} avis)
 Résumé Google : ${reviewData.editorial_summary || "(aucun)"}
 
-AVIS (${reviewData.reviews?.length || 0}, source google5, confiance faible) :
+AVIS (${reviewData.reviews?.length || 0}, pour capter l'ambiance) :
 ${reviews}
 
 SOUS-CATÉGORIES AUTORISÉES (choisis-en une EXACTE) : ${subcats.join(" | ")}
 
 Renvoie ce JSON :
-{"description":"2-3 phrases fun","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"],"gay_friendly":{"signal":"fort|modere|neutre|evenementiel","score":0,"citations":[],"vigilance":"","confidence":"low"}}`;
+{"description":"2-3 phrases fun sur l'ambiance du lieu","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"]}`;
 
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

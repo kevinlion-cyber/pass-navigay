@@ -1,10 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
-import { buildQueries, searchText, passesGate, isRealVenue, isLgbtName, PN_CATEGORIES } from "../_shared/fiches.ts";
+import { buildQueries, searchText, passesGate, isRealVenue, PN_CATEGORIES } from "../_shared/fiches.ts";
 
 // Découverte de candidats (admin only). Ne stocke RIEN : renvoie une liste au front
 // pour que l'admin coche ce qu'il veut. Deux modes :
-//   - ville (+ catégorie option) : balaie via des requêtes LGBT-ciblées puis génériques
+//   - ville (+ catégorie option) : balaie les requêtes de la/les catégorie(s)
 //   - query : recherche libre par nom/terme (mode "ajout à l'unité")
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -23,7 +23,6 @@ Deno.serve(async (req: Request) => {
     const city: string = (body.city || "").trim();
     const query: string = (body.query || "").trim();
     const category: string | null = body.category || null;
-    const lgbtOnly: boolean = !!body.lgbtOnly;
     const minRating: number = typeof body.minRating === "number" ? body.minRating : 4.0;
     const minReviews: number = typeof body.minReviews === "number" ? body.minReviews : 20;
     const maxPerQuery: number = Math.min(Number(body.max) || 60, 60);
@@ -33,8 +32,8 @@ Deno.serve(async (req: Request) => {
 
     // Requêtes à exécuter selon le mode.
     const queries = query
-      ? [{ category: category || "soiree", query, textQuery: city ? `${query} ${city}` : query, targeted: true }]
-      : buildQueries(city, category, lgbtOnly);
+      ? [{ category: category || "soiree", query, textQuery: city ? `${query} ${city}` : query }]
+      : buildQueries(city, category);
 
     // Dédup : place_ids déjà en base (fiches + brouillons non rejetés).
     const seen = new Set<string>();
@@ -61,14 +60,13 @@ Deno.serve(async (req: Request) => {
           ...p,
           category: q.category,
           discovery_query: `${q.query}${city ? " @ " + city : ""}`,
-          lgbt: isLgbtName(p.name), // signal honnête basé sur le nom
         });
       }
     }
 
-    // Tri : signal LGBT d'abord, puis par nombre d'avis décroissant.
+    // Tri par nombre d'avis décroissant (les lieux les plus établis d'abord).
     const candidates = [...byId.values()].sort((a, b) =>
-      (b.lgbt ? 1 : 0) - (a.lgbt ? 1 : 0) || (b.google_rating_count ?? 0) - (a.google_rating_count ?? 0)
+      (b.google_rating_count ?? 0) - (a.google_rating_count ?? 0)
     );
 
     return jsonResponse({ candidates, stats: { found, unique: candidates.length, duplicates, belowGate, notVenue, minRating, minReviews } });

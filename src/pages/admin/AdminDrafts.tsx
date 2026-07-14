@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Check, X, ExternalLink, Star, ShieldAlert, MapPin, Pencil, RefreshCw, Plus } from 'lucide-react';
+import { Sparkles, Check, X, ExternalLink, Star, MapPin, Pencil, RefreshCw, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -7,16 +7,6 @@ import type { CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 import AddPlacesModal from './AddPlacesModal';
-
-interface GayFriendly {
-  signal?: 'fort' | 'modere' | 'neutre' | 'evenementiel';
-  score?: number;
-  citations?: string[];
-  vigilance?: string;
-  confidence?: 'low' | 'medium' | 'high';
-  total_reviews_read?: number;
-  provider?: string;
-}
 
 interface Draft {
   id: string;
@@ -37,19 +27,11 @@ interface Draft {
   ai_description: string | null;
   ai_subcategory: string | null;
   ai_tags: string[] | null;
-  gay_friendly: GayFriendly | null;
   status: 'pending' | 'enriched' | 'approved' | 'rejected';
   created_at: string;
 }
 
 type StatusFilter = 'enriched' | 'pending' | 'approved' | 'rejected' | 'all';
-
-const SIGNAL_STYLE: Record<string, { bg: string; border: string; color: string; label: string }> = {
-  fort: { bg: 'rgba(46,160,67,0.15)', border: '#2ea043', color: '#3fb950', label: 'Signal fort' },
-  modere: { bg: 'rgba(210,153,34,0.15)', border: '#d29922', color: '#e3b341', label: 'Signal modéré' },
-  evenementiel: { bg: 'rgba(123,45,139,0.18)', border: '#7B2D8B', color: '#c084f5', label: 'Événementiel LGBT' },
-  neutre: { bg: 'rgba(255,255,255,0.05)', border: '#2a2a3a', color: '#808090', label: 'Neutre' },
-};
 
 export default function AdminDrafts() {
   const { categories } = useCategories();
@@ -136,15 +118,6 @@ export default function AdminDrafts() {
     setBusy(false);
   };
 
-  const signalBadge = (gf: GayFriendly | null) => {
-    const style = SIGNAL_STYLE[gf?.signal || 'neutre'] || SIGNAL_STYLE.neutre;
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ background: style.bg, border: `1px solid ${style.border}`, color: style.color, borderRadius: 6, padding: '3px 10px' }}>
-        {style.label}{typeof gf?.score === 'number' && gf.score > 0 ? ` · ${gf.score}` : ''}
-      </span>
-    );
-  };
-
   const tabs: { key: StatusFilter; label: string }[] = [
     { key: 'enriched', label: `À valider${counts.enriched ? ` (${counts.enriched})` : ''}` },
     { key: 'pending', label: `À enrichir${counts.pending ? ` (${counts.pending})` : ''}` },
@@ -171,7 +144,6 @@ export default function AdminDrafts() {
       </div>
       <p className="text-sm text-gray-500 -mt-2">
         Candidats découverts automatiquement puis décrits par l'IA. Rien n'est public tant que vous n'avez pas publié.
-        L'indice « gay-friendly » est une aide interne à la validation, jamais un badge public automatique.
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +178,6 @@ export default function AdminDrafts() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">{d.name}</h3>
-                    {d.gay_friendly && signalBadge(d.gay_friendly)}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-2 flex-wrap">
                     <span>{categories[d.category as CategoryKey]?.label || d.category}{d.ai_subcategory ? ` · ${d.ai_subcategory}` : ''}</span>
@@ -236,7 +207,7 @@ export default function AdminDrafts() {
               {d.ai_description ? (
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{d.ai_description}</p>
               ) : (
-                <p className="text-sm text-gray-500 italic">Pas encore enrichi par l'IA (lancez enrich.mjs).</p>
+                <p className="text-sm text-gray-500 italic">Pas encore décrit par l'IA.</p>
               )}
 
               {d.ai_tags && d.ai_tags.length > 0 && (
@@ -245,28 +216,6 @@ export default function AdminDrafts() {
                     <span key={t} className="text-xs text-gray-500 bg-gray-100 dark:bg-dark-bg px-2 py-0.5 rounded-full">{t}</span>
                   ))}
                 </div>
-              )}
-
-              {d.gay_friendly?.vigilance && (
-                <div className="flex items-start gap-2 text-xs rounded-input p-2.5" style={{ background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.3)' }}>
-                  <ShieldAlert size={15} style={{ color: '#c0392b' }} className="shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold" style={{ color: '#e06c5e' }}>Vigilance : </span>
-                    <span className="text-gray-600 dark:text-gray-300">{d.gay_friendly.vigilance}</span>
-                  </div>
-                </div>
-              )}
-
-              {d.gay_friendly?.citations && d.gay_friendly.citations.length > 0 && (
-                <details className="text-xs text-gray-500">
-                  <summary className="cursor-pointer hover:text-gray-900 dark:hover:text-white">
-                    {d.gay_friendly.citations.length} extrait(s) d'avis
-                    {d.gay_friendly.confidence === 'low' ? ' · indice faible (5 avis Google)' : ''}
-                  </summary>
-                  <ul className="mt-2 space-y-1 pl-3">
-                    {d.gay_friendly.citations.map((c, i) => <li key={i} className="italic border-l-2 border-light-border dark:border-dark-border pl-2">« {c} »</li>)}
-                  </ul>
-                </details>
               )}
 
               <div className="flex items-center gap-3 pt-1 text-xs text-gray-500">

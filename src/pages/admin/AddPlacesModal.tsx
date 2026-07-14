@@ -16,7 +16,6 @@ interface Candidate {
   primary_type: string;
   category: string;
   discovery_query: string;
-  lgbt: boolean;
 }
 
 interface Stats { found: number; unique: number; duplicates: number; belowGate: number; notVenue: number; minRating: number; minReviews: number; }
@@ -38,7 +37,6 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
 
   // Filtres d'affichage (côté client) pour rendre gérable une grosse liste.
   const [catFilter, setCatFilter] = useState<string>('all');
-  const [lgbtOnly, setLgbtOnly] = useState(false);
   const [textFilter, setTextFilter] = useState('');
 
   const catCounts = useMemo(() => {
@@ -47,20 +45,17 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
     return m;
   }, [candidates]);
 
-  const lgbtCount = useMemo(() => candidates.filter((c) => c.lgbt).length, [candidates]);
-
   const visible = useMemo(() => {
     const t = textFilter.trim().toLowerCase();
     return candidates.filter((c) =>
       (catFilter === 'all' || c.category === catFilter) &&
-      (!lgbtOnly || c.lgbt) &&
       (!t || c.name.toLowerCase().includes(t))
     );
-  }, [candidates, catFilter, lgbtOnly, textFilter]);
+  }, [candidates, catFilter, textFilter]);
 
   if (!open) return null;
 
-  const resetFilters = () => { setCatFilter('all'); setLgbtOnly(false); setTextFilter(''); };
+  const resetFilters = () => { setCatFilter('all'); setTextFilter(''); };
 
   const search = async () => {
     if (mode === 'city' && !city.trim()) { toast.error('Indiquez une ville'); return; }
@@ -77,8 +72,7 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
       const cands: Candidate[] = data.candidates || [];
       setCandidates(cands);
       setStats(data.stats || null);
-      // Pré-cocher uniquement les lieux au signal LGBT (nom explicite) — les plus pertinents.
-      setSelected(new Set(cands.filter((c) => c.lgbt).map((c) => c.place_id)));
+      setSelected(new Set()); // l'admin coche ce qu'il veut ajouter
       if (!cands.length) toast('Aucun lieu au-dessus du seuil. Baissez la note/les avis si besoin.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur de recherche');
@@ -196,15 +190,9 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
                   {chip('all', 'Tout', candidates.length)}
                   {categoryKeys.filter((k) => catCounts[k]).map((k) => chip(k, categories[k as CategoryKey].label, catCounts[k]))}
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
-                    <input type="checkbox" checked={lgbtOnly} onChange={(e) => setLgbtOnly(e.target.checked)} />
-                    🏳️‍🌈 LGBT seulement <span className="opacity-70">({lgbtCount})</span>
-                  </label>
-                  <div className="relative flex-1 min-w-[160px]">
-                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrer par nom…" className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-xs pl-8 py-1.5 w-full" />
-                  </div>
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrer par nom…" className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-xs pl-8 py-1.5 w-full" />
                 </div>
               </div>
 
@@ -228,7 +216,6 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</span>
-                          {c.lgbt && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'rgba(123,45,139,0.18)', color: '#c084f5' }}>🏳️‍🌈 LGBT</span>}
                         </div>
                         <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap mt-0.5">
                           <span>{categories[c.category as CategoryKey]?.label || c.category}</span>
