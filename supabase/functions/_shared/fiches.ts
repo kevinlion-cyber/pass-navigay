@@ -81,6 +81,17 @@ export function isRealVenue(primaryType: string): boolean {
   return !!primaryType && !BLOCK_TYPES.has(primaryType);
 }
 
+// Nettoie le nom : "gay friendly"/"lgbt friendly" ne doit JAMAIS rester dans le titre
+// (ça relèvera d'un badge, jamais du nom). Retire parenthèses, séparateurs et mentions isolées.
+export function cleanName(name: string): string {
+  let n = name || "";
+  n = n.replace(/\s*\([^)]*(?:gay|lgbtq?)[\s-]*friendly[^)]*\)/gi, "");
+  n = n.replace(/\s*[-–—|·,]\s*(?:gay|lgbtq?)[\s-]*friendly\b/gi, "");
+  n = n.replace(/\b(?:gay|lgbtq?)[\s-]*friendly\b/gi, "");
+  n = n.replace(/\(\s*\)/g, "").replace(/\s*[-–—|·,]\s*$/g, "").replace(/\s{2,}/g, " ").trim();
+  return n || name;
+}
+
 const DETAILS_MASK = [
   "id", "displayName", "formattedAddress", "location", "rating", "userRatingCount", "businessStatus",
   "primaryTypeDisplayName", "nationalPhoneNumber", "websiteUri", "editorialSummary", "reviews",
@@ -156,7 +167,7 @@ export async function searchText(apiKey: string, textQuery: string, max = 60): P
       const a = addrParts(p);
       results.push({
         place_id: p.id,
-        name: p.displayName?.text || "",
+        name: cleanName(p.displayName?.text || ""),
         address: p.formattedAddress || "",
         postal_code: a.postal_code,
         city: a.city,
