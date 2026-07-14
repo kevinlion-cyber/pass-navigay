@@ -178,11 +178,11 @@ export default function AdminDrafts() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => setPreviewDraft(d)} title="Prévisualiser la fiche" className="p-2 text-gray-500 hover:text-primary transition-colors border border-light-border dark:border-dark-border rounded-input">
-                    <Eye size={15} />
-                  </button>
                   {(d.status === 'enriched' || d.status === 'pending') && (
                     <>
+                      <button onClick={() => setPreviewDraft(d)} title="Prévisualiser la fiche" className="p-2 text-gray-500 hover:text-primary transition-colors border border-light-border dark:border-dark-border rounded-input">
+                        <Eye size={15} />
+                      </button>
                       <button onClick={() => setPublishTarget(d)} className="btn-primary text-sm flex items-center gap-1.5 py-1.5 px-3">
                         <Check size={15} /> Publier
                       </button>
@@ -192,9 +192,14 @@ export default function AdminDrafts() {
                     </>
                   )}
                   {d.status === 'approved' && d.published_establishment_id && (
-                    <button onClick={() => setEditId(d.published_establishment_id!)} className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-gray-900 dark:hover:text-white">
-                      <Pencil size={14} /> Éditer la fiche
-                    </button>
+                    <>
+                      <a href={`/establishment/${d.published_establishment_id}`} target="_blank" rel="noopener noreferrer" title="Voir la fiche en ligne" className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-primary transition-colors">
+                        <ExternalLink size={14} /> Voir la fiche
+                      </a>
+                      <button onClick={() => setEditId(d.published_establishment_id!)} title="Éditer" className="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors border border-light-border dark:border-dark-border rounded-input">
+                        <Pencil size={14} />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
