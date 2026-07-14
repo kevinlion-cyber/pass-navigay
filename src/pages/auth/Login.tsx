@@ -4,6 +4,7 @@ import { Eye, EyeOff, X, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { translateAuthError } from '../../lib/authErrors';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 export default function Login() {
@@ -46,9 +47,9 @@ export default function Login() {
     setResetLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(translateAuthError(error));
     } else {
-      toast.success('Un email de réinitialisation a été envoyé !');
+      toast.success('Un e-mail de réinitialisation a été envoyé !');
       setForgotMode(false);
     }
   };

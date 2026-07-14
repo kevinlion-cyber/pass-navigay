@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateAuthError } from '../../lib/authErrors';
 import RegisterStep1, { type Step1Data } from './RegisterStep1';
 import RegisterStep2, { type Step2Data } from './RegisterStep2';
 import RegisterStep3, { type Step3Data } from './RegisterStep3';
@@ -70,12 +71,12 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         email: step1.email,
         password: step1.password,
       });
-      if (authError) throw new Error(authError.message);
+      if (authError) throw new Error(translateAuthError(authError));
       if (!authData.user) throw new Error('Erreur lors de la création du compte.');
       setSubmitting(false);
       setPhase('verify');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la création du compte.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la création du compte.');
       setSubmitting(false);
     }
   };
@@ -90,7 +91,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         token: code,
         type: 'signup',
       });
-      if (vErr) throw new Error(vErr.message);
+      if (vErr) throw new Error(translateAuthError(vErr));
       const userId = vData.user?.id;
       if (!userId) throw new Error('Session non établie. Réessaie.');
 
@@ -173,8 +174,8 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       toast.success('Bienvenue ! Votre établissement est en cours de validation.');
       onClose();
       navigate('/pros/tableau-de-bord');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la création.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la création.');
       setSubmitting(false);
       setVerifying(false);
     }

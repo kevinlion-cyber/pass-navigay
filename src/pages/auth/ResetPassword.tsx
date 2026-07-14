@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateAuthError } from '../../lib/authErrors';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 // Page cible du lien « mot de passe oublié ». GoTrue redirige ici avec un token de
@@ -38,7 +39,7 @@ export default function ResetPassword() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(translateAuthError(error)); return; }
     toast.success('Mot de passe mis à jour !');
     navigate('/explore');
   };

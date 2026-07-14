@@ -1,38 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { User, Session, AuthError } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
-
-function translateAuthError(error: AuthError): string {
-  const msg = error.message.toLowerCase();
-
-  if (msg.includes('user already registered') || msg.includes('already been registered')) {
-    return 'Cette adresse email est deja utilisee.';
-  }
-  if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
-    return 'Email ou mot de passe incorrect.';
-  }
-  if (msg.includes('email not confirmed')) {
-    return "Ton email n'a pas encore été confirmé. Vérifie ta boîte de réception.";
-  }
-  if (msg.includes('too many requests') || msg.includes('rate limit')) {
-    return 'Trop de tentatives. Réessaie dans quelques minutes.';
-  }
-  if (msg.includes('password') && msg.includes('least')) {
-    return 'Le mot de passe doit contenir au moins 6 caractères.';
-  }
-  if (msg.includes('invalid email')) {
-    return "L'adresse email n'est pas valide.";
-  }
-  if (msg.includes('signup is disabled')) {
-    return "L'inscription est temporairement désactivée.";
-  }
-  if (msg.includes('network') || msg.includes('fetch')) {
-    return 'Erreur de connexion. Vérifie ta connexion internet.';
-  }
-
-  return error.message;
-}
+import { translateAuthError } from '../lib/authErrors';
 
 interface AuthState {
   user: User | null;
@@ -147,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       type: 'signup',
     });
 
-    if (error) return { error: error.message };
+    if (error) return { error: translateAuthError(error) };
 
     if (data.user) {
       await fetchProfile(data.user);

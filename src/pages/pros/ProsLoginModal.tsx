@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateAuthError } from '../../lib/authErrors';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 interface ProsLoginModalProps {
@@ -30,7 +31,7 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error('Email ou mot de passe incorrect.');
+      toast.error(translateAuthError(error));
       setLoading(false);
       return;
     }
