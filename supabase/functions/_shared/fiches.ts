@@ -127,6 +127,23 @@ export async function searchText(apiKey: string, textQuery: string, max = 60): P
   return results;
 }
 
+// Noms de ressources photo d'un lieu (pour stockage à la publication).
+export async function getPhotoNames(apiKey: string, placeId: string, max = 5): Promise<string[]> {
+  const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`, {
+    headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" },
+  });
+  if (!r.ok) return [];
+  const data = await r.json();
+  return (data.photos || []).map((p: { name: string }) => p.name).filter(Boolean).slice(0, max);
+}
+
+// Télécharge les bytes d'une photo (JPEG) à stocker dans Supabase Storage.
+export async function fetchPhotoMedia(apiKey: string, name: string, w = 1200): Promise<Uint8Array | null> {
+  const g = await fetch(`https://places.googleapis.com/v1/${name}/media?maxWidthPx=${w}&key=${apiKey}`);
+  if (!g.ok) return null;
+  return new Uint8Array(await g.arrayBuffer());
+}
+
 export async function placeDetails(apiKey: string, placeId: string): Promise<{ editorial_summary: string; reviews: any[] }> {
   const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`, {
     headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": DETAILS_MASK },

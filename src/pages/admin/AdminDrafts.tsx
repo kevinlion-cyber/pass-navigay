@@ -76,28 +76,13 @@ export default function AdminDrafts() {
     const d = publishTarget;
     setBusy(true);
     try {
-      const subcategory = d.ai_subcategory || categories[d.category as CategoryKey]?.subcategories?.[0] || '';
-      const { data: created, error } = await supabase.from('establishments').insert({
-        name: d.name,
-        description: d.ai_description || '',
-        phone: d.phone || '',
-        website: d.website || '',
-        address: d.address || '',
-        city: d.city || '',
-        postal_code: d.postal_code || '',
-        category: d.category,
-        subcategory,
-        latitude: d.latitude ?? 0,
-        longitude: d.longitude ?? 0,
-        place_id: d.place_id,
-      }).select('id').single();
+      // Crée l'établissement + stocke les photos Google en Storage (bannière + galerie).
+      const { data, error } = await supabase.functions.invoke('fiches-publish', { body: { draftId: d.id } });
       if (error) throw error;
-      await supabase.from('establishment_drafts')
-        .update({ status: 'approved', published_establishment_id: created.id })
-        .eq('id', d.id);
-      toast.success('Fiche publiée — ajoutez les visuels si besoin');
+      if (data?.error) throw new Error(data.error);
+      toast.success(data.banner ? 'Fiche publiée avec ses photos' : 'Fiche publiée');
       setPublishTarget(null);
-      setEditId(created.id); // ouvre le sidebar pour bannière/logo/photos
+      setEditId(data.establishment_id); // ouvre le sidebar pour ajuster si besoin
       load(); loadMeta();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur à la publication');
