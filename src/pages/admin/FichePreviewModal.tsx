@@ -117,7 +117,11 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
           </div>
 
           {data.ai_description && (
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{data.ai_description}</p>
+            <div className="space-y-2.5">
+              {data.ai_description.split(/\n{2,}|\n/).map((para) => para.trim()).filter(Boolean).map((para, i) => (
+                <p key={i} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{para}</p>
+              ))}
+            </div>
           )}
 
           {(data.phone || data.website) && (

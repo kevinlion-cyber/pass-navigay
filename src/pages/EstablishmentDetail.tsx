@@ -320,9 +320,11 @@ export default function EstablishmentDetail() {
         </div>
 
         {establishment.is_pro && establishment.description && (
-          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-            {establishment.description}
-          </p>
+          <div className="space-y-3">
+            {establishment.description.split(/\n{2,}|\n/).map((para) => para.trim()).filter(Boolean).map((para, i) => (
+              <p key={i} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{para}</p>
+            ))}
+          </div>
         )}
 
         {establishment.is_pro && (establishment.phone || establishment.website) && (

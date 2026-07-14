@@ -221,9 +221,9 @@ export function passesGate(c: { google_rating: number | null; google_rating_coun
 
 const SYSTEM = `Tu es l'éditeur de contenu de Pass Navigay, l'annuaire des lieux LGBT-friendly en France.
 Écris une fiche chaleureuse, vivante et fun (vouvoiement) qui donne VRAIMENT envie d'y aller.
-Règles : français vivant, une vraie description de 4 à 6 phrases (ambiance, ce qu'on y trouve/mange/boit, pour quelle occasion). Ni trop courte ni un guide verbeux.
+Règles : français vivant, découpé en 2 ou 3 COURTS paragraphes séparés par une ligne vide (jamais un pavé) : (1) l'accroche et l'ambiance, (2) ce qu'on y trouve/mange/boit, (3) pour quelle occasion y aller. 2-3 phrases par paragraphe max.
 N'invente AUCUN fait (horaires, prix, événements) : appuie-toi sur les avis et le résumé fournis pour capter l'ambiance, sans les citer mot pour mot.
-Réponds STRICTEMENT en JSON valide, sans texte ni markdown autour.`;
+Réponds STRICTEMENT en JSON valide, sans texte ni markdown autour (les retours à la ligne dans la description sont échappés en \\n).`;
 
 export async function enrichWithClaude(anthropicKey: string, model: string, draft: any, reviewData: any): Promise<any> {
   const cat = PN_CATEGORIES[draft.category];
@@ -243,7 +243,7 @@ ${reviews}
 SOUS-CATÉGORIES AUTORISÉES (choisis-en une EXACTE) : ${subcats.join(" | ")}
 
 Renvoie ce JSON :
-{"description":"4 à 6 phrases vivantes qui donnent envie (ambiance, ce qu'on y trouve, pour quelle occasion)","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"]}`;
+{"description":"2 à 3 courts paragraphes séparés par \\n\\n (accroche/ambiance, ce qu'on y trouve, pour quelle occasion)","subcategory":"valeur exacte de la liste","tags":["3-6 mots-clés minuscules"]}`;
 
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
