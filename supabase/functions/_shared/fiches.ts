@@ -60,8 +60,39 @@ export function buildQueries(city: string, category: string | null, lgbtOnly = f
 const SEARCH_MASK = [
   "places.id", "places.displayName", "places.formattedAddress", "places.addressComponents",
   "places.location", "places.rating", "places.userRatingCount", "places.businessStatus",
-  "places.primaryTypeDisplayName", "places.nationalPhoneNumber", "places.websiteUri", "nextPageToken",
+  "places.primaryType", "places.primaryTypeDisplayName", "places.types",
+  "places.nationalPhoneNumber", "places.websiteUri", "nextPageToken",
 ].join(",");
+
+// Types Google à EXCLURE : pas des établissements « qui accueillent un public »
+// (monuments, places, parcs, aqueducs, lieux de culte, administrations, transports, services…).
+// Pass Navigay n'est PAS un guide touristique → uniquement des lieux commerciaux où l'on entre.
+export const BLOCK_TYPES = new Set([
+  "tourist_attraction", "historical_landmark", "historical_place", "monument", "observation_deck",
+  "plaza", "town_square", "park", "national_park", "state_park", "dog_park", "garden", "botanical_garden",
+  "hiking_area", "beach", "campground", "rv_park", "marina", "pier",
+  "place_of_worship", "church", "hindu_temple", "mosque", "synagogue", "cemetery", "funeral_home",
+  "city_hall", "local_government_office", "government_office", "courthouse", "embassy", "fire_station",
+  "police", "post_office", "hospital", "doctor", "dentist", "pharmacy", "drugstore", "physiotherapist", "veterinary_care",
+  "school", "primary_school", "secondary_school", "preschool", "university", "child_care_agency",
+  "transit_station", "bus_station", "train_station", "subway_station", "light_rail_station", "transit_depot",
+  "airport", "parking", "rest_stop", "gas_station", "electric_vehicle_charging_station",
+  "atm", "bank", "insurance_agency", "accounting", "real_estate_agency", "lawyer",
+  "car_repair", "car_dealer", "car_rental", "car_wash", "auto_parts_store", "storage", "moving_company",
+  "plumber", "electrician", "roofing_contractor", "general_contractor", "painter", "locksmith",
+  "aquarium", "zoo", "amusement_park", "water_park", "stadium", "sports_complex", "gym", "fitness_center",
+]);
+
+// Vrai établissement accueillant du public (≠ POI touristique / service) ?
+export function isRealVenue(primaryType: string): boolean {
+  return !!primaryType && !BLOCK_TYPES.has(primaryType);
+}
+
+// Signal LGBT HONNÊTE : uniquement si le nom l'indique explicitement (pas de badge à l'aveugle).
+const LGBT_NAME = /\b(gay|lgbtq?|queer|rainbow|arc[- ]?en[- ]?ciel|drag|pride|homos?)\b/i;
+export function isLgbtName(name: string): boolean {
+  return LGBT_NAME.test(name || "");
+}
 
 const DETAILS_MASK = "id,displayName,formattedAddress,location,rating,userRatingCount,businessStatus,primaryTypeDisplayName,nationalPhoneNumber,websiteUri,editorialSummary,reviews";
 
@@ -100,6 +131,7 @@ export async function searchText(apiKey: string, textQuery: string, max = 60): P
         google_rating: p.rating ?? null,
         google_rating_count: p.userRatingCount ?? null,
         google_primary_type: p.primaryTypeDisplayName?.text || "",
+        primary_type: p.primaryType || "",
       });
       if (results.length >= max) return results;
     }

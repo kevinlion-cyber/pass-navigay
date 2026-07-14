@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
-import { buildQueries, searchText, passesGate, PN_CATEGORIES } from "../_shared/fiches.ts";
+import { buildQueries, searchText, passesGate, isRealVenue, isLgbtName, PN_CATEGORIES } from "../_shared/fiches.ts";
 
 // Découverte de candidats (admin only). Ne stocke RIEN : renvoie une liste au front
 // pour que l'admin coche ce qu'il veut. Deux modes :
@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
     for (const d of dr.data || []) if (d.place_id) seen.add(d.place_id);
 
     const byId = new Map<string, any>();
-    let found = 0, duplicates = 0, belowGate = 0;
+    let found = 0, duplicates = 0, belowGate = 0, notVenue = 0;
 
     for (const q of queries) {
       let places: any[] = [];
@@ -54,17 +54,24 @@ Deno.serve(async (req: Request) => {
       for (const p of places) {
         if (!p.place_id || byId.has(p.place_id)) continue;
         if (seen.has(p.place_id)) { duplicates++; continue; }
+        // Anti-tourisme : on écarte monuments, places, parcs, lieux de culte, services…
+        if (!isRealVenue(p.primary_type)) { notVenue++; continue; }
         if (!passesGate(p, minRating, minReviews)) { belowGate++; continue; }
-        byId.set(p.place_id, { ...p, category: q.category, discovery_query: `${q.query}${city ? " @ " + city : ""}`, targeted: q.targeted });
+        byId.set(p.place_id, {
+          ...p,
+          category: q.category,
+          discovery_query: `${q.query}${city ? " @ " + city : ""}`,
+          lgbt: isLgbtName(p.name), // signal honnête basé sur le nom
+        });
       }
     }
 
-    // Tri : requêtes LGBT-ciblées d'abord, puis par nombre d'avis décroissant.
+    // Tri : signal LGBT d'abord, puis par nombre d'avis décroissant.
     const candidates = [...byId.values()].sort((a, b) =>
-      (b.targeted ? 1 : 0) - (a.targeted ? 1 : 0) || (b.google_rating_count ?? 0) - (a.google_rating_count ?? 0)
+      (b.lgbt ? 1 : 0) - (a.lgbt ? 1 : 0) || (b.google_rating_count ?? 0) - (a.google_rating_count ?? 0)
     );
 
-    return jsonResponse({ candidates, stats: { found, unique: candidates.length, duplicates, belowGate, minRating, minReviews } });
+    return jsonResponse({ candidates, stats: { found, unique: candidates.length, duplicates, belowGate, notVenue, minRating, minReviews } });
   } catch (err) {
     return jsonResponse({ error: err instanceof Error ? err.message : "Erreur" }, 500);
   }

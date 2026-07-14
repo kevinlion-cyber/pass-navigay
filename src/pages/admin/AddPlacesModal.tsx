@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Search, Loader2, Star, MapPin, Sparkles, Check } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { X, Search, Loader2, Star, MapPin, Sparkles, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -13,12 +13,13 @@ interface Candidate {
   google_rating: number | null;
   google_rating_count: number | null;
   google_primary_type: string;
+  primary_type: string;
   category: string;
   discovery_query: string;
-  targeted: boolean;
+  lgbt: boolean;
 }
 
-interface Stats { found: number; unique: number; duplicates: number; belowGate: number; minRating: number; minReviews: number; }
+interface Stats { found: number; unique: number; duplicates: number; belowGate: number; notVenue: number; minRating: number; minReviews: number; }
 
 export default function AddPlacesModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
   const { categories, categoryKeys } = useCategories();
@@ -26,7 +27,6 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
   const [city, setCity] = useState('');
   const [category, setCategory] = useState<string>('');
   const [query, setQuery] = useState('');
-  const [lgbtOnly, setLgbtOnly] = useState(false);
   const [minRating, setMinRating] = useState(4.0);
   const [minReviews, setMinReviews] = useState(20);
 
@@ -36,27 +36,50 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
   const [stats, setStats] = useState<Stats | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  // Filtres d'affichage (côté client) pour rendre gérable une grosse liste.
+  const [catFilter, setCatFilter] = useState<string>('all');
+  const [lgbtOnly, setLgbtOnly] = useState(false);
+  const [textFilter, setTextFilter] = useState('');
+
+  const catCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const c of candidates) m[c.category] = (m[c.category] || 0) + 1;
+    return m;
+  }, [candidates]);
+
+  const lgbtCount = useMemo(() => candidates.filter((c) => c.lgbt).length, [candidates]);
+
+  const visible = useMemo(() => {
+    const t = textFilter.trim().toLowerCase();
+    return candidates.filter((c) =>
+      (catFilter === 'all' || c.category === catFilter) &&
+      (!lgbtOnly || c.lgbt) &&
+      (!t || c.name.toLowerCase().includes(t))
+    );
+  }, [candidates, catFilter, lgbtOnly, textFilter]);
+
   if (!open) return null;
+
+  const resetFilters = () => { setCatFilter('all'); setLgbtOnly(false); setTextFilter(''); };
 
   const search = async () => {
     if (mode === 'city' && !city.trim()) { toast.error('Indiquez une ville'); return; }
     if (mode === 'name' && !query.trim()) { toast.error('Indiquez un nom à chercher'); return; }
     setSearching(true);
-    setCandidates([]);
-    setSelected(new Set());
-    setStats(null);
+    setCandidates([]); setSelected(new Set()); setStats(null); resetFilters();
     try {
       const body = mode === 'city'
-        ? { city: city.trim(), category: category || null, lgbtOnly, minRating, minReviews }
+        ? { city: city.trim(), category: category || null, minRating, minReviews }
         : { query: query.trim(), city: city.trim() || undefined, category: category || null, minRating, minReviews };
       const { data, error } = await supabase.functions.invoke('fiches-search', { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCandidates(data.candidates || []);
+      const cands: Candidate[] = data.candidates || [];
+      setCandidates(cands);
       setStats(data.stats || null);
-      // Pré-cocher les lieux issus des requêtes LGBT-ciblées (les plus pertinents).
-      setSelected(new Set((data.candidates || []).filter((c: Candidate) => c.targeted).map((c: Candidate) => c.place_id)));
-      if (!data.candidates?.length) toast('Aucun lieu au-dessus du seuil. Baissez la note/les avis si besoin.');
+      // Pré-cocher uniquement les lieux au signal LGBT (nom explicite) — les plus pertinents.
+      setSelected(new Set(cands.filter((c) => c.lgbt).map((c) => c.place_id)));
+      if (!cands.length) toast('Aucun lieu au-dessus du seuil. Baissez la note/les avis si besoin.');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur de recherche');
     }
@@ -64,7 +87,13 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
   };
 
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const toggleAll = () => setSelected((s) => s.size === candidates.length ? new Set() : new Set(candidates.map((c) => c.place_id)));
+  const allVisibleSelected = visible.length > 0 && visible.every((c) => selected.has(c.place_id));
+  const toggleAllVisible = () => setSelected((s) => {
+    const n = new Set(s);
+    if (allVisibleSelected) visible.forEach((c) => n.delete(c.place_id));
+    else visible.forEach((c) => n.add(c.place_id));
+    return n;
+  });
 
   const create = async () => {
     const items = candidates.filter((c) => selected.has(c.place_id));
@@ -86,6 +115,16 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
     }
     setCreating(false);
   };
+
+  const chip = (key: string, label: string, count: number) => (
+    <button
+      key={key}
+      onClick={() => setCatFilter(key)}
+      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${catFilter === key ? 'bg-primary text-white' : 'bg-light-bg dark:bg-dark-bg text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+    >
+      {label} <span className="opacity-70">{count}</span>
+    </button>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
@@ -125,7 +164,6 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
             )}
           </div>
 
-          {/* Gate qualité + options */}
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <label className="flex items-center gap-2 text-gray-500">
               Note min
@@ -135,46 +173,62 @@ export default function AddPlacesModal({ open, onClose, onDone }: { open: boolea
               Avis min
               <input type="number" min="0" value={minReviews} onChange={(e) => setMinReviews(Number(e.target.value))} className="w-20 input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm py-1.5" />
             </label>
-            {mode === 'city' && (
-              <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
-                <input type="checkbox" checked={lgbtOnly} onChange={(e) => setLgbtOnly(e.target.checked)} />
-                Lieux LGBT ciblés seulement
-              </label>
-            )}
             <button onClick={search} disabled={searching} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4 ml-auto disabled:opacity-60">
               {searching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />} Chercher
             </button>
           </div>
 
-          {/* Résultats */}
           {stats && (
             <div className="text-xs text-gray-500 flex flex-wrap gap-3 border-t border-light-border dark:border-dark-border pt-3">
               <span><strong className="text-gray-900 dark:text-white">{stats.unique}</strong> lieux retenus</span>
               <span>{stats.duplicates} déjà en base</span>
-              <span>{stats.belowGate} sous le seuil ({stats.minRating}★ / {stats.minReviews} avis)</span>
+              <span>{stats.notVenue} écartés (non-établissements)</span>
+              <span>{stats.belowGate} sous le seuil</span>
             </div>
           )}
 
           {candidates.length > 0 && (
             <>
+              {/* Filtres d'affichage */}
+              <div className="space-y-2 border-t border-light-border dark:border-dark-border pt-3">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Filter size={13} className="text-gray-400" />
+                  {chip('all', 'Tout', candidates.length)}
+                  {categoryKeys.filter((k) => catCounts[k]).map((k) => chip(k, categories[k as CategoryKey].label, catCounts[k]))}
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                    <input type="checkbox" checked={lgbtOnly} onChange={(e) => setLgbtOnly(e.target.checked)} />
+                    🏳️‍🌈 LGBT seulement <span className="opacity-70">({lgbtCount})</span>
+                  </label>
+                  <div className="relative flex-1 min-w-[160px]">
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrer par nom…" className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white text-xs pl-8 py-1.5 w-full" />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
-                <button onClick={toggleAll} className="text-xs text-primary hover:underline">
-                  {selected.size === candidates.length ? 'Tout décocher' : 'Tout cocher'}
+                <button onClick={toggleAllVisible} className="text-xs text-primary hover:underline">
+                  {allVisibleSelected ? 'Tout décocher' : 'Tout cocher'} ({visible.length})
                 </button>
                 <span className="text-xs text-gray-500">{selected.size} sélectionné(s)</span>
               </div>
-              <div className="max-h-[45vh] overflow-y-auto space-y-1.5 -mx-1 px-1">
-                {candidates.map((c) => {
+
+              <div className="max-h-[42vh] overflow-y-auto space-y-1.5 -mx-1 px-1">
+                {visible.length === 0 ? (
+                  <p className="text-center text-gray-500 text-sm py-6">Aucun lieu ne correspond à ces filtres.</p>
+                ) : visible.map((c) => {
                   const on = selected.has(c.place_id);
                   return (
                     <button key={c.place_id} onClick={() => toggle(c.place_id)} className={`w-full text-left flex items-start gap-3 p-2.5 rounded-input border transition-colors ${on ? 'border-primary bg-primary/5' : 'border-light-border dark:border-dark-border hover:border-gray-400'}`}>
                       <div className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center shrink-0 ${on ? 'bg-primary' : 'border border-gray-400'}`}>
-                        {on && <Check size={12} className="text-white" />}
+                        {on && <span className="text-white text-[10px]">✓</span>}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</span>
-                          {c.targeted && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'rgba(123,45,139,0.18)', color: '#c084f5' }}>LGBT ciblé</span>}
+                          {c.lgbt && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'rgba(123,45,139,0.18)', color: '#c084f5' }}>🏳️‍🌈 LGBT</span>}
                         </div>
                         <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap mt-0.5">
                           <span>{categories[c.category as CategoryKey]?.label || c.category}</span>
