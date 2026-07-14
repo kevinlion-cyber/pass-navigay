@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Check, X, ExternalLink, Star, MapPin, Pencil, RefreshCw, Plus } from 'lucide-react';
+import { Sparkles, Check, X, ExternalLink, Star, MapPin, Pencil, RefreshCw, Plus, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -7,6 +7,7 @@ import type { CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 import AddPlacesModal from './AddPlacesModal';
+import FichePreviewModal from './FichePreviewModal';
 
 interface Draft {
   id: string;
@@ -46,6 +47,7 @@ export default function AdminDrafts() {
   const [busy, setBusy] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [previewDraft, setPreviewDraft] = useState<Draft | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -187,21 +189,26 @@ export default function AdminDrafts() {
                     )}
                   </p>
                 </div>
-                {(d.status === 'enriched' || d.status === 'pending') && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => setPublishTarget(d)} className="btn-primary text-sm flex items-center gap-1.5 py-1.5 px-3">
-                      <Check size={15} /> Publier
-                    </button>
-                    <button onClick={() => setRejectTarget(d)} title="Rejeter" className="p-2 text-gray-500 hover:text-alert transition-colors border border-light-border dark:border-dark-border rounded-input">
-                      <X size={15} />
-                    </button>
-                  </div>
-                )}
-                {d.status === 'approved' && d.published_establishment_id && (
-                  <button onClick={() => setEditId(d.published_establishment_id!)} className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-gray-900 dark:hover:text-white">
-                    <Pencil size={14} /> Éditer la fiche
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => setPreviewDraft(d)} title="Prévisualiser la fiche" className="p-2 text-gray-500 hover:text-primary transition-colors border border-light-border dark:border-dark-border rounded-input">
+                    <Eye size={15} />
                   </button>
-                )}
+                  {(d.status === 'enriched' || d.status === 'pending') && (
+                    <>
+                      <button onClick={() => setPublishTarget(d)} className="btn-primary text-sm flex items-center gap-1.5 py-1.5 px-3">
+                        <Check size={15} /> Publier
+                      </button>
+                      <button onClick={() => setRejectTarget(d)} title="Rejeter" className="p-2 text-gray-500 hover:text-alert transition-colors border border-light-border dark:border-dark-border rounded-input">
+                        <X size={15} />
+                      </button>
+                    </>
+                  )}
+                  {d.status === 'approved' && d.published_establishment_id && (
+                    <button onClick={() => setEditId(d.published_establishment_id!)} className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                      <Pencil size={14} /> Éditer la fiche
+                    </button>
+                  )}
+                </div>
               </div>
 
               {d.ai_description ? (
@@ -263,6 +270,12 @@ export default function AdminDrafts() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }}
+      />
+
+      <FichePreviewModal
+        open={!!previewDraft}
+        onClose={() => setPreviewDraft(null)}
+        data={previewDraft}
       />
     </div>
   );
