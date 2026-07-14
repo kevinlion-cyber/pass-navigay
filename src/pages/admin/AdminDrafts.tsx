@@ -1,0 +1,320 @@
+import { useEffect, useState } from 'react';
+import { Sparkles, Check, X, ExternalLink, Star, ShieldAlert, MapPin, Pencil, RefreshCw, Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
+import { useCategories } from '../../contexts/CategoriesContext';
+import type { CategoryKey } from '../../lib/types';
+import ConfirmModal from '../../components/admin/ConfirmModal';
+import EstablishmentEditSidebar from './EstablishmentEditSidebar';
+import AddPlacesModal from './AddPlacesModal';
+
+interface GayFriendly {
+  signal?: 'fort' | 'modere' | 'neutre' | 'evenementiel';
+  score?: number;
+  citations?: string[];
+  vigilance?: string;
+  confidence?: 'low' | 'medium' | 'high';
+  total_reviews_read?: number;
+  provider?: string;
+}
+
+interface Draft {
+  id: string;
+  place_id: string;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string;
+  website: string;
+  google_rating: number | null;
+  google_rating_count: number | null;
+  google_primary_type: string;
+  category: CategoryKey;
+  discovery_query: string;
+  ai_description: string | null;
+  ai_subcategory: string | null;
+  ai_tags: string[] | null;
+  gay_friendly: GayFriendly | null;
+  status: 'pending' | 'enriched' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+type StatusFilter = 'enriched' | 'pending' | 'approved' | 'rejected' | 'all';
+
+const SIGNAL_STYLE: Record<string, { bg: string; border: string; color: string; label: string }> = {
+  fort: { bg: 'rgba(46,160,67,0.15)', border: '#2ea043', color: '#3fb950', label: 'Signal fort' },
+  modere: { bg: 'rgba(210,153,34,0.15)', border: '#d29922', color: '#e3b341', label: 'Signal modéré' },
+  evenementiel: { bg: 'rgba(123,45,139,0.18)', border: '#7B2D8B', color: '#c084f5', label: 'Événementiel LGBT' },
+  neutre: { bg: 'rgba(255,255,255,0.05)', border: '#2a2a3a', color: '#808090', label: 'Neutre' },
+};
+
+export default function AdminDrafts() {
+  const { categories } = useCategories();
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('enriched');
+  const [cityFilter, setCityFilter] = useState('all');
+  const [cities, setCities] = useState<string[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [publishTarget, setPublishTarget] = useState<Draft | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<Draft | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      let q = supabase.from('establishment_drafts').select('*').order('created_at', { ascending: false });
+      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      if (cityFilter !== 'all') q = q.eq('city', cityFilter);
+      const { data } = await q;
+      setDrafts((data as Draft[]) || []);
+    } catch { /* handled */ }
+    setLoading(false);
+  };
+
+  const loadMeta = async () => {
+    const { data } = await supabase.from('establishment_drafts').select('city,status');
+    const rows = (data as { city: string; status: string }[]) || [];
+    setCities([...new Set(rows.map((r) => r.city).filter(Boolean))].sort());
+    setCounts(rows.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {} as Record<string, number>));
+  };
+
+  useEffect(() => { load(); }, [statusFilter, cityFilter]);
+  useEffect(() => { loadMeta(); }, []);
+
+  const publish = async () => {
+    if (!publishTarget) return;
+    const d = publishTarget;
+    setBusy(true);
+    try {
+      const subcategory = d.ai_subcategory || categories[d.category as CategoryKey]?.subcategories?.[0] || '';
+      const { data: created, error } = await supabase.from('establishments').insert({
+        name: d.name,
+        description: d.ai_description || '',
+        phone: d.phone || '',
+        website: d.website || '',
+        address: d.address || '',
+        city: d.city || '',
+        postal_code: d.postal_code || '',
+        category: d.category,
+        subcategory,
+        latitude: d.latitude ?? 0,
+        longitude: d.longitude ?? 0,
+        place_id: d.place_id,
+      }).select('id').single();
+      if (error) throw error;
+      await supabase.from('establishment_drafts')
+        .update({ status: 'approved', published_establishment_id: created.id })
+        .eq('id', d.id);
+      toast.success('Fiche publiée — ajoutez les visuels si besoin');
+      setPublishTarget(null);
+      setEditId(created.id); // ouvre le sidebar pour bannière/logo/photos
+      load(); loadMeta();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur à la publication');
+    }
+    setBusy(false);
+  };
+
+  const reject = async () => {
+    if (!rejectTarget) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from('establishment_drafts').update({ status: 'rejected' }).eq('id', rejectTarget.id);
+      if (error) throw error;
+      toast.success('Brouillon rejeté');
+      setRejectTarget(null);
+      load(); loadMeta();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setBusy(false);
+  };
+
+  const signalBadge = (gf: GayFriendly | null) => {
+    const style = SIGNAL_STYLE[gf?.signal || 'neutre'] || SIGNAL_STYLE.neutre;
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ background: style.bg, border: `1px solid ${style.border}`, color: style.color, borderRadius: 6, padding: '3px 10px' }}>
+        {style.label}{typeof gf?.score === 'number' && gf.score > 0 ? ` · ${gf.score}` : ''}
+      </span>
+    );
+  };
+
+  const tabs: { key: StatusFilter; label: string }[] = [
+    { key: 'enriched', label: `À valider${counts.enriched ? ` (${counts.enriched})` : ''}` },
+    { key: 'pending', label: `À enrichir${counts.pending ? ` (${counts.pending})` : ''}` },
+    { key: 'approved', label: 'Publiées' },
+    { key: 'rejected', label: 'Rejetées' },
+    { key: 'all', label: 'Toutes' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={20} style={{ color: '#7B2D8B' }} />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Fiches auto</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setAddOpen(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
+            <Plus size={16} /> Ajouter des lieux
+          </button>
+          <button onClick={() => { load(); loadMeta(); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <RefreshCw size={15} /> Rafraîchir
+          </button>
+        </div>
+      </div>
+      <p className="text-sm text-gray-500 -mt-2">
+        Candidats découverts automatiquement puis décrits par l'IA. Rien n'est public tant que vous n'avez pas publié.
+        L'indice « gay-friendly » est une aide interne à la validation, jamais un badge public automatique.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap gap-1 bg-light-surface dark:bg-dark-surface p-1 rounded-input border border-light-border dark:border-dark-border">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setStatusFilter(t.key)}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${statusFilter === t.key ? 'bg-primary/15 text-primary' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {cities.length > 0 && (
+          <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les villes</option>
+            {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-28 rounded-card" />)}</div>
+      ) : drafts.length === 0 ? (
+        <p className="text-center text-gray-500 py-12">Aucun brouillon dans cet onglet.</p>
+      ) : (
+        <div className="space-y-3">
+          {drafts.map((d) => (
+            <div key={d.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{d.name}</h3>
+                    {d.gay_friendly && signalBadge(d.gay_friendly)}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                    <span>{categories[d.category as CategoryKey]?.label || d.category}{d.ai_subcategory ? ` · ${d.ai_subcategory}` : ''}</span>
+                    <span className="inline-flex items-center gap-1"><MapPin size={12} /> {d.city}</span>
+                    {typeof d.google_rating === 'number' && (
+                      <span className="inline-flex items-center gap-1"><Star size={12} style={{ color: '#d4a017' }} /> {d.google_rating} ({d.google_rating_count ?? 0})</span>
+                    )}
+                  </p>
+                </div>
+                {(d.status === 'enriched' || d.status === 'pending') && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => setPublishTarget(d)} className="btn-primary text-sm flex items-center gap-1.5 py-1.5 px-3">
+                      <Check size={15} /> Publier
+                    </button>
+                    <button onClick={() => setRejectTarget(d)} title="Rejeter" className="p-2 text-gray-500 hover:text-alert transition-colors border border-light-border dark:border-dark-border rounded-input">
+                      <X size={15} />
+                    </button>
+                  </div>
+                )}
+                {d.status === 'approved' && d.published_establishment_id && (
+                  <button onClick={() => setEditId(d.published_establishment_id!)} className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                    <Pencil size={14} /> Éditer la fiche
+                  </button>
+                )}
+              </div>
+
+              {d.ai_description ? (
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{d.ai_description}</p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">Pas encore enrichi par l'IA (lancez enrich.mjs).</p>
+              )}
+
+              {d.ai_tags && d.ai_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {d.ai_tags.map((t) => (
+                    <span key={t} className="text-xs text-gray-500 bg-gray-100 dark:bg-dark-bg px-2 py-0.5 rounded-full">{t}</span>
+                  ))}
+                </div>
+              )}
+
+              {d.gay_friendly?.vigilance && (
+                <div className="flex items-start gap-2 text-xs rounded-input p-2.5" style={{ background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.3)' }}>
+                  <ShieldAlert size={15} style={{ color: '#c0392b' }} className="shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold" style={{ color: '#e06c5e' }}>Vigilance : </span>
+                    <span className="text-gray-600 dark:text-gray-300">{d.gay_friendly.vigilance}</span>
+                  </div>
+                </div>
+              )}
+
+              {d.gay_friendly?.citations && d.gay_friendly.citations.length > 0 && (
+                <details className="text-xs text-gray-500">
+                  <summary className="cursor-pointer hover:text-gray-900 dark:hover:text-white">
+                    {d.gay_friendly.citations.length} extrait(s) d'avis
+                    {d.gay_friendly.confidence === 'low' ? ' · indice faible (5 avis Google)' : ''}
+                  </summary>
+                  <ul className="mt-2 space-y-1 pl-3">
+                    {d.gay_friendly.citations.map((c, i) => <li key={i} className="italic border-l-2 border-light-border dark:border-dark-border pl-2">« {c} »</li>)}
+                  </ul>
+                </details>
+              )}
+
+              <div className="flex items-center gap-3 pt-1 text-xs text-gray-500">
+                <a href={`https://www.google.com/maps/place/?q=place_id:${d.place_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
+                  <ExternalLink size={12} /> Voir sur Google
+                </a>
+                {d.website && (
+                  <a href={d.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white truncate max-w-[200px]">
+                    <ExternalLink size={12} /> Site web
+                  </a>
+                )}
+                <span className="text-gray-600">· {d.discovery_query}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!publishTarget}
+        title="Publier cette fiche"
+        message={`Créer l'établissement public "${publishTarget?.name}" à partir de ce brouillon ? Vous pourrez ensuite ajouter bannière, logo et photos.`}
+        confirmLabel="Publier"
+        onCancel={() => setPublishTarget(null)}
+        onConfirm={publish}
+        loading={busy}
+      />
+      <ConfirmModal
+        open={!!rejectTarget}
+        title="Rejeter ce brouillon"
+        message={`Rejeter "${rejectTarget?.name}" ? Il ne sera plus proposé (mais reste en base, non public).`}
+        confirmLabel="Rejeter"
+        onCancel={() => setRejectTarget(null)}
+        onConfirm={reject}
+        loading={busy}
+      />
+
+      <EstablishmentEditSidebar
+        establishmentId={editId}
+        onClose={() => setEditId(null)}
+        onRefresh={() => { load(); loadMeta(); }}
+      />
+
+      <AddPlacesModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }}
+      />
+    </div>
+  );
+}

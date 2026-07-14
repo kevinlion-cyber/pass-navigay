@@ -26,3 +26,9 @@ dist-ssr
 
 # Supabase CLI artefacts
 supabase/.temp/
+.reviews-cache/
+
+# Secrets & local tooling
+.secrets/
+.claude/
+.netlify/
