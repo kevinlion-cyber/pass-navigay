@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map } from 'lucide-react';
+import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map,
+  Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, type LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +13,14 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
+const AMENITY_ICONS: Record<string, LucideIcon> = {
+  'Terrasse': Sun, 'Petit-déjeuner': Coffee, 'Brunch': Coffee, 'Café': Coffee,
+  'Options végé': Leaf, 'Cocktails': Martini, 'Bière': Beer, 'Vin': Wine, 'Musique live': Music,
+  'Adapté enfants': Baby, 'Groupes': Users, 'Animaux acceptés': Dog, 'Réservation': CalendarCheck,
+  'Livraison': Truck, 'À emporter': ShoppingBag, 'Sur place': Utensils, 'Accessible PMR': Accessibility,
+  'Parking': Car, 'CB acceptée': Wallet,
+};
 
 function OpeningHoursDisplay({ hours }: { hours: OpeningHours }) {
   const today = DAYS_ORDER[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
@@ -226,74 +235,75 @@ export default function EstablishmentDetail() {
         </div>
       )}
 
-      {/* Bannière de l'établissement (si définie), sinon placeholder */}
-      <div className="w-full h-48 md:h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-border dark:to-dark-bg flex items-center justify-center overflow-hidden">
+      {/* Hero immersif : pour un lieu, la photo EST le héros */}
+      <div className="relative w-full h-64 md:h-80 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg">
         {establishment.banner_url ? (
           <img src={establishment.banner_url} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="text-center">
-            <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">{establishment.name}</p>
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin size={44} className="text-gray-300 dark:text-gray-600" />
           </div>
         )}
-      </div>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(12,9,16,0.85) 0%, rgba(12,9,16,0.35) 40%, rgba(12,9,16,0) 65%)' }} />
 
-      <div className="p-4 space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-card bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+        <button onClick={() => navigate(-1)} aria-label="Retour" className="absolute top-3 left-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
+          <ChevronLeft size={20} />
+        </button>
+
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          {isOwner && (
+            <button onClick={() => navigate(`/establishment/${id}/edit`)} aria-label="Modifier" className="w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
+              <Edit size={17} />
+            </button>
+          )}
+          <button onClick={toggleFavorite} aria-label="Favoris" className="w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
+            <Heart size={17} className={isFavorite ? 'fill-alert text-alert' : ''} />
+          </button>
+          <button onClick={handleShare} aria-label="Partager" className="w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
+            <Share2 size={17} />
+          </button>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-4 md:p-6">
+          <div className="flex items-end gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-white/95 dark:bg-dark-surface shadow-lg flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/25">
               {establishment.logo_url ? (
                 <img src={establishment.logo_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-primary text-2xl font-semibold">{establishment.name.charAt(0)}</span>
+                <span className="text-primary text-2xl font-bold">{establishment.name.charAt(0)}</span>
               )}
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{establishment.name}</h1>
-                {establishment.is_pro && <span className="badge-pro">PARTENAIRE OFFICIEL</span>}
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="min-w-0 pb-0.5">
+              {establishment.is_pro && <span className="badge-pro mb-1 inline-block">PARTENAIRE OFFICIEL</span>}
+              <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>{establishment.name}</h1>
+              <p className="text-sm text-white/85 mt-0.5">
                 {categoryLabel} &middot; {establishment.subcategory}
                 {typeof establishment.price_level === 'number' && establishment.price_level > 0 && (
-                  <span className="ml-2 text-primary font-medium">{'€'.repeat(establishment.price_level)}</span>
+                  <span className="ml-1.5 font-semibold">{'€'.repeat(establishment.price_level)}</span>
                 )}
               </p>
-              <div className="flex items-center gap-4 mt-1.5">
-                {avgRating > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <StarRating rating={Math.round(avgRating)} size={14} />
-                    <span className="text-xs text-gray-400">({reviews.length})</span>
-                  </div>
-                )}
-                {avgSafety > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <ShieldRating rating={Math.round(avgSafety)} size={14} />
-                    <span className="text-xs text-gray-400">({safetyReviews.length})</span>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            {isOwner && (
-              <button
-                onClick={() => navigate(`/establishment/${id}/edit`)}
-                aria-label="Modifier"
-                className="btn-ghost p-2"
-              >
-                <Edit size={18} />
-              </button>
-            )}
-            <button onClick={toggleFavorite} aria-label="Favoris" className="btn-ghost p-2">
-              <Heart size={18} className={isFavorite ? 'fill-alert text-alert' : ''} />
-            </button>
-            <button onClick={handleShare} aria-label="Partager" className="btn-ghost p-2">
-              <Share2 size={18} />
-            </button>
-          </div>
         </div>
+      </div>
+
+      <div className="p-4 space-y-6">
+        {(avgRating > 0 || avgSafety > 0) && (
+          <div className="flex items-center gap-4">
+            {avgRating > 0 && (
+              <div className="flex items-center gap-1.5">
+                <StarRating rating={Math.round(avgRating)} size={16} />
+                <span className="text-xs text-gray-500">({reviews.length} avis)</span>
+              </div>
+            )}
+            {avgSafety > 0 && (
+              <div className="flex items-center gap-1.5">
+                <ShieldRating rating={Math.round(avgSafety)} size={16} />
+                <span className="text-xs text-gray-500">({safetyReviews.length})</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 flex-1">
@@ -333,10 +343,16 @@ export default function EstablishmentDetail() {
         {establishment.is_pro && establishment.amenities && establishment.amenities.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Bon à savoir</h2>
-            <div className="flex flex-wrap gap-2">
-              {establishment.amenities.map((a) => (
-                <span key={a} className="text-sm text-gray-700 dark:text-gray-300 bg-primary/5 border border-primary/20 px-3 py-1 rounded-full">{a}</span>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {establishment.amenities.map((a) => {
+                const Icon = AMENITY_ICONS[a] || Check;
+                return (
+                  <div key={a} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input px-3 py-2">
+                    <Icon size={16} className="text-primary shrink-0" />
+                    <span className="truncate">{a}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
