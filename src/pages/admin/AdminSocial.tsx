@@ -27,10 +27,18 @@ const STATUS: Record<string, { label: string; icon: typeof Clock; color: string;
   failed: { label: 'Échec', icon: AlertTriangle, color: '#c0392b', bg: 'rgba(192,57,43,0.12)' },
 };
 
+const META_APP_ID = import.meta.env.VITE_META_APP_ID as string | undefined;
+const META_REDIRECT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth`;
+const META_SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,business_management';
+const metaOauthUrl = () => `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&scope=${META_SCOPES}&response_type=code`;
+
+interface Integration { page_name: string | null; ig_username: string | null; connected_at: string | null; }
+
 export default function AdminSocial() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [integ, setInteg] = useState<Integration | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -43,7 +51,15 @@ export default function AdminSocial() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    supabase.from('social_integrations').select('page_name,ig_username,connected_at').eq('id', 1).maybeSingle()
+      .then(({ data }) => setInteg(data as Integration | null));
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('connected')) toast.success('Instagram + Facebook connectés !');
+    if (p.get('meta_error')) toast.error('Connexion Meta : ' + p.get('meta_error'));
+    if (p.get('connected') || p.get('meta_error')) window.history.replaceState({}, '', '/admin/social');
+  }, []);
 
   const runNow = async () => {
     setRunning(true);
@@ -75,8 +91,29 @@ export default function AdminSocial() {
       </div>
       <p className="text-sm text-gray-500 -mt-2">
         Chaque jour, un établissement (et un événement à venir s'il y en a) est publié automatiquement sur Instagram + Facebook, avec un appel à avis.
-        Tant que l'accès Meta de Kevin n'est pas branché, les posts sont <strong>générés et prêts</strong> (statut « en attente Meta »), sans être publiés.
       </p>
+
+      {/* Connexion Meta en 1 clic */}
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5" style={{ color: '#7B2D8B' }}><Instagram size={20} /><Facebook size={20} /></span>
+          {integ?.connected_at ? (
+            <p className="text-sm">
+              <span className="inline-flex items-center gap-1 text-green-500 font-medium"><CheckCircle2 size={15} /> Connecté</span>
+              <span className="text-gray-500"> · {integ.page_name}{integ.ig_username ? ` · @${integ.ig_username}` : ''}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500">Instagram + Facebook <strong>non connectés</strong> — les posts sont générés mais pas publiés.</p>
+          )}
+        </div>
+        {META_APP_ID ? (
+          <a href={metaOauthUrl()} className="btn-primary text-sm py-2 px-4">
+            {integ?.connected_at ? 'Reconnecter' : 'Connecter Instagram + Facebook'}
+          </a>
+        ) : (
+          <span className="text-xs text-gray-500 italic">Configuration Meta requise (App ID)</span>
+        )}
+      </div>
 
       {loading ? (
         <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-24 rounded-card" />)}</div>

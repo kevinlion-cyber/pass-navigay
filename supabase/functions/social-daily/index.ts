@@ -28,13 +28,15 @@ Termine TOUJOURS par un appel à avis ("Vous connaissez ? Laissez votre avis �
   return (data.content || []).map((c: { text?: string }) => c.text || "").join("").trim();
 }
 
+interface MetaCreds { token?: string | null; pageId?: string | null; igUser?: string | null }
+
 // Publication Meta (Facebook Page + Instagram). Renvoie { fb_post_id, ig_media_id }.
-async function postToMeta(image: string, text: string, link: string): Promise<{ fb?: string; ig?: string; errors: string[] }> {
-  const token = Deno.env.get("META_ACCESS_TOKEN");
-  const pageId = Deno.env.get("META_PAGE_ID");
-  const igUser = Deno.env.get("META_IG_USER_ID");
+async function postToMeta(creds: MetaCreds, image: string, text: string, link: string): Promise<{ fb?: string; ig?: string; errors: string[] }> {
+  const token = creds.token;
+  const pageId = creds.pageId;
+  const igUser = creds.igUser;
   const out: { fb?: string; ig?: string; errors: string[] } = { errors: [] };
-  if (!token) { out.errors.push("META_ACCESS_TOKEN absent (publication en attente)"); return out; }
+  if (!token) { out.errors.push("Meta non connecté (cliquez « Connecter Instagram + Facebook »)"); return out; }
   const V = "v21.0";
 
   if (pageId) {
@@ -62,13 +64,13 @@ async function postToMeta(image: string, text: string, link: string): Promise<{ 
   return out;
 }
 
-async function buildAndPost(svc: ReturnType<typeof serviceClient>, anthropicKey: string, kind: "establishment" | "event", row: Record<string, any>, image: string, ctx: Record<string, unknown>, link: string) {
+async function buildAndPost(svc: ReturnType<typeof serviceClient>, anthropicKey: string, creds: MetaCreds, kind: "establishment" | "event", row: Record<string, any>, image: string, ctx: Record<string, unknown>, link: string) {
   const platforms: string[] = [];
-  if (Deno.env.get("META_PAGE_ID")) platforms.push("facebook");
-  if (Deno.env.get("META_IG_USER_ID")) platforms.push("instagram");
+  if (creds.pageId) platforms.push("facebook");
+  if (creds.igUser) platforms.push("instagram");
 
   const text = await caption(anthropicKey, kind, ctx);
-  const meta = image ? await postToMeta(image, text, link) : { errors: ["pas de visuel"] } as { fb?: string; ig?: string; errors: string[] };
+  const meta = image ? await postToMeta(creds, image, text, link) : { errors: ["pas de visuel"] } as { fb?: string; ig?: string; errors: string[] };
   const posted = !!(meta.fb || meta.ig);
   const status = posted ? (meta.errors.length ? "partial" : "posted") : "generated";
 
@@ -108,6 +110,8 @@ Deno.serve(async (req: Request) => {
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!anthropicKey) return jsonResponse({ error: "ANTHROPIC_API_KEY manquante" }, 500);
     const svc = serviceClient();
+    const { data: integ } = await svc.from("social_integrations").select("page_id,page_access_token,ig_user_id").eq("id", 1).maybeSingle();
+    const creds: MetaCreds = { token: integ?.page_access_token, pageId: integ?.page_id, igUser: integ?.ig_user_id };
     const results: unknown[] = [];
 
     // 1) Établissement du jour : avec photo, le moins récemment mis en avant.
@@ -119,7 +123,7 @@ Deno.serve(async (req: Request) => {
     if (est?.[0]) {
       const e = est[0];
       const link = `${SITE}/establishment/${e.id}?src=social`;
-      results.push(await buildAndPost(svc, anthropicKey, "establishment", e, e.banner_url,
+      results.push(await buildAndPost(svc, anthropicKey, creds, "establishment", e, e.banner_url,
         { nom: e.name, categorie: e.category, sous_categorie: e.subcategory, ville: e.city, description: (e.description || "").slice(0, 400) }, link));
     }
 
@@ -134,7 +138,7 @@ Deno.serve(async (req: Request) => {
     if (ev?.[0]) {
       const v = ev[0];
       const link = `${SITE}/events/${v.id}?src=social`;
-      results.push(await buildAndPost(svc, anthropicKey, "event", v, v.image_url,
+      results.push(await buildAndPost(svc, anthropicKey, creds, "event", v, v.image_url,
         { titre: v.title, description: (v.description || "").slice(0, 400), date: v.event_date, lieu: v.address }, link));
     }
 
