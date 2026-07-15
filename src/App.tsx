@@ -28,6 +28,7 @@ import AdminRoot from './pages/Admin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
+import AdminSocial from './pages/admin/AdminSocial';
 import AdminEvents from './pages/admin/AdminEvents';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminMembers from './pages/admin/AdminMembers';
@@ -103,6 +104,7 @@ export default function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="establishments" element={<AdminEstablishments />} />
               <Route path="drafts" element={<AdminDrafts />} />
+              <Route path="social" element={<AdminSocial />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="members" element={<AdminMembers />} />

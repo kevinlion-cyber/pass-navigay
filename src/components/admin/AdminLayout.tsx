@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
   { to: '/admin/establishments', icon: Building2, label: 'Établissements' },
   { to: '/admin/drafts', icon: Sparkles, label: 'Fiches auto' },
+  { to: '/admin/social', icon: Megaphone, label: 'Social' },
   { to: '/admin/events', icon: CalendarDays, label: 'Événements' },
   { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
   { to: '/admin/members', icon: Users, label: 'Membres' },
