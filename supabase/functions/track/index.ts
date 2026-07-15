@@ -27,6 +27,9 @@ function host(url: string | null | undefined): string | null {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return null; }
 }
 
+// Robots & aperçus de liens : exclus des analytics (sinon audience gonflée sur un annuaire public).
+const BOT_RE = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|facebot|embedly|quora|pinterest|redditbot|vkshare|whatsapp|telegram|slackbot|discordbot|linkedinbot|twitterbot|preview|headless|phantom|lighthouse|gtmetrix|pingdom|uptime|semrush|ahrefs|dataforseo|mj12|dotbot|petalbot|yandex|baiduspider|python-requests|axios\/|curl\/|wget|node-fetch|go-http|okhttp|java\//i;
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   try {
@@ -53,6 +56,7 @@ Deno.serve(async (req: Request) => {
     const referrer = typeof body.referrer === "string" ? body.referrer.slice(0, 300) : null;
     const country = req.headers.get("x-country") || req.headers.get("cf-ipcountry") || null;
     const ua = (req.headers.get("user-agent") || "").slice(0, 300);
+    if (!ua || BOT_RE.test(ua)) return jsonResponse({ ok: false, bot: true }, 200);
 
     // 1) Événement brut.
     await svc.from("analytics_events").insert({

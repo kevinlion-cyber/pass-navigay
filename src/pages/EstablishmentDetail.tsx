@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map,
   Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, BadgeCheck, type LucideIcon } from 'lucide-react';
@@ -10,7 +10,7 @@ import type { Establishment, EstablishmentPhoto, Event, Promotion, Review, Categ
 import StarRating from '../components/ui/StarRating';
 import ShieldRating from '../components/ui/ShieldRating';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { trackEstablishmentView } from '../lib/analytics';
+import { trackEstablishmentView, track } from '../lib/analytics';
 import AuthGateModal from '../components/ui/AuthGateModal';
 
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -83,8 +83,18 @@ export default function EstablishmentDetail() {
     loadAll();
   }, [id, user, isPremium]);
 
-  // Analytics : une vue de fiche par identifiant (levier upsell côté propriétaire Pro).
-  useEffect(() => { if (id) trackEstablishmentView(id); }, [id]);
+  // Analytics : une vue de fiche par identifiant, MAIS on exclut les auto-vues
+  // (propriétaire qui regarde sa propre fiche, admin) pour ne pas fausser le
+  // compteur « votre page a été vue X fois » côté Pro ni le top des fiches.
+  const viewTracked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!establishment?.id || viewTracked.current === establishment.id) return;
+    const isAdminViewer = profile?.is_admin === true;
+    const isOwnerViewer = !!user?.id && establishment.owner_id === user.id;
+    if (isAdminViewer || isOwnerViewer) return;
+    viewTracked.current = establishment.id;
+    trackEstablishmentView(establishment.id);
+  }, [establishment?.id, establishment?.owner_id, profile?.is_admin, user?.id]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -161,6 +171,7 @@ export default function EstablishmentDetail() {
 
   const openMap = () => {
     if (!establishment) return;
+    track('outbound_click', { kind: 'directions' }, establishment.id);
     const url = `https://www.google.com/maps/dir/?api=1&destination=${establishment.latitude},${establishment.longitude}`;
     window.open(url, '_blank');
   };
@@ -336,12 +347,12 @@ export default function EstablishmentDetail() {
         {(establishment.is_pro || showProContent) && (establishment.phone || establishment.website) && (
           <div className="flex flex-wrap gap-4 text-sm">
             {establishment.phone && (
-              <a href={`tel:${establishment.phone}`} className="flex items-center gap-2 text-primary hover:underline">
+              <a href={`tel:${establishment.phone}`} onClick={() => track('outbound_click', { kind: 'phone' }, establishment.id)} className="flex items-center gap-2 text-primary hover:underline">
                 <Phone size={14} /> {establishment.phone}
               </a>
             )}
             {establishment.website && (
-              <a href={establishment.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+              <a href={establishment.website} target="_blank" rel="noopener noreferrer" onClick={() => track('outbound_click', { kind: 'website' }, establishment.id)} className="flex items-center gap-2 text-primary hover:underline">
                 <Globe size={14} /> Site web
               </a>
             )}

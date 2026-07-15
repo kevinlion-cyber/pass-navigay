@@ -217,6 +217,10 @@ Deno.serve(async (req: Request) => {
         timeline.push({ ts: String(e.created_at), type: "establishment", label: `A consulté la fiche ${nm(e.establishment_id)}` });
       } else if (name === "search") {
         const q = (e.payload as Row)?.q; timeline.push({ ts: String(e.created_at), type: "search", label: `A recherché « ${q ?? "?"} »` });
+      } else if (name === "outbound_click") {
+        const kind = String((e.payload as Row)?.kind || "");
+        const what = kind === "phone" ? "le téléphone" : kind === "website" ? "le site web" : kind === "directions" ? "l'itinéraire" : "un contact";
+        timeline.push({ ts: String(e.created_at), type: "contact", label: `A cliqué sur ${what} de ${nm(e.establishment_id)}` });
       } else {
         timeline.push({ ts: String(e.created_at), type: "event", label: EVENT_FR[name] ?? name });
       }

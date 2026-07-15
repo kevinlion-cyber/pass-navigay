@@ -44,11 +44,13 @@ Deno.serve(async (req: Request) => {
       // Ids des promos de cette fiche (pour attribuer les activations).
       const { data: promoRows } = await svc.from("promotions").select("id").eq("establishment_id", estId);
       const promoIds = (promoRows || []).map((p) => p.id);
-      const [totalRes, rowsRes, promoTotalRes, promoUsesRes] = await Promise.all([
+      const [totalRes, rowsRes, promoTotalRes, promoUsesRes, contactTotalRes, contactRowsRes] = await Promise.all([
         svc.from("analytics_events").select("*", { count: "exact", head: true }).eq("establishment_id", estId).eq("name", "establishment_view"),
         svc.from("analytics_events").select("created_at, session_id").eq("establishment_id", estId).eq("name", "establishment_view").gte("created_at", since30).limit(MAX_ROWS),
         promoIds.length ? svc.from("promotion_uses").select("*", { count: "exact", head: true }).in("promotion_id", promoIds) : Promise.resolve({ count: 0 }),
         promoIds.length ? svc.from("promotion_uses").select("used_at").in("promotion_id", promoIds).gte("used_at", since30).limit(MAX_ROWS) : Promise.resolve({ data: [] }),
+        svc.from("analytics_events").select("*", { count: "exact", head: true }).eq("establishment_id", estId).eq("name", "outbound_click"),
+        svc.from("analytics_events").select("created_at, payload").eq("establishment_id", estId).eq("name", "outbound_click").gte("created_at", since30).limit(MAX_ROWS),
       ]);
       const rows = rowsRes.data || [];
       const series = emptyDays(30);
@@ -65,10 +67,15 @@ Deno.serve(async (req: Request) => {
       const pidx: Record<string, number> = {}; promoSeries.forEach((d, i) => (pidx[d.date] = i));
       let promoLast7 = 0;
       for (const u of promoUses) { const k = dayKey(u.used_at); if (k in pidx) promoSeries[pidx[k]].value++; if (u.used_at >= since7) promoLast7++; }
+      // Clics de contact (site web / téléphone / itinéraire) + répartition par type.
+      const contactRows = (contactRowsRes.data || []) as { created_at: string; payload: Record<string, unknown> }[];
+      let contactLast7 = 0; const contactKinds: Record<string, number> = {};
+      for (const c of contactRows) { if (c.created_at >= since7) contactLast7++; const k = String(c.payload?.kind || "autre"); contactKinds[k] = (contactKinds[k] || 0) + 1; }
       return jsonResponse({
         mode, total: totalRes.count ?? 0, last30: rows.length, last7,
         uniqueVisitors30: visitors.size, series,
         promoActivations: { total: promoTotalRes.count ?? 0, last30: promoUses.length, last7: promoLast7, series: promoSeries },
+        contactClicks: { total: contactTotalRes.count ?? 0, last30: contactRows.length, last7: contactLast7, kinds: contactKinds },
       });
     }
 
@@ -90,7 +97,7 @@ Deno.serve(async (req: Request) => {
     const identities = idRes.data || [];
 
     const visitors = new Set<string>();
-    let pageviews = 0, estViews = 0, searches = 0;
+    let pageviews = 0, estViews = 0, searches = 0, contactClicks = 0;
     const tsPV: Record<string, number> = {};
     const tsVisit: Record<string, Set<string>> = {};
     const fiches: Record<string, number> = {};
@@ -110,7 +117,8 @@ Deno.serve(async (req: Request) => {
         searches++;
         const q = (e.payload?.q || "").toString().trim().toLowerCase();
         if (q) queries[q] = (queries[q] || 0) + 1;
-      } else if (e.name === "claim_start") funnelSets.claim_start.add(e.session_id);
+      } else if (e.name === "outbound_click") contactClicks++;
+      else if (e.name === "claim_start") funnelSets.claim_start.add(e.session_id);
       else if (e.name === "claim_submit") funnelSets.claim_submit.add(e.session_id);
       else if (e.name === "register_complete") funnelSets.register.add(e.session_id);
     }
@@ -163,7 +171,7 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({
       mode, days,
-      kpis: { visitors: visitors.size, pageviews, establishmentViews: estViews, searches, newSessions: identities.length },
+      kpis: { visitors: visitors.size, pageviews, establishmentViews: estViews, searches, contactClicks, newSessions: identities.length },
       engagement: { newMembers: newMembersRes.count ?? 0, favorites: favRes.count ?? 0, reviews: revRes.count ?? 0, messages: msgRes.count ?? 0, promoActivations: promoUses.length },
       series, topFiches, topSearches, topSources, topPromos, funnel,
       capped: events.length >= MAX_ROWS,

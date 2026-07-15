@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Users, Search, X, RefreshCw, MapPin, Crown, BadgeCheck, ShieldCheck, Eye, Heart, Star,
-  MessageCircle, FileText, Building2, Zap, Tag, UserPlus, Loader2, Monitor, Globe, Clock, Layers,
+  MessageCircle, FileText, Building2, Zap, Tag, UserPlus, Loader2, Monitor, Globe, Clock, Layers, Phone,
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -21,7 +21,7 @@ const PAGE = 25;
 
 const TYPE_ICON: Record<string, LucideIcon> = {
   page: FileText, establishment: Building2, search: Search, event: Zap, favorite: Heart,
-  review: Star, message: MessageCircle, claim: BadgeCheck, promo: Tag, signup: UserPlus,
+  review: Star, message: MessageCircle, claim: BadgeCheck, promo: Tag, signup: UserPlus, contact: Phone,
 };
 
 function relTime(iso: string | null): string {

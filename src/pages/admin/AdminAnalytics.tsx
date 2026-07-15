@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket } from 'lucide-react';
+import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket, Phone } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Overview {
   days: number;
-  kpis: { visitors: number; pageviews: number; establishmentViews: number; searches: number; newSessions: number };
+  kpis: { visitors: number; pageviews: number; establishmentViews: number; searches: number; contactClicks: number; newSessions: number };
   engagement: { newMembers: number; favorites: number; reviews: number; messages: number; promoActivations: number };
   topPromos: { id: string; title: string; establishment: string | null; count: number }[];
   series: { date: string; pageviews: number; visitors: number }[];
@@ -69,11 +69,12 @@ export default function AdminAnalytics() {
         <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-8 text-center text-sm text-gray-500">{error}</div>
       ) : data && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <Kpi icon={Users} label="Visiteurs uniques" value={data.kpis.visitors} sub={`${data.kpis.newSessions} nouvelles sessions`} />
             <Kpi icon={Eye} label="Pages vues" value={data.kpis.pageviews} />
             <Kpi icon={Building2} label="Vues de fiches" value={data.kpis.establishmentViews} />
             <Kpi icon={Search} label="Recherches" value={data.kpis.searches} />
+            <Kpi icon={Phone} label="Clics de contact" value={data.kpis.contactClicks} />
           </div>
 
           <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6">

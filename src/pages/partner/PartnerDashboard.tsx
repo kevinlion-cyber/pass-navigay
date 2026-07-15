@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   CalendarDays, Tag, Eye, CreditCard, TrendingUp,
-  ArrowRight, ChevronRight, Users, BarChart3,
+  ArrowRight, ChevronRight, Users, BarChart3, Phone, Globe, Map,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Event, Promotion } from '../../lib/types';
 
-interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[]; promoActivations?: { total: number; last30: number; last7: number } }
+interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[]; promoActivations?: { total: number; last30: number; last7: number }; contactClicks?: { total: number; last30: number; last7: number; kinds: Record<string, number> } }
 
 interface PartnerContext {
   establishment: Establishment;
@@ -296,6 +296,21 @@ export default function PartnerDashboard() {
                   <MiniStat icon={Tag} label="Total" value={data.viewStats.promoActivations.total} />
                   <MiniStat icon={TrendingUp} label="30 derniers jours" value={data.viewStats.promoActivations.last30} />
                   <MiniStat icon={CalendarDays} label="7 derniers jours" value={data.viewStats.promoActivations.last7} />
+                </div>
+              </div>
+            )}
+            {data.viewStats?.contactClicks && data.viewStats.contactClicks.total > 0 && (
+              <div className="mt-5 pt-5 border-t border-light-border dark:border-dark-border">
+                <div className="flex items-center gap-2 mb-3"><Phone size={15} style={{ color: '#7B2D8B' }} /><h3 className="text-sm font-semibold text-gray-900 dark:text-white">Clics de contact</h3></div>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <MiniStat icon={Phone} label="Total" value={data.viewStats.contactClicks.total} />
+                  <MiniStat icon={TrendingUp} label="30 derniers jours" value={data.viewStats.contactClicks.last30} />
+                  <MiniStat icon={CalendarDays} label="7 derniers jours" value={data.viewStats.contactClicks.last7} />
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                  {(data.viewStats.contactClicks.kinds.website ?? 0) > 0 && <span className="flex items-center gap-1"><Globe size={12} /> Site web : {data.viewStats.contactClicks.kinds.website}</span>}
+                  {(data.viewStats.contactClicks.kinds.phone ?? 0) > 0 && <span className="flex items-center gap-1"><Phone size={12} /> Téléphone : {data.viewStats.contactClicks.kinds.phone}</span>}
+                  {(data.viewStats.contactClicks.kinds.directions ?? 0) > 0 && <span className="flex items-center gap-1"><Map size={12} /> Itinéraire : {data.viewStats.contactClicks.kinds.directions}</span>}
                 </div>
               </div>
             )}
