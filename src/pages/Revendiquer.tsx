@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { track } from '../lib/analytics';
 
 // Parcours « Revendique ta page » : le propriétaire (connecté, email vérifié à l'inscription)
 // demande la revendication de sa fiche. L'admin valide, puis il gère sa fiche + passe Pro.
@@ -18,6 +19,9 @@ export default function Revendiquer() {
   const [existingClaim, setExistingClaim] = useState<{ status: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+
+  // Analytics : entrée sur le parcours de revendication (étape entonnoir).
+  useEffect(() => { if (id) track('claim_start', {}, id); }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -42,6 +46,7 @@ export default function Revendiquer() {
         claimant_profile_id: user.id,
       });
       if (error) throw error;
+      track('claim_submit', {}, estab.id);
       setDone(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');

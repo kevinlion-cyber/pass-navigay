@@ -3,6 +3,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import { translateAuthError } from '../lib/authErrors';
+import { setAnalyticsUser } from '../lib/analytics';
 
 interface AuthState {
   user: User | null;
@@ -75,6 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Relie la session analytics au membre connecté (attribution des actions).
+  useEffect(() => { setAnalyticsUser(user?.id ?? null); }, [user]);
 
   const signUp = async (email: string, password: string, username: string) => {
     const { data: existing } = await supabase

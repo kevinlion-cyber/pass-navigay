@@ -10,6 +10,7 @@ import type { Establishment, EstablishmentPhoto, Event, Promotion, Review, Categ
 import StarRating from '../components/ui/StarRating';
 import ShieldRating from '../components/ui/ShieldRating';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { trackEstablishmentView } from '../lib/analytics';
 import AuthGateModal from '../components/ui/AuthGateModal';
 
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -81,6 +82,9 @@ export default function EstablishmentDetail() {
     if (!id) return;
     loadAll();
   }, [id, user, isPremium]);
+
+  // Analytics : une vue de fiche par identifiant (levier upsell côté propriétaire Pro).
+  useEffect(() => { if (id) trackEstablishmentView(id); }, [id]);
 
   const loadAll = async () => {
     setLoading(true);

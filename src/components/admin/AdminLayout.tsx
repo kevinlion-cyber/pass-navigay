@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck,
+  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const NAV_ITEMS = [
   { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
+  { to: '/admin/analytics', icon: LineChart, label: 'Analytics' },
   { to: '/admin/establishments', icon: Building2, label: 'Établissements' },
   { to: '/admin/drafts', icon: Sparkles, label: 'Fiches auto' },
   { to: '/admin/social', icon: Megaphone, label: 'Social' },

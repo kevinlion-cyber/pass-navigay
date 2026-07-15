@@ -73,13 +73,22 @@ export default function PartnerDashboard() {
           promoUses = count ?? 0;
         }
 
+        // Vues réelles de la fiche (30 derniers jours) via l'analytics first-party.
+        let views = 0;
+        try {
+          const { data: av } = await supabase.functions.invoke('analytics', {
+            body: { mode: 'establishment', establishmentId: establishment.id },
+          });
+          if (av && !av.error) views = av.last30 ?? 0;
+        } catch { /* best-effort */ }
+
         setData({
           activeEvents: evActiveRes.count ?? 0,
           pastEventsThisMonth: evPastRes.count ?? 0,
           activePromos: prActiveRes.count ?? 0,
           expiredPromos: prExpiredRes.count ?? 0,
           promoUses,
-          views: 0,
+          views,
           recentEvents: (evRecentRes.data as Event[]) || [],
           recentPromos: (prRecentRes.data as Promotion[]) || [],
         });

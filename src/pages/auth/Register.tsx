@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import PlanSelection, { type PlanType, type BillingInterval } from '../../components/ui/PlanSelection';
+import { track } from '../../lib/analytics';
 
 type TunnelStep = 'plan' | 'chat' | 'verify';
 type ChatStep = 'username' | 'email' | 'password' | 'submitting' | 'done';
@@ -156,6 +157,9 @@ export default function Register() {
       toast.error(error);
       return;
     }
+
+    // Analytics : inscription menée à terme (dernière étape de l'entonnoir).
+    track('register_complete', { plan: selectedPlan });
 
     if (selectedPlan === 'premium') {
       try {

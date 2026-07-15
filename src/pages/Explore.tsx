@@ -14,6 +14,7 @@ import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
+import { trackSearch } from '../lib/analytics';
 
 type Bounds = { north: number; south: number; east: number; west: number };
 
@@ -82,6 +83,9 @@ export default function Explore() {
     }, 300);
     return () => clearTimeout(debounceRef.current);
   }, [search]);
+
+  // Analytics : une recherche par terme stabilisé (alimente le top des recherches).
+  useEffect(() => { trackSearch(debouncedSearch); }, [debouncedSearch]);
 
   const fetchEstablishments = useCallback(async (reset = false) => {
     setLoading(true);

@@ -27,6 +27,7 @@ import Members from './pages/Members';
 
 import AdminRoot from './pages/Admin';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
 import AdminSocial from './pages/admin/AdminSocial';
@@ -58,6 +59,7 @@ import PartnerPromotions from './pages/partner/PartnerPromotions';
 import PartnerReviews from './pages/partner/PartnerReviews';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
 import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
+import RouteTracker from './components/analytics/RouteTracker';
 
 export default function App() {
   return (
@@ -65,6 +67,7 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
         <CategoriesProvider>
+          <RouteTracker />
           <Toaster
             position="top-center"
             toastOptions={{
@@ -105,6 +108,7 @@ export default function App() {
 
             <Route path="/admin" element={<AdminRoot />}>
               <Route index element={<AdminDashboard />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="establishments" element={<AdminEstablishments />} />
               <Route path="drafts" element={<AdminDrafts />} />
               <Route path="social" element={<AdminSocial />} />
