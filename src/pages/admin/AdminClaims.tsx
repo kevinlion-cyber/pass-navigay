@@ -69,12 +69,10 @@ export default function AdminClaims() {
   const approve = async (c: Claim) => {
     setBusy(true);
     try {
-      const { error: e1 } = await supabase.from('establishments').update({ owner_id: c.claimant_profile_id }).eq('id', c.establishment_id);
-      if (e1) throw e1;
-      if (c.claimant_profile_id) await supabase.from('profiles').update({ account_type: 'pro' }).eq('id', c.claimant_profile_id);
-      const { error: e3 } = await supabase.from('establishment_claims').update({ status: 'approved', reviewed_at: new Date().toISOString(), reviewed_by: profile?.id ?? null }).eq('id', c.id);
-      if (e3) throw e3;
-      toast.success('Revendication validée — la fiche est attribuée');
+      const { data, error } = await supabase.functions.invoke('claim-approve', { body: { claimId: c.id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(data?.emailed ? 'Validée — la fiche est attribuée et le propriétaire prévenu par email' : 'Revendication validée — la fiche est attribuée');
       load(); loadCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');
