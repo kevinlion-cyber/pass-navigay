@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle } from 'lucide-react';
+import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Overview {
   days: number;
   kpis: { visitors: number; pageviews: number; establishmentViews: number; searches: number; newSessions: number };
-  engagement: { newMembers: number; favorites: number; reviews: number; messages: number };
+  engagement: { newMembers: number; favorites: number; reviews: number; messages: number; promoActivations: number };
+  topPromos: { id: string; title: string; establishment: string | null; count: number }[];
   series: { date: string; pageviews: number; visitors: number }[];
   topFiches: { id: string; name: string; city: string | null; views: number }[];
   topSearches: { q: string; count: number }[];
@@ -99,8 +100,9 @@ export default function AdminAnalytics() {
           </div>
 
           {/* Activité communauté */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <Kpi icon={UserPlus} label="Nouveaux membres" value={data.engagement.newMembers} />
+            <Kpi icon={Ticket} label="Promos activées" value={data.engagement.promoActivations} />
             <Kpi icon={Heart} label="Favoris ajoutés" value={data.engagement.favorites} />
             <Kpi icon={Star} label="Avis publiés" value={data.engagement.reviews} />
             <Kpi icon={MessageCircle} label="Messages envoyés" value={data.engagement.messages} />
@@ -152,6 +154,25 @@ export default function AdminAnalytics() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Promos les plus activées */}
+          <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Ticket size={15} className="text-primary" /> Promos les plus activées</h2>
+            {(!data.topPromos || data.topPromos.length === 0) ? <Empty /> : (
+              <div className="space-y-2">
+                {data.topPromos.map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 w-4 text-right">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-white truncate">{p.title}</p>
+                      {p.establishment && <p className="text-xs text-gray-500 truncate">{p.establishment}</p>}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white shrink-0">{p.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Sources de trafic */}

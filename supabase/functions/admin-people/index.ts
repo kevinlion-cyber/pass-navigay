@@ -198,6 +198,14 @@ Deno.serve(async (req: Request) => {
     }
     const nm = (id: unknown) => (isUuid(id) && estName.get(String(id))) || "une fiche";
 
+    // Résolution des promos activées (titre + établissement).
+    const promoIds = [...new Set(((promoFull.data ?? []) as Row[]).map((p) => p.promotion_id).filter(isUuid).map(String))];
+    const promoMap = new Map<string, { title: string; est: string | null }>();
+    if (promoIds.length) {
+      const { data: promos } = await svc.from("promotions").select("id, title, establishments(name)").in("id", promoIds);
+      (promos ?? []).forEach((p: Row) => promoMap.set(String(p.id), { title: String(p.title), est: (p.establishments as Row)?.name ? String((p.establishments as Row).name) : null }));
+    }
+
     const timeline: { ts: string; type: string; label: string; detail?: string }[] = [];
     for (const e of (evFull.data ?? []) as Row[]) {
       const name = String(e.name);
@@ -217,7 +225,11 @@ Deno.serve(async (req: Request) => {
     for (const r of (revFull.data ?? []) as Row[]) timeline.push({ ts: String(r.created_at), type: "review", label: `A laissé un avis sur ${nm(r.establishment_id)}`, detail: `${r.rating ?? "?"}/5${norm(r.comment) ? ` · « ${String(r.comment).slice(0, 80)} »` : ""}` });
     for (const m of (msgFull.data ?? []) as Row[]) timeline.push({ ts: String(m.created_at), type: "message", label: "A envoyé un message" });
     for (const c of (claimFull.data ?? []) as Row[]) timeline.push({ ts: String(c.created_at), type: "claim", label: `A revendiqué ${nm(c.establishment_id)}`, detail: String(c.status) });
-    for (const p of (promoFull.data ?? []) as Row[]) timeline.push({ ts: String(p.used_at), type: "promo", label: "A utilisé une promotion" });
+    for (const p of (promoFull.data ?? []) as Row[]) {
+      const info = promoMap.get(String(p.promotion_id));
+      const label = info ? `A activé la promo « ${info.title} »${info.est ? ` chez ${info.est}` : ""}` : "A activé une promotion";
+      timeline.push({ ts: String(p.used_at), type: "promo", label });
+    }
     if (b.createdAt) timeline.push({ ts: b.createdAt, type: "signup", label: "Inscription sur Pass Navigay" });
 
     timeline.sort((a, c) => c.ts.localeCompare(a.ts));

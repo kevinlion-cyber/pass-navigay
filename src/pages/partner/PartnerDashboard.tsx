@@ -8,7 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Event, Promotion } from '../../lib/types';
 
-interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[] }
+interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[]; promoActivations?: { total: number; last30: number; last7: number } }
 
 interface PartnerContext {
   establishment: Establishment;
@@ -288,6 +288,16 @@ export default function PartnerDashboard() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-6">Votre page n'a pas encore été consultée. Complétez votre fiche et partagez-la pour attirer vos premiers visiteurs.</p>
+            )}
+            {data.viewStats?.promoActivations && data.viewStats.promoActivations.total > 0 && (
+              <div className="mt-5 pt-5 border-t border-light-border dark:border-dark-border">
+                <div className="flex items-center gap-2 mb-3"><Tag size={15} style={{ color: '#7B2D8B' }} /><h3 className="text-sm font-semibold text-gray-900 dark:text-white">Activations de vos promos</h3></div>
+                <div className="grid grid-cols-3 gap-3">
+                  <MiniStat icon={Tag} label="Total" value={data.viewStats.promoActivations.total} />
+                  <MiniStat icon={TrendingUp} label="30 derniers jours" value={data.viewStats.promoActivations.last30} />
+                  <MiniStat icon={CalendarDays} label="7 derniers jours" value={data.viewStats.promoActivations.last7} />
+                </div>
+              </div>
             )}
             {!establishment.is_pro && data.viewStats && data.viewStats.total > 0 && (
               <div className="mt-4 flex items-center justify-between gap-3 flex-wrap rounded-input p-3" style={{ background: 'rgba(123,45,139,0.08)' }}>
