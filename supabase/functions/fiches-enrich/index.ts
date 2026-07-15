@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
-import { placeDetails, enrichWithClaude, validSubcat } from "../_shared/fiches.ts";
+import { placeDetails, enrichWithClaude, validSubcat, getPhotoNames, fetchPhotoMedia } from "../_shared/fiches.ts";
 
 // Enrichissement des lieux SÉLECTIONNÉS par l'admin (admin only) : pour chaque candidat
 // coché → détail Google (avis) + Claude → insère un brouillon "enriched".
@@ -49,6 +49,19 @@ Deno.serve(async (req: Request) => {
         outTok += usage?.output_tokens || 0;
         const subcategory = validSubcat(it.category, parsed.subcategory);
 
+        // Photos : téléchargées UNE fois et stockées en Storage (réutilisées vignette/aperçu/publication).
+        const photoUrls: string[] = [];
+        try {
+          const names = await getPhotoNames(placesKey, it.place_id, 5);
+          for (let i = 0; i < names.length; i++) {
+            const bytes = await fetchPhotoMedia(placesKey, names[i], i === 0 ? 1400 : 900);
+            if (!bytes) continue;
+            const path = `${it.place_id}/${i}.jpg`;
+            const up = await svc.storage.from("place-photos").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+            if (!up.error) photoUrls.push(svc.storage.from("place-photos").getPublicUrl(path).data.publicUrl);
+          }
+        } catch { /* photos best-effort */ }
+
         const { error } = await svc.from("establishment_drafts").upsert({
           place_id: it.place_id,
           name: it.name,
@@ -68,6 +81,8 @@ Deno.serve(async (req: Request) => {
           ai_description: parsed.description || "",
           ai_subcategory: subcategory,
           ai_tags: parsed.tags || [],
+          thumb_url: photoUrls[0] ?? null,
+          photo_urls: photoUrls,
           opening_hours: det.opening_hours || {},
           price_level: det.price_level,
           amenities: det.amenities || [],

@@ -47,32 +47,37 @@ Deno.serve(async (req: Request) => {
     if (eErr) return jsonResponse({ error: eErr.message }, 500);
     const estId = est.id;
 
-    // 2) Stocker les photos Google dans Storage.
+    // 2) Photos : réutilise celles déjà stockées à l'enrichissement (bucket place-photos,
+    //    ZÉRO appel Google). Fallback : télécharge depuis Google pour les vieux brouillons.
     let bannerUrl: string | null = null;
     let stored = 0;
-    const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (placesKey) {
-      try {
-        const names = await getPhotoNames(placesKey, d.place_id, 5);
-        for (let i = 0; i < names.length; i++) {
-          const bytes = await fetchPhotoMedia(placesKey, names[i], i === 0 ? 1400 : 900);
-          if (!bytes) continue;
-          if (i === 0) {
-            const path = `${estId}/banner.jpg`;
-            const up = await svc.storage.from("establishment-banners").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
-            if (!up.error) bannerUrl = svc.storage.from("establishment-banners").getPublicUrl(path).data.publicUrl;
-          } else {
-            const path = `${estId}/${i}.jpg`;
-            const up = await svc.storage.from("establishment-photos").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
-            if (!up.error) {
-              const url = svc.storage.from("establishment-photos").getPublicUrl(path).data.publicUrl;
-              await svc.from("establishment_photos").insert({ establishment_id: estId, url, order_index: i - 1 });
-            }
+    const draftPhotos: string[] = Array.isArray(d.photo_urls) ? d.photo_urls : [];
+    if (draftPhotos.length) {
+      bannerUrl = draftPhotos[0];
+      for (let i = 1; i < draftPhotos.length; i++) {
+        await svc.from("establishment_photos").insert({ establishment_id: estId, url: draftPhotos[i], order_index: i - 1 });
+      }
+      stored = draftPhotos.length;
+      await svc.from("establishments").update({ banner_url: bannerUrl }).eq("id", estId);
+    } else {
+      const placesKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+      if (placesKey) {
+        try {
+          const names = await getPhotoNames(placesKey, d.place_id, 5);
+          for (let i = 0; i < names.length; i++) {
+            const bytes = await fetchPhotoMedia(placesKey, names[i], i === 0 ? 1400 : 900);
+            if (!bytes) continue;
+            const path = `${d.place_id}/${i}.jpg`;
+            const up = await svc.storage.from("place-photos").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+            if (up.error) continue;
+            const url = svc.storage.from("place-photos").getPublicUrl(path).data.publicUrl;
+            if (i === 0) bannerUrl = url;
+            else await svc.from("establishment_photos").insert({ establishment_id: estId, url, order_index: i - 1 });
+            stored++;
           }
-          stored++;
-        }
-        if (bannerUrl) await svc.from("establishments").update({ banner_url: bannerUrl }).eq("id", estId);
-      } catch (_e) { /* photos best-effort : la fiche existe déjà */ }
+          if (bannerUrl) await svc.from("establishments").update({ banner_url: bannerUrl }).eq("id", estId);
+        } catch (_e) { /* best-effort */ }
+      }
     }
 
     // 3) Marquer le brouillon publié.

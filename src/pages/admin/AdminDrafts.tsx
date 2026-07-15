@@ -31,6 +31,8 @@ interface Draft {
   price_level: number | null;
   amenities: string[] | null;
   opening_hours: Record<string, { open: string; close: string } | null> | null;
+  thumb_url: string | null;
+  photo_urls: string[] | null;
   status: 'pending' | 'enriched' | 'approved' | 'rejected';
   published_establishment_id: string | null;
   created_at: string;
@@ -149,12 +151,16 @@ export default function AdminDrafts() {
     return arr;
   }, [page, totalPages]);
 
-  const Thumb = ({ d }: { d: Draft }) => (
-    <button onClick={() => setLightbox(thumbUrl(d.place_id, 1200))} className="relative w-11 h-11 rounded-lg overflow-hidden bg-primary/10 shrink-0" title="Agrandir la photo">
-      <span className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">{d.name.charAt(0)}</span>
-      <img src={thumbUrl(d.place_id, 120)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-    </button>
-  );
+  const Thumb = ({ d }: { d: Draft }) => {
+    const small = d.thumb_url || thumbUrl(d.place_id, 120); // stockée si dispo, sinon proxy Google
+    const big = d.thumb_url || thumbUrl(d.place_id, 1200);
+    return (
+      <button onClick={() => setLightbox(big)} className="relative w-11 h-11 rounded-lg overflow-hidden bg-primary/10 shrink-0" title="Agrandir la photo">
+        <span className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">{d.name.charAt(0)}</span>
+        <img src={small} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+      </button>
+    );
+  };
 
   const rowActions = (d: Draft) => (
     <div className="flex items-center justify-end gap-1">

@@ -22,6 +22,7 @@ export interface FichePreviewData {
   price_level?: number | null;
   amenities?: string[] | null;
   opening_hours?: Record<string, { open: string; close: string } | null> | null;
+  photo_urls?: string[] | null;
 }
 
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -42,21 +43,25 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
   const { categories } = useCategories();
   const [photos, setPhotos] = useState<string[]>([]);
 
+  const stored = data?.photo_urls && data.photo_urls.length ? data.photo_urls : null;
+
   useEffect(() => {
-    if (!open || !data?.place_id) { setPhotos([]); return; }
+    if (!open || !data?.place_id || stored) { setPhotos([]); return; }
     let cancelled = false;
     fetch(`${PHOTO_BASE}?place_id=${encodeURIComponent(data.place_id)}&apikey=${ANON}`)
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setPhotos(d.photos || []); })
       .catch(() => { if (!cancelled) setPhotos([]); });
     return () => { cancelled = true; };
-  }, [open, data?.place_id]);
+  }, [open, data?.place_id, stored]);
 
   if (!open || !data) return null;
 
   const categoryLabel = categories[data.category as CategoryKey]?.label || data.category;
   const rating = data.google_rating ?? 0;
-  const gallery = photos.slice(1, 7);
+  // Images stockées (direct) si dispo, sinon proxy Google (noms → URL).
+  const photoList: string[] = stored ?? photos.map((n) => photoUrl(n, 1200));
+  const gallery = photoList.slice(1, 7);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.65)' }} onClick={onClose}>
@@ -68,8 +73,8 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
 
         {/* Hero immersif */}
         <div className="relative w-full h-52 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg">
-          {photos[0] ? (
-            <img src={photoUrl(photos[0], 1200)} alt="" className="w-full h-full object-cover" />
+          {photoList[0] ? (
+            <img src={photoList[0]} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <MapPin size={40} className="text-gray-300 dark:text-gray-600" />
@@ -83,7 +88,7 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
           <div className="absolute inset-x-0 bottom-0 p-4">
             <div className="flex items-end gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white/95 dark:bg-dark-surface shadow-lg flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/25">
-                {photos[0] ? <img src={photoUrl(photos[0], 200)} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xl font-bold">{data.name.charAt(0)}</span>}
+                {photoList[0] ? <img src={photoList[0]} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xl font-bold">{data.name.charAt(0)}</span>}
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl font-bold text-white leading-tight" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>{data.name}</h1>
@@ -169,8 +174,8 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
             <div>
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Galerie</h2>
               <div className="grid grid-cols-3 gap-2">
-                {gallery.map((n) => (
-                  <img key={n} src={photoUrl(n, 400)} alt="" className="w-full h-20 object-cover rounded-input" />
+                {gallery.map((url) => (
+                  <img key={url} src={url} alt="" className="w-full h-20 object-cover rounded-input" />
                 ))}
               </div>
             </div>
