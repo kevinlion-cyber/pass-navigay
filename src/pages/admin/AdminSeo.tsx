@@ -12,7 +12,7 @@ function slugify(s: string): string {
 }
 
 interface Row { id: string; name: string; city: string; category: string }
-interface Article { slug: string; title: string; h1: string | null; type: string; hero_emoji: string | null }
+interface Article { slug: string; title: string; h1: string | null; type: string; hero_emoji: string | null; related_city: string | null }
 
 export default function AdminSeo() {
   const { categories } = useCategories();
@@ -24,7 +24,7 @@ export default function AdminSeo() {
     setLoading(true);
     const [est, arts] = await Promise.all([
       supabase.from('establishments').select('id,name,city,category').limit(5000),
-      supabase.from('seo_articles').select('slug,title,h1,type,hero_emoji').eq('published', true).order('sort', { ascending: false }),
+      supabase.from('seo_articles').select('slug,title,h1,type,hero_emoji,related_city').eq('published', true).order('sort', { ascending: false }),
     ]);
     setRows((est.data as Row[]) || []);
     setArticles((arts.data as Article[]) || []);
@@ -80,9 +80,20 @@ export default function AdminSeo() {
             <Kpi icon={Building2} label="Fiches établissements" value={model.fiches} />
           </div>
 
-          <Section icon={FileText} title={`Guides & contenus éditoriaux (${articles.length})`} hint="Articles rédigés à la main — evergreen, indexés">
-            {articles.length === 0 ? <p className="text-sm text-gray-500 py-2">Aucun article.</p> : articles.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.type === 'guide' ? 'Guide pratique' : 'Contenu informatif'} url={`/guides/${a.slug}`} ok={true} />)}
-          </Section>
+          {(() => {
+            const editorial = articles.filter((a) => a.type !== 'city');
+            const cityGuides = articles.filter((a) => a.type === 'city');
+            return (<>
+              <Section icon={FileText} title={`Guides & contenus éditoriaux (${editorial.length})`} hint="Articles rédigés à la main — evergreen, indexés">
+                {editorial.length === 0 ? <p className="text-sm text-gray-500 py-2">Aucun article.</p> : editorial.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.type === 'guide' ? 'Guide pratique' : 'Contenu informatif'} url={`/guides/${a.slug}`} ok={true} />)}
+              </Section>
+              {cityGuides.length > 0 && (
+                <Section icon={MapPin} title={`City guides éditoriaux (${cityGuides.length})`} hint="Pages ville enrichies d'une intro rédigée — indexables même sans lieux">
+                  {cityGuides.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.related_city || ''} url={`/annuaire/${slugify(a.related_city || '')}`} ok={true} />)}
+                </Section>
+              )}
+            </>);
+          })()}
 
           <Section icon={Layers} title={`Piliers catégorie (${model.catPillars.length})`} hint="Ex. « Restaurants LGBT-friendly en France »">
             {model.catPillars.map((p) => <LineItem key={p.key} title={p.label} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
