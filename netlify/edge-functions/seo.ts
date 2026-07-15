@@ -33,7 +33,14 @@ const CAT_SYN: Record<string, string> = {
   bien_etre: "saunas, spas et bien-être gay-friendly",
   culture: "lieux culturels et sorties LGBT",
 };
+// Requête « tête » réellement tapée par catégorie (intention transactionnelle) —
+// utilisée dans les titres/H1/metas des pages ville×catégorie et piliers catégorie.
+const CAT_KW: Record<string, string> = {
+  se_loger: "Hôtels gay-friendly", shopping: "Boutiques gay-friendly", manger: "Restaurants gay-friendly",
+  soiree: "Bars gays", bien_etre: "Saunas gays", culture: "Sorties LGBT",
+};
 const catLabel = (k: string) => CAT_LABEL[k] || k.replace(/_/g, " ");
+const catKw = (k: string) => CAT_KW[k] || (catLabel(k) + " gay-friendly");
 const catSyn = (k: string) => CAT_SYN[k] || (catLabel(k).toLowerCase() + " LGBT-friendly");
 
 function slugify(s: string): string {
@@ -175,13 +182,13 @@ async function renderCategoryPillar(catSlug: string): Promise<Response> {
     .map((c) => `<a class="chip" href="/lieux/${slugify(c)}">${esc(catLabel(c))}</a>`).join("");
 
   const body = `<nav class="crumb"><a href="/">Accueil</a> › <a href="/annuaire">Annuaire</a> › ${esc(label)}</nav>
-<h1>${esc(label)} LGBT-friendly en France</h1>
+<h1>${esc(catKw(catKey))} en France</h1>
 <p class="lead">Tous les ${esc(catSyn(catKey))} recommandés par la communauté Pass Navigay : ${rows.length} adresse${rows.length > 1 ? "s" : ""} dans ${cityCount} ville${cityCount > 1 ? "s" : ""}. Sélection, avis et infos pratiques.</p>
 ${sections}
 ${otherCats ? `<h2>Autres catégories</h2><div class="links">${otherCats}</div>` : ""}
 <p style="margin-top:20px"><a class="cta" href="/annuaire">Voir tout l'annuaire</a></p>`;
   const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`], [label, canonical]]), itemListLd(rows)];
-  return page({ title: `${label} LGBT-friendly en France | Pass Navigay`, description: `Les meilleurs ${catSyn(catKey)} en France : ${rows.length} adresses LGBT-friendly dans ${cityCount} villes, avec avis et infos pratiques.`, canonical, noindex: rows.length < MIN_CAT, jsonLd, body });
+  return page({ title: `${catKw(catKey)} en France : le guide par ville | Pass Navigay`, description: `Les meilleurs ${catSyn(catKey)} en France : ${rows.length} adresses dans ${cityCount} villes, avec avis et infos pratiques.`, canonical, noindex: rows.length < MIN_CAT, jsonLd, body });
 }
 
 // ---------- PILIER ville + SATELLITE ville×catégorie ----------
@@ -208,14 +215,14 @@ async function renderHub(citySlug: string, catSlug: string | null): Promise<Resp
     const crumb = `<nav class="crumb"><a href="/">Accueil</a> › <a href="/annuaire">Annuaire</a> › <a href="/annuaire/${citySlug}">${esc(cityName)}</a> › ${esc(label)}</nav>`;
     const siblings = catsInCity.filter((c) => c !== catKey).map((c) => `<a class="chip" href="/annuaire/${citySlug}/${slugify(c)}">${esc(catLabel(c))} à ${esc(cityName)}</a>`).join("");
     const body = `${crumb}
-<h1>Meilleurs ${esc(label.toLowerCase())} LGBT-friendly à ${esc(cityName)}</h1>
+<h1>${esc(catKw(catKey))} à ${esc(cityName)}</h1>
 <p class="lead">Les ${esc(catSyn(catKey))} à ${esc(cityName)} : ${rows.length} adresse${rows.length > 1 ? "s" : ""} sélectionnée${rows.length > 1 ? "s" : ""} par la communauté Pass Navigay. Adresses, avis et bons plans.</p>
 <div class="grid">${rows.map(card).join("")}</div>
 ${siblings ? `<h2>Autres catégories à ${esc(cityName)}</h2><div class="links">${siblings}</div>` : ""}
 <h2>${esc(label)} dans d'autres villes</h2><div class="links"><a class="chip" href="/lieux/${slugify(catKey)}">${esc(label)} en France</a>${otherCitiesChips}</div>
 <p style="margin-top:20px"><a class="cta" href="/annuaire/${citySlug}">Tous les lieux à ${esc(cityName)}</a></p>`;
     const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`], [cityName, `${SITE}/annuaire/${citySlug}`], [label, canonical]]), itemListLd(rows)];
-    return page({ title: `Meilleurs ${label.toLowerCase()} LGBT-friendly à ${cityName} | Pass Navigay`, description: `Les ${catSyn(catKey)} à ${cityName} : ${rows.length} adresse${rows.length > 1 ? "s" : ""} recommandée${rows.length > 1 ? "s" : ""}, avis et infos pratiques sur Pass Navigay.`, canonical, noindex: rows.length < MIN_CITY_CAT, jsonLd, body });
+    return page({ title: `${catKw(catKey)} à ${cityName} — les meilleures adresses | Pass Navigay`, description: `${catKw(catKey)} à ${cityName} : ${rows.length} adresse${rows.length > 1 ? "s" : ""} (${catSyn(catKey)}), avis et infos pratiques sur Pass Navigay.`, canonical, noindex: rows.length < MIN_CITY_CAT, jsonLd, body });
   }
 
   // Pilier ville.
