@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Send, Eye, EyeOff, CheckCircle, Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
@@ -47,6 +47,8 @@ export default function Register() {
 
   const { signUp, verifyOtp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -177,10 +179,10 @@ export default function Register() {
         // Stripe not configured yet
       }
       toast.success('Bienvenue sur Pass Navigay ! Le paiement Premium sera disponible prochainement.');
-      navigate('/explore');
+      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explore');
     } else {
       toast.success('Bienvenue sur Pass Navigay !');
-      navigate('/explore');
+      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explore');
     }
   };
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map,
-  Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, type LucideIcon } from 'lucide-react';
+  Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, BadgeCheck, type LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -449,6 +449,15 @@ export default function EstablishmentDetail() {
               <OpeningHoursDisplay hours={openingHours} />
             </div>
           </div>
+        )}
+
+        {!establishment.owner_id && (
+          <button
+            onClick={() => navigate(`/revendiquer/${establishment.id}`)}
+            className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-primary border border-dashed border-light-border dark:border-dark-border rounded-card py-3 transition-colors"
+          >
+            <BadgeCheck size={15} /> C'est votre établissement ? Revendiquez-le
+          </button>
         )}
 
         <div>

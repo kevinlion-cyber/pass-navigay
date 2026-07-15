@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Verify from './pages/auth/Verify';
 import ResetPassword from './pages/auth/ResetPassword';
+import Revendiquer from './pages/Revendiquer';
 import Explore from './pages/Explore';
 import EstablishmentDetail from './pages/EstablishmentDetail';
 import EstablishmentForm from './pages/EstablishmentForm';
@@ -29,6 +30,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
 import AdminSocial from './pages/admin/AdminSocial';
+import AdminClaims from './pages/admin/AdminClaims';
 import AdminEvents from './pages/admin/AdminEvents';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminMembers from './pages/admin/AdminMembers';
@@ -98,6 +100,7 @@ export default function App() {
               <Route path="/profile/settings" element={<ProfileSettings />} />
               <Route path="/profile/:userId" element={<ProfilePublic />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/revendiquer/:id" element={<Revendiquer />} />
             </Route>
 
             <Route path="/admin" element={<AdminRoot />}>
@@ -105,6 +108,7 @@ export default function App() {
               <Route path="establishments" element={<AdminEstablishments />} />
               <Route path="drafts" element={<AdminDrafts />} />
               <Route path="social" element={<AdminSocial />} />
+              <Route path="claims" element={<AdminClaims />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="members" element={<AdminMembers />} />
