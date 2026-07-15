@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight } from 'lucide-react';
+import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Overview {
   days: number;
   kpis: { visitors: number; pageviews: number; establishmentViews: number; searches: number; newSessions: number };
+  engagement: { newMembers: number; favorites: number; reviews: number; messages: number };
   series: { date: string; pageviews: number; visitors: number }[];
   topFiches: { id: string; name: string; city: string | null; views: number }[];
   topSearches: { q: string; count: number }[];
@@ -95,6 +96,14 @@ export default function AdminAnalytics() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+          </div>
+
+          {/* Activité communauté */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Kpi icon={UserPlus} label="Nouveaux membres" value={data.engagement.newMembers} />
+            <Kpi icon={Heart} label="Favoris ajoutés" value={data.engagement.favorites} />
+            <Kpi icon={Star} label="Avis publiés" value={data.engagement.reviews} />
+            <Kpi icon={MessageCircle} label="Messages envoyés" value={data.engagement.messages} />
           </div>
 
           {/* Entonnoir de conversion */}

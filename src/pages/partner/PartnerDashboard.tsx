@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   CalendarDays, Tag, Eye, CreditCard, TrendingUp,
-  ArrowRight, ChevronRight,
+  ArrowRight, ChevronRight, Users, BarChart3,
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import type { Establishment, Event, Promotion } from '../../lib/types';
+
+interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[] }
 
 interface PartnerContext {
   establishment: Establishment;
@@ -19,6 +22,7 @@ interface DashboardData {
   expiredPromos: number;
   promoUses: number;
   views: number;
+  viewStats: ViewStats | null;
   recentEvents: Event[];
   recentPromos: Promotion[];
 }
@@ -34,6 +38,7 @@ export default function PartnerDashboard() {
     expiredPromos: 0,
     promoUses: 0,
     views: 0,
+    viewStats: null,
     recentEvents: [],
     recentPromos: [],
   });
@@ -73,13 +78,14 @@ export default function PartnerDashboard() {
           promoUses = count ?? 0;
         }
 
-        // Vues réelles de la fiche (30 derniers jours) via l'analytics first-party.
+        // Statistiques réelles de la fiche via l'analytics first-party.
         let views = 0;
+        let viewStats: ViewStats | null = null;
         try {
           const { data: av } = await supabase.functions.invoke('analytics', {
             body: { mode: 'establishment', establishmentId: establishment.id },
           });
-          if (av && !av.error) views = av.last30 ?? 0;
+          if (av && !av.error) { views = av.last30 ?? 0; viewStats = av as ViewStats; }
         } catch { /* best-effort */ }
 
         setData({
@@ -89,6 +95,7 @@ export default function PartnerDashboard() {
           expiredPromos: prExpiredRes.count ?? 0,
           promoUses,
           views,
+          viewStats,
           recentEvents: (evRecentRes.data as Event[]) || [],
           recentPromos: (prRecentRes.data as Promotion[]) || [],
         });
@@ -254,6 +261,42 @@ export default function PartnerDashboard() {
             </div>
           </div>
 
+          {/* Statistiques de la page */}
+          <div className="rounded-card p-5" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 size={18} style={{ color: '#7B2D8B' }} />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Statistiques de votre page</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              <MiniStat icon={Eye} label="Vues totales" value={data.viewStats?.total ?? 0} />
+              <MiniStat icon={TrendingUp} label="30 derniers jours" value={data.viewStats?.last30 ?? 0} />
+              <MiniStat icon={CalendarDays} label="7 derniers jours" value={data.viewStats?.last7 ?? 0} />
+              <MiniStat icon={Users} label="Visiteurs uniques (30j)" value={data.viewStats?.uniqueVisitors30 ?? 0} />
+            </div>
+            {data.viewStats && data.viewStats.total > 0 ? (
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.viewStats.series}>
+                    <defs><linearGradient id="pnViews" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7B2D8B" stopOpacity={0.35} /><stop offset="100%" stopColor="#7B2D8B" stopOpacity={0} /></linearGradient></defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.12)" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} interval="preserveStartEnd" tickFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} />
+                    <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} width={26} />
+                    <Tooltip contentStyle={{ background: '#16161f', border: '1px solid #2a2a35', borderRadius: 8, fontSize: 13, color: '#fff' }} labelFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} formatter={(v: number) => [v, 'Vues']} />
+                    <Area type="monotone" dataKey="value" stroke="#7B2D8B" strokeWidth={2} fill="url(#pnViews)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-6">Votre page n'a pas encore été consultée. Complétez votre fiche et partagez-la pour attirer vos premiers visiteurs.</p>
+            )}
+            {!establishment.is_pro && data.viewStats && data.viewStats.total > 0 && (
+              <div className="mt-4 flex items-center justify-between gap-3 flex-wrap rounded-input p-3" style={{ background: 'rgba(123,45,139,0.08)' }}>
+                <p className="text-sm text-gray-700 dark:text-gray-300">Passez Pro pour ressortir en tête des résultats et gagner encore plus de vues.</p>
+                <button onClick={() => navigate('/pros/abonnement')} className="text-xs font-semibold px-3 py-1.5 rounded-input shrink-0" style={{ background: '#7B2D8B', color: '#fff' }}>Passez Pro</button>
+              </div>
+            )}
+          </div>
+
           {/* Actions rapides */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Par où commencer ?</h2>
@@ -359,6 +402,16 @@ export default function PartnerDashboard() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+  return (
+    <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input p-3 text-center">
+      <Icon size={16} className="mx-auto mb-1" style={{ color: '#7B2D8B' }} />
+      <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{value.toLocaleString('fr-FR')}</p>
+      <p className="text-[11px] text-gray-500 mt-1">{label}</p>
     </div>
   );
 }

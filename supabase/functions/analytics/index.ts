@@ -65,9 +65,13 @@ Deno.serve(async (req: Request) => {
     const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
     const since = sinceIso(days);
 
-    const [evRes, idRes] = await Promise.all([
+    const [evRes, idRes, newMembersRes, favRes, revRes, msgRes] = await Promise.all([
       svc.from("analytics_events").select("session_id, name, establishment_id, payload, created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(MAX_ROWS),
       svc.from("analytics_identities").select("session_id, referrer, utm_source").gte("first_seen", since).limit(MAX_ROWS),
+      svc.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", since).neq("account_type", "pro"),
+      svc.from("favorites").select("*", { count: "exact", head: true }).gte("created_at", since),
+      svc.from("reviews").select("*", { count: "exact", head: true }).gte("created_at", since),
+      svc.from("messages").select("*", { count: "exact", head: true }).gte("created_at", since),
     ]);
     const events = evRes.data || [];
     const identities = idRes.data || [];
@@ -131,6 +135,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({
       mode, days,
       kpis: { visitors: visitors.size, pageviews, establishmentViews: estViews, searches, newSessions: identities.length },
+      engagement: { newMembers: newMembersRes.count ?? 0, favorites: favRes.count ?? 0, reviews: revRes.count ?? 0, messages: msgRes.count ?? 0 },
       series, topFiches, topSearches, topSources, funnel,
       capped: events.length >= MAX_ROWS,
     });
