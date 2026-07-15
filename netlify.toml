@@ -19,5 +19,13 @@
   function = "seo"
 
 [[edge_functions]]
+  path = "/guides"
+  function = "seo"
+
+[[edge_functions]]
+  path = "/guides/*"
+  function = "seo"
+
+[[edge_functions]]
   path = "/establishment/*"
   function = "seo"

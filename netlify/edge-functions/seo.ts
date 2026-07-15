@@ -106,8 +106,9 @@ h2 a{color:#1a1a2e}
 .chip b{color:#999;font-weight:400}
 .cta{display:inline-block;background:var(--p);color:#fff;border-radius:10px;padding:11px 22px;font-weight:600;margin-top:8px}.cta:hover{text-decoration:none;opacity:.92}
 footer{border-top:1px solid #eee;padding:24px 20px;color:#999;font-size:13px}footer .wrap{max-width:980px;margin:0 auto}footer a{color:#777}
+.article{max-width:740px;font-size:16px}.article h2{font-size:20px}.article p{margin:0 0 14px}.article ul{padding-left:22px;margin:0 0 14px}.article li{margin:5px 0}.article strong{color:#1a1a2e}
 </style></head><body>
-<header><div class="wrap"><a class="logo" href="/">Pass <span>Navigay</span></a><nav class="top"><a href="/annuaire">Annuaire</a><a href="/explore">Carte</a><a href="/events">Événements</a></nav></div></header>
+<header><div class="wrap"><a class="logo" href="/">Pass <span>Navigay</span></a><nav class="top"><a href="/annuaire">Annuaire</a><a href="/guides">Guides</a><a href="/explore">Carte</a><a href="/events">Événements</a></nav></div></header>
 <main>${o.body}</main>
 <footer><div class="wrap">Pass Navigay — l'annuaire des lieux LGBT-friendly en France. <a href="/annuaire">Annuaire complet</a> · <a href="/">Accueil</a> · <a href="/explore">Explorer la carte</a></div></footer>
 </body></html>`;
@@ -122,6 +123,9 @@ function card(e: Est): string {
 ${e.address ? `<p class="addr">${esc(e.address)}</p>` : ""}
 ${e.description ? `<p class="snip">${esc(snippet(e.description))}</p>` : ""}</div></div>`;
 }
+interface Article { slug: string; type: string; title: string; h1: string | null; meta_description: string | null; excerpt: string | null; hero_emoji: string | null; body_html: string; related_category: string | null; related_city: string | null; }
+const allArticles = () => sb(`seo_articles?select=slug,type,title,h1,meta_description,excerpt,hero_emoji,body_html,related_category,related_city,sort&published=eq.true&order=sort.desc`) as Promise<Article[]>;
+
 const breadcrumbLd = (items: [string, string][]): object => ({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items.map(([name, url], i) => ({ "@type": "ListItem", position: i + 1, name, item: url })) });
 const itemListLd = (rows: Est[]): object => ({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: rows.length, itemListElement: rows.slice(0, 50).map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/establishment/${e.id}`, name: e.name })) });
 
@@ -135,12 +139,16 @@ async function renderIndex(): Promise<Response> {
 
   const cityChips = cities.map(([s, g]) => `<a class="chip" href="/annuaire/${s}">${esc(g.name)} <b>(${g.rows.length})</b></a>`).join("");
   const catChips = catList.map(([c, n]) => `<a class="chip" href="/lieux/${slugify(c)}">${esc(catLabel(c))} <b>(${n})</b></a>`).join("");
+  const arts = await allArticles();
+  const guideChips = arts.slice(0, 10).map((a) => `<a class="chip" href="/guides/${a.slug}">${a.hero_emoji ? a.hero_emoji + " " : ""}${esc(a.h1 || a.title)}</a>`).join("");
 
   const body = `<nav class="crumb"><a href="/">Accueil</a> › Annuaire</nav>
 <h1>Annuaire des lieux LGBT-friendly en France</h1>
 <p class="lead">Pass Navigay recense les bars, restaurants, hébergements, saunas, lieux culturels et boutiques accueillants pour la communauté LGBT+, partout en France. Parcourez l'annuaire par ville ou par catégorie.</p>
 <h2>Par catégorie</h2><div class="links">${catChips || "<span style='color:#999'>Bientôt disponible</span>"}</div>
 <h2>Par ville</h2><div class="links">${cityChips || "<span style='color:#999'>Bientôt disponible</span>"}</div>
+<h2><a href="/guides">Guides & conseils</a></h2>
+<div class="links">${guideChips || `<a class="chip" href="/guides">Voir tous les guides</a>`}</div>
 <p style="margin-top:20px"><a class="cta" href="/explore">Explorer tous les lieux sur la carte</a></p>`;
   const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`]])];
   return page({ title: "Annuaire des lieux LGBT-friendly en France | Pass Navigay", description: "L'annuaire Pass Navigay : bars, restaurants, hébergements, saunas et sorties LGBT-friendly ville par ville, partout en France.", canonical: `${SITE}/annuaire`, noindex: all.length === 0, jsonLd, body });
@@ -229,6 +237,51 @@ function notFound(): Response {
   return page({ title: "Page introuvable | Pass Navigay", description: "Cette page n'existe pas.", canonical: SITE, noindex: true, jsonLd: [], body: `<h1>Page introuvable</h1><p><a href="/annuaire">Voir l'annuaire</a></p>` });
 }
 
+// ---------- GUIDES (contenu éditorial) ----------
+function guideCard(a: Article): string {
+  return `<a class="card" href="/guides/${esc(a.slug)}" style="text-decoration:none;color:inherit">
+<div class="bd"><h3 style="color:var(--p)">${a.hero_emoji ? a.hero_emoji + " " : ""}${esc(a.h1 || a.title)}</h3>
+${a.excerpt ? `<p class="snip">${esc(a.excerpt)}</p>` : ""}</div></a>`;
+}
+async function renderGuidesIndex(): Promise<Response> {
+  const arts = await allArticles();
+  const guides = arts.filter((a) => a.type === "guide");
+  const infos = arts.filter((a) => a.type !== "guide");
+  const body = `<nav class="crumb"><a href="/">Accueil</a> › Guides</nav>
+<h1>Guides & conseils LGBT-friendly</h1>
+<p class="lead">Nos guides pour sortir, voyager, s'installer et profiter en toute sérénité quand on est LGBT+, et pour mieux comprendre la communauté. Des conseils clairs, bienveillants et gratuits.</p>
+${guides.length ? `<h2>Guides pratiques</h2><div class="grid">${guides.map(guideCard).join("")}</div>` : ""}
+${infos.length ? `<h2>Comprendre</h2><div class="grid">${infos.map(guideCard).join("")}</div>` : ""}
+<p style="margin-top:22px"><a class="cta" href="/annuaire">Explorer l'annuaire des lieux</a></p>`;
+  const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Guides", `${SITE}/guides`]])];
+  return page({ title: "Guides & conseils LGBT-friendly | Pass Navigay", description: "Sortir, voyager, s'installer et comprendre la communauté LGBT+ : tous nos guides pratiques et bienveillants, gratuits, sur Pass Navigay.", canonical: `${SITE}/guides`, noindex: arts.length === 0, jsonLd, body });
+}
+async function renderGuide(slug: string): Promise<Response> {
+  const arts = await allArticles();
+  const a = arts.find((x) => x.slug === slug);
+  if (!a) return notFound();
+  const canonical = `${SITE}/guides/${a.slug}`;
+  const h1 = a.h1 || a.title;
+
+  // Maillage : lien vers le hub lié (ville/catégorie) + 3 autres guides.
+  const relChips: string[] = [];
+  if (a.related_city) relChips.push(`<a class="chip" href="/annuaire/${slugify(a.related_city)}">Lieux à ${esc(a.related_city)}</a>`);
+  if (a.related_category) relChips.push(`<a class="chip" href="/lieux/${slugify(a.related_category)}">${esc(catLabel(a.related_category))} en France</a>`);
+  relChips.push(`<a class="chip" href="/annuaire">Tout l'annuaire</a>`);
+  const others = arts.filter((x) => x.slug !== a.slug).slice(0, 3).map((x) => `<a class="chip" href="/guides/${x.slug}">${x.hero_emoji ? x.hero_emoji + " " : ""}${esc(x.h1 || x.title)}</a>`).join("");
+
+  const body = `<nav class="crumb"><a href="/">Accueil</a> › <a href="/guides">Guides</a> › ${esc(h1)}</nav>
+<article><h1>${a.hero_emoji ? a.hero_emoji + " " : ""}${esc(h1)}</h1>
+<div class="article">${a.body_html}</div></article>
+<h2>Pour aller plus loin</h2><div class="links">${relChips.join("")}</div>
+${others ? `<h2>Autres guides</h2><div class="links">${others}</div>` : ""}`;
+  const jsonLd = [
+    breadcrumbLd([["Accueil", SITE + "/"], ["Guides", `${SITE}/guides`], [h1, canonical]]),
+    { "@context": "https://schema.org", "@type": "Article", headline: h1, description: a.meta_description || a.excerpt || "", author: { "@type": "Organization", name: "Pass Navigay" }, publisher: { "@type": "Organization", name: "Pass Navigay", logo: { "@type": "ImageObject", url: `${SITE}/logo-pass-navigay.png` } }, mainEntityOfPage: canonical },
+  ];
+  return page({ title: a.title, description: a.meta_description || a.excerpt || h1, canonical, noindex: false, jsonLd, body });
+}
+
 // ---------- SITEMAP ----------
 async function sitemap(): Promise<Response> {
   const all = await allEstablishments();
@@ -246,6 +299,9 @@ async function sitemap(): Promise<Response> {
     for (const [c, n] of cc) if (n >= MIN_CITY_CAT) urls.push({ loc: `${SITE}/annuaire/${s}/${slugify(c)}`, pr: "0.7" });
   }
   for (const e of all) urls.push({ loc: `${SITE}/establishment/${e.id}`, pr: "0.6" });
+  const arts = await allArticles();
+  if (arts.length) urls.push({ loc: `${SITE}/guides`, pr: "0.8" });
+  for (const a of arts) urls.push({ loc: `${SITE}/guides/${a.slug}`, pr: "0.7" });
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${u.loc}</loc><priority>${u.pr}</priority></url>`).join("\n")}\n</urlset>`;
   return new Response(xml, { status: 200, headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
@@ -284,6 +340,8 @@ export default async (request: Request, context: any) => {
   const { pathname } = new URL(request.url);
   try {
     if (pathname === "/sitemap.xml") return await sitemap();
+    if (pathname === "/guides" || pathname === "/guides/") return await renderGuidesIndex();
+    if (pathname.startsWith("/guides/")) return await renderGuide(pathname.split("/")[2] || "");
     if (pathname === "/annuaire" || pathname === "/annuaire/") return await renderIndex();
     if (pathname.startsWith("/lieux/")) return await renderCategoryPillar(pathname.split("/")[2] || "");
     if (pathname.startsWith("/annuaire/")) {

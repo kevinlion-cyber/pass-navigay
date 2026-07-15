@@ -12,16 +12,22 @@ function slugify(s: string): string {
 }
 
 interface Row { id: string; name: string; city: string; category: string }
+interface Article { slug: string; title: string; h1: string | null; type: string; hero_emoji: string | null }
 
 export default function AdminSeo() {
   const { categories } = useCategories();
   const [rows, setRows] = useState<Row[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('establishments').select('id,name,city,category').limit(5000);
-    setRows((data as Row[]) || []);
+    const [est, arts] = await Promise.all([
+      supabase.from('establishments').select('id,name,city,category').limit(5000),
+      supabase.from('seo_articles').select('slug,title,h1,type,hero_emoji').eq('published', true).order('sort', { ascending: false }),
+    ]);
+    setRows((est.data as Row[]) || []);
+    setArticles((arts.data as Article[]) || []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -45,10 +51,11 @@ export default function AdminSeo() {
     for (const cp of cityPillars) for (const [cat, n] of cp.cats) spokes.push({ city: cp.name, citySlug: cp.slug, cat, label: catLabel(cat), n, indexable: n >= MIN_CITY_CAT, url: `/annuaire/${cp.slug}/${slugify(cat)}` });
     spokes.sort((a, b) => b.n - a.n);
 
-    const allPages = 1 /* index */ + catPillars.length + cityPillars.length + spokes.length + rows.length /* fiches */;
-    const indexablePages = 1 + catPillars.filter((p) => p.indexable).length + cityPillars.filter((p) => p.indexable).length + spokes.filter((p) => p.indexable).length + rows.length;
+    const guidesN = articles.length + (articles.length ? 1 : 0); // articles + index /guides
+    const allPages = 1 /* index annuaire */ + catPillars.length + cityPillars.length + spokes.length + rows.length + guidesN;
+    const indexablePages = 1 + catPillars.filter((p) => p.indexable).length + cityPillars.filter((p) => p.indexable).length + spokes.filter((p) => p.indexable).length + rows.length + guidesN;
     return { cityPillars, catPillars, spokes, allPages, indexablePages, thin: allPages - indexablePages, fiches: rows.length };
-  }, [rows]);
+  }, [rows, articles]);
 
   return (
     <div className="space-y-5">
@@ -72,6 +79,10 @@ export default function AdminSeo() {
             <Kpi icon={Clock} label="En attente (mince)" value={model.thin} />
             <Kpi icon={Building2} label="Fiches établissements" value={model.fiches} />
           </div>
+
+          <Section icon={FileText} title={`Guides & contenus éditoriaux (${articles.length})`} hint="Articles rédigés à la main — evergreen, indexés">
+            {articles.length === 0 ? <p className="text-sm text-gray-500 py-2">Aucun article.</p> : articles.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.type === 'guide' ? 'Guide pratique' : 'Contenu informatif'} url={`/guides/${a.slug}`} ok={true} />)}
+          </Section>
 
           <Section icon={Layers} title={`Piliers catégorie (${model.catPillars.length})`} hint="Ex. « Restaurants LGBT-friendly en France »">
             {model.catPillars.map((p) => <LineItem key={p.key} title={p.label} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
