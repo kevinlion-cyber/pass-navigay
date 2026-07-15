@@ -344,7 +344,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {(establishment.is_pro || showProContent) && establishment.amenities && establishment.amenities.length > 0 && (
+        {establishment.amenities && establishment.amenities.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Bon à savoir</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
