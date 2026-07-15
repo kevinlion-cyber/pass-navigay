@@ -30,6 +30,7 @@ export default function AdminSeo() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [target, setTarget] = useState<{ city: string; cat: string } | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const coverage = useMemo(() => {
     const m = new Map<string, number>();
@@ -84,12 +85,16 @@ export default function AdminSeo() {
           <button onClick={load} className="text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-1"><RefreshCw size={14} /> Rafraîchir</button>
         </div>
       </div>
-      <p className="text-sm text-gray-500 -mt-2">Pages SEO générées automatiquement depuis le catalogue (racine → piliers ville/catégorie → satellites ville×catégorie → fiches), rendues en vraie HTML côté serveur. Une page passe « Indexée » dès qu'elle a assez de lieux — elle se remplit toute seule quand le catalogue grandit.</p>
+      <div className="bg-primary/5 border border-primary/20 rounded-card p-4 text-sm text-gray-700 dark:text-gray-300 space-y-1.5">
+        <p className="font-semibold text-gray-900 dark:text-white">À quoi sert cette page&nbsp;?</p>
+        <p>C'est le poste de pilotage du référencement Google du site. Le site crée <strong>tout seul</strong> des pages pour chaque ville et chaque type de lieu (« bar gay à Lyon », « sauna gay à Paris »…), plus les articles.</p>
+        <p><strong>La seule chose à faire ici&nbsp;:</strong> remplir le catalogue de lieux là où ça rapporte (le tableau ci-dessous). Plus il y a de lieux, plus Google nous met en avant. Le reste est automatique.</p>
+      </div>
 
       {!loading && (
         <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
-          <div className="flex items-center gap-2 mb-1"><Target size={16} className="text-primary" /><h2 className="text-sm font-semibold text-gray-900 dark:text-white">Cibles SEO prioritaires — piloter le catalogue par la demande</h2></div>
-          <p className="text-xs text-gray-500 mb-3">Les requêtes à forte intention (« bar gay Paris », « sauna gay Lyon »…). Remplissez ces cases en priorité : chaque case débloque une page qui cible une vraie recherche. « Découvrir » lance la recherche de lieux pré-remplie (ville + catégorie).</p>
+          <div className="flex items-center gap-2 mb-1"><Target size={16} className="text-primary" /><h2 className="text-base font-bold text-gray-900 dark:text-white">👉 À faire&nbsp;: ajouter des lieux dans les grandes villes</h2></div>
+          <p className="text-xs text-gray-500 mb-3">Chaque case correspond à une recherche que les gens font vraiment sur Google (« bar gay à Paris »…). <strong className="text-emerald-600">Un chiffre vert</strong> = on a déjà des lieux. <strong>« Découvrir »</strong> = trouver et ajouter des lieux pour cette ville en un clic. Commencez par les villes du haut.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead><tr className="text-xs text-gray-500 uppercase tracking-wide"><th className="text-left py-2 pr-3 font-medium">Ville</th>{PRIORITY_CATS.map((c) => <th key={c.key} className="text-center px-2 font-medium">{c.label}</th>)}</tr></thead>
@@ -120,39 +125,45 @@ export default function AdminSeo() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-24 rounded-card" />)}</div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Kpi icon={Network} label="Pages générées" value={model.allPages} />
-            <Kpi icon={CheckCircle2} label="Indexables" value={model.indexablePages} />
-            <Kpi icon={Clock} label="En attente (mince)" value={model.thin} />
-            <Kpi icon={Building2} label="Fiches établissements" value={model.fiches} />
-          </div>
-
           {(() => {
             const editorial = articles.filter((a) => a.type !== 'city');
             const cityGuides = articles.filter((a) => a.type === 'city');
             return (<>
-              <Section icon={FileText} title={`Guides & contenus éditoriaux (${editorial.length})`} hint="Articles rédigés à la main — evergreen, indexés">
-                {editorial.length === 0 ? <p className="text-sm text-gray-500 py-2">Aucun article.</p> : editorial.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.type === 'guide' ? 'Guide pratique' : 'Contenu informatif'} url={`/guides/${a.slug}`} ok={true} />)}
-              </Section>
-              {cityGuides.length > 0 && (
-                <Section icon={MapPin} title={`City guides éditoriaux (${cityGuides.length})`} hint="Pages ville enrichies d'une intro rédigée — indexables même sans lieux">
-                  {cityGuides.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.related_city || ''} url={`/annuaire/${slugify(a.related_city || '')}`} ok={true} />)}
+              <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
+                <div className="flex items-center gap-2 mb-1"><FileText size={16} className="text-primary" /><h2 className="text-base font-bold text-gray-900 dark:text-white">Ce qui est déjà en ligne</h2></div>
+                <p className="text-xs text-gray-500 mb-4">Tout ceci est déjà créé et visible par Google — rien à faire, ça s'enrichit tout seul quand tu ajoutes des lieux.</p>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Kpi icon={Building2} label="Fiches de lieux" value={model.fiches} />
+                  <Kpi icon={FileText} label="Articles & guides" value={editorial.length} />
+                  <Kpi icon={MapPin} label="Guides de ville" value={cityGuides.length} />
+                  <Kpi icon={Network} label="Pages ville × type" value={model.spokes.length} />
+                </div>
+                <button onClick={() => setShowDetails((v) => !v)} className="text-sm text-primary hover:underline mt-4">
+                  {showDetails ? 'Masquer le détail' : 'Voir le détail de toutes les pages'}
+                </button>
+              </div>
+
+              {showDetails && (<>
+                <Section icon={FileText} title={`Articles & guides (${editorial.length})`} hint="Articles rédigés à la main, en ligne">
+                  {editorial.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.type === 'guide' ? 'Guide pratique' : 'Info'} url={`/guides/${a.slug}`} ok={true} />)}
                 </Section>
-              )}
+                {cityGuides.length > 0 && (
+                  <Section icon={MapPin} title={`Guides de ville (${cityGuides.length})`} hint="Pages ville avec un texte rédigé — en ligne">
+                    {cityGuides.map((a) => <LineItem key={a.slug} title={`${a.hero_emoji ? a.hero_emoji + ' ' : ''}${a.h1 || a.title}`} sub={a.related_city || ''} url={`/annuaire/${slugify(a.related_city || '')}`} ok={true} />)}
+                  </Section>
+                )}
+                <Section icon={Layers} title={`Pages « type de lieu » (${model.catPillars.length})`} hint="Ex. « Bars gays en France »">
+                  {model.catPillars.map((p) => <LineItem key={p.key} title={p.label} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
+                </Section>
+                <Section icon={MapPin} title={`Pages « ville » (${model.cityPillars.length})`} hint="Ex. « Lieux LGBT-friendly à Montpellier »">
+                  {model.cityPillars.map((p) => <LineItem key={p.slug} title={p.name} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
+                </Section>
+                <Section icon={Network} title={`Pages « ville × type » (${model.spokes.length})`} hint="Ex. « Bars gays à Montpellier »">
+                  {model.spokes.map((s) => <LineItem key={s.url} title={`${s.label} à ${s.city}`} sub={`${s.n} lieu${s.n > 1 ? 'x' : ''}`} url={s.url} ok={s.indexable} />)}
+                </Section>
+              </>)}
             </>);
           })()}
-
-          <Section icon={Layers} title={`Piliers catégorie (${model.catPillars.length})`} hint="Ex. « Restaurants LGBT-friendly en France »">
-            {model.catPillars.map((p) => <LineItem key={p.key} title={p.label} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
-          </Section>
-
-          <Section icon={MapPin} title={`Piliers ville (${model.cityPillars.length})`} hint="Ex. « Lieux LGBT-friendly à Montpellier »">
-            {model.cityPillars.map((p) => <LineItem key={p.slug} title={p.name} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
-          </Section>
-
-          <Section icon={Network} title={`Satellites ville × catégorie (${model.spokes.length})`} hint="Ex. « Bars gays à Montpellier »">
-            {model.spokes.map((s) => <LineItem key={s.url} title={`${s.label} à ${s.city}`} sub={`${s.n} lieu${s.n > 1 ? 'x' : ''}`} url={s.url} ok={s.indexable} />)}
-          </Section>
         </>
       )}
 
