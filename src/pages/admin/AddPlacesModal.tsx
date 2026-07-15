@@ -20,11 +20,11 @@ interface Candidate {
 
 interface Stats { found: number; unique: number; duplicates: number; belowGate: number; notVenue: number; minRating: number; minReviews: number; }
 
-export default function AddPlacesModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
+export default function AddPlacesModal({ open, onClose, onDone, initialCity = '', initialCategory = '' }: { open: boolean; onClose: () => void; onDone: () => void; initialCity?: string; initialCategory?: string }) {
   const { categories, categoryKeys } = useCategories();
   const [mode, setMode] = useState<'city' | 'name'>('city');
-  const [city, setCity] = useState('');
-  const [category, setCategory] = useState<string>('');
+  const [city, setCity] = useState(initialCity);
+  const [category, setCategory] = useState<string>(initialCategory);
   const [query, setQuery] = useState('');
   const [minRating, setMinRating] = useState(4.0);
   const [minReviews, setMinReviews] = useState(20);

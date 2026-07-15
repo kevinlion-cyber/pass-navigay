@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Network, ExternalLink, RefreshCw, CheckCircle2, Clock, Building2, MapPin, Layers, FileText } from 'lucide-react';
+import { Network, ExternalLink, RefreshCw, CheckCircle2, Clock, Building2, MapPin, Layers, FileText, Target, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
+import AddPlacesModal from './AddPlacesModal';
+
+// Matrice pilotée par la demande SEO : les requêtes à fort volume/intention.
+const PRIORITY_CITIES = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Bordeaux', 'Lille', 'Nantes', 'Nice', 'Strasbourg', 'Montpellier', 'Rennes', 'Grenoble'];
+const PRIORITY_CATS: { key: string; label: string; kw: string }[] = [
+  { key: 'soiree', label: 'Bars & clubs', kw: 'bar gay' },
+  { key: 'bien_etre', label: 'Saunas & spas', kw: 'sauna gay' },
+  { key: 'manger', label: 'Restaurants', kw: 'restaurant gay-friendly' },
+  { key: 'se_loger', label: 'Hôtels', kw: 'hôtel gay-friendly' },
+];
 
 // Seuils identiques à l'edge function seo.ts (page indexable au-dessus du seuil).
 const MIN_CITY = 3, MIN_CITY_CAT = 2, MIN_CAT = 3;
@@ -19,6 +29,13 @@ export default function AdminSeo() {
   const [rows, setRows] = useState<Row[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [target, setTarget] = useState<{ city: string; cat: string } | null>(null);
+
+  const coverage = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows) m.set(`${slugify(r.city)}|${r.category}`, (m.get(`${slugify(r.city)}|${r.category}`) || 0) + 1);
+    return m;
+  }, [rows]);
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +86,36 @@ export default function AdminSeo() {
       </div>
       <p className="text-sm text-gray-500 -mt-2">Pages SEO générées automatiquement depuis le catalogue (racine → piliers ville/catégorie → satellites ville×catégorie → fiches), rendues en vraie HTML côté serveur. Une page passe « Indexée » dès qu'elle a assez de lieux — elle se remplit toute seule quand le catalogue grandit.</p>
 
+      {!loading && (
+        <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
+          <div className="flex items-center gap-2 mb-1"><Target size={16} className="text-primary" /><h2 className="text-sm font-semibold text-gray-900 dark:text-white">Cibles SEO prioritaires — piloter le catalogue par la demande</h2></div>
+          <p className="text-xs text-gray-500 mb-3">Les requêtes à forte intention (« bar gay Paris », « sauna gay Lyon »…). Remplissez ces cases en priorité : chaque case débloque une page qui cible une vraie recherche. « Découvrir » lance la recherche de lieux pré-remplie (ville + catégorie).</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead><tr className="text-xs text-gray-500 uppercase tracking-wide"><th className="text-left py-2 pr-3 font-medium">Ville</th>{PRIORITY_CATS.map((c) => <th key={c.key} className="text-center px-2 font-medium">{c.label}</th>)}</tr></thead>
+              <tbody>
+                {PRIORITY_CITIES.map((city) => (
+                  <tr key={city} className="border-t border-light-border dark:border-dark-border">
+                    <td className="py-2 pr-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">{city}</td>
+                    {PRIORITY_CATS.map((cat) => {
+                      const n = coverage.get(`${slugify(city)}|${cat.key}`) || 0;
+                      return (
+                        <td key={cat.key} className="text-center px-2">
+                          <button onClick={() => setTarget({ city, cat: cat.key })} title={`Découvrir : ${cat.kw} ${city}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors ${n > 0 ? 'text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-gray-500 hover:text-primary hover:bg-primary/10'}`}>
+                            {n > 0 ? <><CheckCircle2 size={12} /> {n}</> : <><Sparkles size={12} /> Découvrir</>}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-24 rounded-card" />)}</div>
       ) : (
@@ -103,10 +150,15 @@ export default function AdminSeo() {
             {model.cityPillars.map((p) => <LineItem key={p.slug} title={p.name} sub={`${p.n} lieu${p.n > 1 ? 'x' : ''}`} url={p.url} ok={p.indexable} />)}
           </Section>
 
-          <Section icon={Network} title={`Satellites ville × catégorie (${model.spokes.length})`} hint="Ex. « Meilleurs bars gays à Montpellier »">
+          <Section icon={Network} title={`Satellites ville × catégorie (${model.spokes.length})`} hint="Ex. « Bars gays à Montpellier »">
             {model.spokes.map((s) => <LineItem key={s.url} title={`${s.label} à ${s.city}`} sub={`${s.n} lieu${s.n > 1 ? 'x' : ''}`} url={s.url} ok={s.indexable} />)}
           </Section>
         </>
+      )}
+
+      {target && (
+        <AddPlacesModal key={`${target.city}-${target.cat}`} open initialCity={target.city} initialCategory={target.cat}
+          onClose={() => setTarget(null)} onDone={() => { setTarget(null); load(); }} />
       )}
     </div>
   );
