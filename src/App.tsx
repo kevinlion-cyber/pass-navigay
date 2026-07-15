@@ -29,6 +29,7 @@ import AdminRoot from './pages/Admin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminSeo from './pages/admin/AdminSeo';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
 import AdminSocial from './pages/admin/AdminSocial';
@@ -111,6 +112,7 @@ export default function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="utilisateurs" element={<AdminUsers />} />
+              <Route path="seo" element={<AdminSeo />} />
               <Route path="establishments" element={<AdminEstablishments />} />
               <Route path="drafts" element={<AdminDrafts />} />
               <Route path="social" element={<AdminSocial />} />

@@ -7,7 +7,15 @@
   function = "seo"
 
 [[edge_functions]]
+  path = "/annuaire"
+  function = "seo"
+
+[[edge_functions]]
   path = "/annuaire/*"
+  function = "seo"
+
+[[edge_functions]]
+  path = "/lieux/*"
   function = "seo"
 
 [[edge_functions]]
