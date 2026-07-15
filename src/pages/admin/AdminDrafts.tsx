@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye } from 'lucide-react';
+import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -58,6 +58,7 @@ export default function AdminDrafts() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('enriched');
   const [cityFilter, setCityFilter] = useState('all');
   const [catFilter, setCatFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
@@ -79,6 +80,7 @@ export default function AdminDrafts() {
       else q = q.neq('status', 'pending');
       if (cityFilter !== 'all') q = q.eq('city', cityFilter);
       if (catFilter !== 'all') q = q.eq('category', catFilter);
+      if (search.trim()) q = q.ilike('name', `%${search.trim()}%`);
       q = q.order('created_at', { ascending: false }).range(page * pageSize, (page + 1) * pageSize - 1);
       const { data, count } = await q;
       setDrafts((data as Draft[]) || []);
@@ -94,9 +96,9 @@ export default function AdminDrafts() {
     setCounts(rows.reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>));
   };
 
-  useEffect(() => { load(); }, [statusFilter, cityFilter, catFilter, page, pageSize]);
+  useEffect(() => { load(); }, [statusFilter, cityFilter, catFilter, search, page, pageSize]);
   useEffect(() => { loadMeta(); }, []);
-  useEffect(() => { setPage(0); }, [statusFilter, cityFilter, catFilter, pageSize]);
+  useEffect(() => { setPage(0); }, [statusFilter, cityFilter, catFilter, search, pageSize]);
 
   const publish = async () => {
     if (!publishTarget) return;
@@ -218,6 +220,13 @@ export default function AdminDrafts() {
             {cities.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
+        <div className="relative flex-1 min-w-[180px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un nom…" className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2 w-full" />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>
+          )}
+        </div>
       </div>
 
       {loading ? (
