@@ -139,7 +139,7 @@ async function renderIndex(): Promise<Response> {
 
   const cityChips = cities.map(([s, g]) => `<a class="chip" href="/annuaire/${s}">${esc(g.name)} <b>(${g.rows.length})</b></a>`).join("");
   const catChips = catList.map(([c, n]) => `<a class="chip" href="/lieux/${slugify(c)}">${esc(catLabel(c))} <b>(${n})</b></a>`).join("");
-  const arts = await allArticles();
+  const arts = (await allArticles()).filter((a) => a.type !== "city");
   const guideChips = arts.slice(0, 10).map((a) => `<a class="chip" href="/guides/${a.slug}">${a.hero_emoji ? a.hero_emoji + " " : ""}${esc(a.h1 || a.title)}</a>`).join("");
 
   const body = `<nav class="crumb"><a href="/">Accueil</a> › Annuaire</nav>
@@ -189,9 +189,12 @@ async function renderHub(citySlug: string, catSlug: string | null): Promise<Resp
   const all = await allEstablishments();
   const cities = groupCities(all);
   const g = cities.get(citySlug);
-  if (!g) return notFound();
-  const cityName = g.name;
-  const cityRows = g.rows;
+  // City guide éditorial (intro rédigée main) → rend le pilier ville riche + indexable même sans lieux.
+  const arts = await allArticles();
+  const cityArt = arts.find((a) => a.type === "city" && slugify(a.related_city || "") === citySlug);
+  if (!g && !cityArt) return notFound();
+  const cityName = g?.name || (cityArt!.related_city as string);
+  const cityRows = g?.rows || [];
   const catsInCity = [...new Set(cityRows.map((e) => e.category))];
   const otherCities = [...cities.entries()].filter(([s]) => s !== citySlug).sort((a, b) => b[1].rows.length - a[1].rows.length).slice(0, 12);
   const otherCitiesChips = otherCities.map(([s, c]) => `<a class="chip" href="/annuaire/${s}">${esc(c.name)}</a>`).join("");
@@ -218,19 +221,24 @@ ${siblings ? `<h2>Autres catégories à ${esc(cityName)}</h2><div class="links">
   // Pilier ville.
   const canonical = `${SITE}/annuaire/${citySlug}`;
   const crumb = `<nav class="crumb"><a href="/">Accueil</a> › <a href="/annuaire">Annuaire</a> › ${esc(cityName)}</nav>`;
+  const intro = cityArt ? `<div class="article" style="margin-bottom:8px">${cityArt.body_html}</div>` : "";
   let sections = "";
   for (const c of catsInCity) {
     const rows = cityRows.filter((e) => e.category === c);
     sections += `<h2><a href="/annuaire/${citySlug}/${slugify(c)}">${esc(catLabel(c))} à ${esc(cityName)}</a> <span style="color:#bbb;font-weight:400">(${rows.length})</span></h2><div class="grid">${rows.map(card).join("")}</div>`;
   }
+  if (!sections) sections = `<p style="color:#777">Les premières adresses LGBT-friendly de ${esc(cityName)} arrivent bientôt sur Pass Navigay. Vous en connaissez une&nbsp;? <a href="/pros">Ajoutez-la</a> ou parlez-nous-en.</p>`;
   const body = `${crumb}
-<h1>Lieux LGBT-friendly à ${esc(cityName)}</h1>
-<p class="lead">Découvrez ${cityRows.length} adresse${cityRows.length > 1 ? "s" : ""} LGBT-friendly à ${esc(cityName)} : bars gays, restaurants, hébergements, saunas, bien-être et sorties accueillant·es pour la communauté LGBT+.</p>
+<h1>${cityArt ? esc(cityArt.h1 || `Vie LGBT à ${cityName}`) : `Lieux LGBT-friendly à ${esc(cityName)}`}</h1>
+${intro || `<p class="lead">Découvrez ${cityRows.length} adresse${cityRows.length > 1 ? "s" : ""} LGBT-friendly à ${esc(cityName)} : bars gays, restaurants, hébergements, saunas, bien-être et sorties accueillant·es pour la communauté LGBT+.</p>`}
+${cityRows.length ? `<h2>Les adresses à ${esc(cityName)}</h2>` : ""}
 ${sections}
 <h2>Explorer d'autres villes</h2><div class="links">${otherCitiesChips}</div>
 <p style="margin-top:20px"><a class="cta" href="/explore">Voir tous les lieux sur la carte</a></p>`;
   const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`], [cityName, canonical]]), itemListLd(cityRows)];
-  return page({ title: `Lieux LGBT-friendly à ${cityName} — bars, restaurants, sorties | Pass Navigay`, description: `${cityRows.length} lieux LGBT-friendly à ${cityName} : ${catsInCity.map(catLabel).slice(0, 4).join(", ")}. Adresses, avis et communauté sur Pass Navigay.`, canonical, noindex: cityRows.length < MIN_CITY, jsonLd, body });
+  const title = cityArt?.title || `Lieux LGBT-friendly à ${cityName} — bars, restaurants, sorties | Pass Navigay`;
+  const description = cityArt?.meta_description || `${cityRows.length} lieux LGBT-friendly à ${cityName} : ${catsInCity.map(catLabel).slice(0, 4).join(", ")}. Adresses, avis et communauté sur Pass Navigay.`;
+  return page({ title, description, canonical, noindex: !cityArt && cityRows.length < MIN_CITY, jsonLd, body });
 }
 
 function notFound(): Response {
@@ -246,7 +254,7 @@ ${a.excerpt ? `<p class="snip">${esc(a.excerpt)}</p>` : ""}</div></a>`;
 async function renderGuidesIndex(): Promise<Response> {
   const arts = await allArticles();
   const guides = arts.filter((a) => a.type === "guide");
-  const infos = arts.filter((a) => a.type !== "guide");
+  const infos = arts.filter((a) => a.type === "info");
   const body = `<nav class="crumb"><a href="/">Accueil</a> › Guides</nav>
 <h1>Guides & conseils LGBT-friendly</h1>
 <p class="lead">Nos guides pour sortir, voyager, s'installer et profiter en toute sérénité quand on est LGBT+, et pour mieux comprendre la communauté. Des conseils clairs, bienveillants et gratuits.</p>
@@ -259,7 +267,7 @@ ${infos.length ? `<h2>Comprendre</h2><div class="grid">${infos.map(guideCard).jo
 async function renderGuide(slug: string): Promise<Response> {
   const arts = await allArticles();
   const a = arts.find((x) => x.slug === slug);
-  if (!a) return notFound();
+  if (!a || a.type === "city") return notFound();
   const canonical = `${SITE}/guides/${a.slug}`;
   const h1 = a.h1 || a.title;
 
@@ -300,8 +308,12 @@ async function sitemap(): Promise<Response> {
   }
   for (const e of all) urls.push({ loc: `${SITE}/establishment/${e.id}`, pr: "0.6" });
   const arts = await allArticles();
-  if (arts.length) urls.push({ loc: `${SITE}/guides`, pr: "0.8" });
-  for (const a of arts) urls.push({ loc: `${SITE}/guides/${a.slug}`, pr: "0.7" });
+  const editorial = arts.filter((a) => a.type !== "city");
+  if (editorial.length) urls.push({ loc: `${SITE}/guides`, pr: "0.8" });
+  for (const a of editorial) urls.push({ loc: `${SITE}/guides/${a.slug}`, pr: "0.7" });
+  // Piliers ville dotés d'un city guide éditorial (indexables même sans lieux) — dédupe.
+  const seenCity = new Set([...groupCities(all).keys()].filter((s) => (groupCities(all).get(s)!.rows.length) >= MIN_CITY));
+  for (const a of arts.filter((x) => x.type === "city")) { const s = slugify(a.related_city || ""); if (s && !seenCity.has(s)) { urls.push({ loc: `${SITE}/annuaire/${s}`, pr: "0.8" }); seenCity.add(s); } }
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${u.loc}</loc><priority>${u.pr}</priority></url>`).join("\n")}\n</urlset>`;
   return new Response(xml, { status: 200, headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
