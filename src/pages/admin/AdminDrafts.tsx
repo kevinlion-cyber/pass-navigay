@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Sparkles, Check, X, ExternalLink, Star, MapPin, Pencil, RefreshCw, Plus, Eye } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -32,34 +32,55 @@ interface Draft {
   amenities: string[] | null;
   opening_hours: Record<string, { open: string; close: string } | null> | null;
   status: 'pending' | 'enriched' | 'approved' | 'rejected';
+  published_establishment_id: string | null;
   created_at: string;
 }
 
-type StatusFilter = 'enriched' | 'pending' | 'approved' | 'rejected' | 'all';
+type StatusFilter = 'enriched' | 'approved' | 'rejected' | 'all';
+
+const PHOTO_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fiches-photo`;
+const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const thumbUrl = (placeId: string, w = 120) => `${PHOTO_BASE}?place_id=${encodeURIComponent(placeId)}&i=0&w=${w}&apikey=${ANON}`;
+
+const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  enriched: { label: 'À valider', bg: 'rgba(210,153,34,0.15)', color: '#e3b341' },
+  approved: { label: 'Publiée', bg: 'rgba(46,160,67,0.15)', color: '#3fb950' },
+  rejected: { label: 'Rejetée', bg: 'rgba(192,57,43,0.12)', color: '#e06c5e' },
+  pending: { label: 'À enrichir', bg: 'rgba(255,255,255,0.05)', color: '#808090' },
+};
 
 export default function AdminDrafts() {
-  const { categories } = useCategories();
+  const { categories, categoryKeys } = useCategories();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('enriched');
   const [cityFilter, setCityFilter] = useState('all');
+  const [catFilter, setCatFilter] = useState('all');
   const [cities, setCities] = useState<string[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [publishTarget, setPublishTarget] = useState<Draft | null>(null);
   const [rejectTarget, setRejectTarget] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<Draft | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
     try {
-      let q = supabase.from('establishment_drafts').select('*').order('created_at', { ascending: false });
+      let q = supabase.from('establishment_drafts').select('*', { count: 'exact' });
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      else q = q.neq('status', 'pending');
       if (cityFilter !== 'all') q = q.eq('city', cityFilter);
-      const { data } = await q;
+      if (catFilter !== 'all') q = q.eq('category', catFilter);
+      q = q.order('created_at', { ascending: false }).range(page * pageSize, (page + 1) * pageSize - 1);
+      const { data, count } = await q;
       setDrafts((data as Draft[]) || []);
+      setTotal(count ?? 0);
     } catch { /* handled */ }
     setLoading(false);
   };
@@ -68,24 +89,23 @@ export default function AdminDrafts() {
     const { data } = await supabase.from('establishment_drafts').select('city,status');
     const rows = (data as { city: string; status: string }[]) || [];
     setCities([...new Set(rows.map((r) => r.city).filter(Boolean))].sort());
-    setCounts(rows.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {} as Record<string, number>));
+    setCounts(rows.reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>));
   };
 
-  useEffect(() => { load(); }, [statusFilter, cityFilter]);
+  useEffect(() => { load(); }, [statusFilter, cityFilter, catFilter, page, pageSize]);
   useEffect(() => { loadMeta(); }, []);
+  useEffect(() => { setPage(0); }, [statusFilter, cityFilter, catFilter, pageSize]);
 
   const publish = async () => {
     if (!publishTarget) return;
-    const d = publishTarget;
     setBusy(true);
     try {
-      // Crée l'établissement + stocke les photos Google en Storage (bannière + galerie).
-      const { data, error } = await supabase.functions.invoke('fiches-publish', { body: { draftId: d.id } });
+      const { data, error } = await supabase.functions.invoke('fiches-publish', { body: { draftId: publishTarget.id } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(data.banner ? 'Fiche publiée avec ses photos' : 'Fiche publiée');
       setPublishTarget(null);
-      setEditId(data.establishment_id); // ouvre le sidebar pour ajuster si besoin
+      setEditId(data.establishment_id);
       load(); loadMeta();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur à la publication');
@@ -108,13 +128,57 @@ export default function AdminDrafts() {
     setBusy(false);
   };
 
-  const tabs: { key: StatusFilter; label: string }[] = [
-    { key: 'enriched', label: `À valider${counts.enriched ? ` (${counts.enriched})` : ''}` },
-    { key: 'pending', label: `À enrichir${counts.pending ? ` (${counts.pending})` : ''}` },
-    { key: 'approved', label: 'Publiées' },
-    { key: 'rejected', label: 'Rejetées' },
-    { key: 'all', label: 'Toutes' },
+  const restore = async (d: Draft) => {
+    await supabase.from('establishment_drafts').update({ status: 'enriched' }).eq('id', d.id);
+    toast.success('Remis à valider');
+    load(); loadMeta();
+  };
+
+  const allCount = (counts.enriched || 0) + (counts.approved || 0) + (counts.rejected || 0);
+  const tabs: { key: StatusFilter; label: string; n: number }[] = [
+    { key: 'enriched', label: 'À valider', n: counts.enriched || 0 },
+    { key: 'approved', label: 'Publiées', n: counts.approved || 0 },
+    { key: 'rejected', label: 'Rejetées', n: counts.rejected || 0 },
+    { key: 'all', label: 'Toutes', n: allCount },
   ];
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageNumbers = useMemo(() => {
+    const arr: number[] = [];
+    const from = Math.max(0, page - 2), to = Math.min(totalPages - 1, page + 2);
+    for (let i = from; i <= to; i++) arr.push(i);
+    return arr;
+  }, [page, totalPages]);
+
+  const Thumb = ({ d }: { d: Draft }) => (
+    <button onClick={() => setLightbox(thumbUrl(d.place_id, 1200))} className="relative w-11 h-11 rounded-lg overflow-hidden bg-primary/10 shrink-0" title="Agrandir la photo">
+      <span className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">{d.name.charAt(0)}</span>
+      <img src={thumbUrl(d.place_id, 120)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+    </button>
+  );
+
+  const rowActions = (d: Draft) => (
+    <div className="flex items-center justify-end gap-1">
+      {(d.status === 'enriched') && (
+        <>
+          <button onClick={() => setPreviewDraft(d)} title="Prévisualiser" className="p-1.5 text-gray-500 hover:text-primary transition-colors"><Eye size={16} /></button>
+          <button onClick={() => setPublishTarget(d)} title="Publier" className="p-1.5 text-green-500 hover:text-green-400 transition-colors"><Check size={16} /></button>
+          <button onClick={() => setRejectTarget(d)} title="Rejeter" className="p-1.5 text-gray-500 hover:text-alert transition-colors"><X size={16} /></button>
+        </>
+      )}
+      {d.status === 'approved' && d.published_establishment_id && (
+        <>
+          <a href={`/establishment/${d.published_establishment_id}`} target="_blank" rel="noopener noreferrer" title="Voir la fiche en ligne" className="p-1.5 text-gray-500 hover:text-primary transition-colors"><ExternalLink size={16} /></a>
+          <button onClick={() => setEditId(d.published_establishment_id!)} title="Éditer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"><Pencil size={16} /></button>
+        </>
+      )}
+      {d.status === 'rejected' && (
+        <>
+          <button onClick={() => setPreviewDraft(d)} title="Prévisualiser" className="p-1.5 text-gray-500 hover:text-primary transition-colors"><Eye size={16} /></button>
+          <button onClick={() => restore(d)} title="Remettre à valider" className="p-1.5 text-gray-500 hover:text-green-500 transition-colors"><RefreshCw size={16} /></button>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -124,30 +188,24 @@ export default function AdminDrafts() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Fiches auto</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setAddOpen(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
-            <Plus size={16} /> Ajouter des lieux
-          </button>
-          <button onClick={() => { load(); loadMeta(); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-            <RefreshCw size={15} /> Rafraîchir
-          </button>
+          <button onClick={() => setAddOpen(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4"><Plus size={16} /> Ajouter des lieux</button>
+          <button onClick={() => { load(); loadMeta(); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><RefreshCw size={15} /> Rafraîchir</button>
         </div>
       </div>
-      <p className="text-sm text-gray-500 -mt-2">
-        Candidats découverts automatiquement puis décrits par l'IA. Rien n'est public tant que vous n'avez pas publié.
-      </p>
+      <p className="text-sm text-gray-500 -mt-2">Candidats découverts automatiquement puis décrits par l'IA. Rien n'est public tant que vous n'avez pas publié.</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1 bg-light-surface dark:bg-dark-surface p-1 rounded-input border border-light-border dark:border-dark-border">
           {tabs.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setStatusFilter(t.key)}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${statusFilter === t.key ? 'bg-primary/15 text-primary' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
-            >
-              {t.label}
+            <button key={t.key} onClick={() => setStatusFilter(t.key)} className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${statusFilter === t.key ? 'bg-primary/15 text-primary' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>
+              {t.label} <span className="opacity-60">{t.n}</span>
             </button>
           ))}
         </div>
+        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+          <option value="all">Toutes catégories</option>
+          {categoryKeys.map((k) => <option key={k} value={k}>{categories[k as CategoryKey].label}</option>)}
+        </select>
         {cities.length > 0 && (
           <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
             <option value="all">Toutes les villes</option>
@@ -157,119 +215,85 @@ export default function AdminDrafts() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-28 rounded-card" />)}</div>
+        <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-14 rounded-card" />)}</div>
       ) : drafts.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun brouillon dans cet onglet.</p>
+        <p className="text-center text-gray-500 py-12">Aucune fiche dans cet onglet.</p>
       ) : (
-        <div className="space-y-3">
-          {drafts.map((d) => (
-            <div key={d.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">{d.name}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-2 flex-wrap">
-                    <span>{categories[d.category as CategoryKey]?.label || d.category}{d.ai_subcategory ? ` · ${d.ai_subcategory}` : ''}</span>
-                    <span className="inline-flex items-center gap-1"><MapPin size={12} /> {d.city}</span>
-                    {typeof d.google_rating === 'number' && (
-                      <span className="inline-flex items-center gap-1"><Star size={12} style={{ color: '#d4a017' }} /> {d.google_rating} ({d.google_rating_count ?? 0})</span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {(d.status === 'enriched' || d.status === 'pending') && (
-                    <>
-                      <button onClick={() => setPreviewDraft(d)} title="Prévisualiser la fiche" className="p-2 text-gray-500 hover:text-primary transition-colors border border-light-border dark:border-dark-border rounded-input">
-                        <Eye size={15} />
+        <div className="overflow-x-auto border border-light-border dark:border-dark-border rounded-card">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
+                <th className="py-2.5 px-3 w-14"></th>
+                <th className="py-2.5 px-3">Nom</th>
+                <th className="py-2.5 px-3 hidden md:table-cell">Catégorie</th>
+                <th className="py-2.5 px-3 hidden sm:table-cell">Ville</th>
+                <th className="py-2.5 px-3 hidden sm:table-cell">Note</th>
+                <th className="py-2.5 px-3">Statut</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {drafts.map((d) => {
+                const st = STATUS_BADGE[d.status] || STATUS_BADGE.pending;
+                return (
+                  <tr key={d.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:hover:bg-dark-surface/40 align-middle">
+                    <td className="py-2 px-3"><Thumb d={d} /></td>
+                    <td className="py-2 px-3">
+                      <button onClick={() => (d.status === 'approved' ? setEditId(d.published_establishment_id) : setPreviewDraft(d))} className="text-left">
+                        <span className="text-gray-900 dark:text-white font-medium">{d.name}</span>
+                        {d.ai_subcategory && <span className="block text-xs text-gray-500">{d.ai_subcategory}{typeof d.price_level === 'number' && d.price_level > 0 ? ` · ${'€'.repeat(d.price_level)}` : ''}</span>}
                       </button>
-                      <button onClick={() => setPublishTarget(d)} className="btn-primary text-sm flex items-center gap-1.5 py-1.5 px-3">
-                        <Check size={15} /> Publier
-                      </button>
-                      <button onClick={() => setRejectTarget(d)} title="Rejeter" className="p-2 text-gray-500 hover:text-alert transition-colors border border-light-border dark:border-dark-border rounded-input">
-                        <X size={15} />
-                      </button>
-                    </>
-                  )}
-                  {d.status === 'approved' && d.published_establishment_id && (
-                    <>
-                      <a href={`/establishment/${d.published_establishment_id}`} target="_blank" rel="noopener noreferrer" title="Voir la fiche en ligne" className="text-sm flex items-center gap-1.5 py-1.5 px-3 border border-light-border dark:border-dark-border rounded-input text-gray-500 hover:text-primary transition-colors">
-                        <ExternalLink size={14} /> Voir la fiche
-                      </a>
-                      <button onClick={() => setEditId(d.published_establishment_id!)} title="Éditer" className="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors border border-light-border dark:border-dark-border rounded-input">
-                        <Pencil size={14} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {d.ai_description ? (
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{d.ai_description}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">Pas encore décrit par l'IA.</p>
-              )}
-
-              {d.ai_tags && d.ai_tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {d.ai_tags.map((t) => (
-                    <span key={t} className="text-xs text-gray-500 bg-gray-100 dark:bg-dark-bg px-2 py-0.5 rounded-full">{t}</span>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-3 pt-1 text-xs text-gray-500">
-                <a href={`https://www.google.com/maps/place/?q=place_id:${d.place_id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
-                  <ExternalLink size={12} /> Voir sur Google
-                </a>
-                {d.website && (
-                  <a href={d.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white truncate max-w-[200px]">
-                    <ExternalLink size={12} /> Site web
-                  </a>
-                )}
-                <span className="text-gray-600">· {d.discovery_query}</span>
-              </div>
-            </div>
-          ))}
+                    </td>
+                    <td className="py-2 px-3 hidden md:table-cell text-gray-500">{categories[d.category as CategoryKey]?.label || d.category}</td>
+                    <td className="py-2 px-3 hidden sm:table-cell text-gray-500">{d.city}</td>
+                    <td className="py-2 px-3 hidden sm:table-cell text-gray-500">
+                      {typeof d.google_rating === 'number' && <span className="inline-flex items-center gap-1"><Star size={12} style={{ color: '#d4a017' }} /> {d.google_rating} <span className="text-gray-400">({d.google_rating_count ?? 0})</span></span>}
+                    </td>
+                    <td className="py-2 px-3"><span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: st.bg, color: st.color }}>{st.label}</span></td>
+                    <td className="py-2 px-3">{rowActions(d)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      <ConfirmModal
-        open={!!publishTarget}
-        title="Publier cette fiche"
-        message={`Créer l'établissement public "${publishTarget?.name}" à partir de ce brouillon ? Vous pourrez ensuite ajouter bannière, logo et photos.`}
-        confirmLabel="Publier"
-        onCancel={() => setPublishTarget(null)}
-        onConfirm={publish}
-        loading={busy}
-      />
-      <ConfirmModal
-        open={!!rejectTarget}
-        title="Rejeter ce brouillon"
-        message={`Rejeter "${rejectTarget?.name}" ? Il ne sera plus proposé (mais reste en base, non public).`}
-        confirmLabel="Rejeter"
-        onCancel={() => setRejectTarget(null)}
-        onConfirm={reject}
-        loading={busy}
-      />
+      {/* Pagination */}
+      {total > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>Lignes par page</span>
+            <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-xs w-auto py-1">
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span>· {total} fiche(s)</span>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="px-2 py-1 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-40">‹</button>
+              {pageNumbers[0] > 0 && <span className="text-gray-400 px-1">…</span>}
+              {pageNumbers.map((i) => (
+                <button key={i} onClick={() => setPage(i)} className={`w-8 h-8 rounded text-sm font-medium transition-colors ${page === i ? 'bg-primary text-white' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}>{i + 1}</button>
+              ))}
+              {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && <span className="text-gray-400 px-1">…</span>}
+              <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="px-2 py-1 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-40">›</button>
+            </div>
+          )}
+        </div>
+      )}
 
-      <EstablishmentEditSidebar
-        establishmentId={editId}
-        onClose={() => setEditId(null)}
-        onRefresh={() => { load(); loadMeta(); }}
-      />
+      {lightbox && (
+        <div className="fixed inset-0 z-[70] bg-black/85 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+        </div>
+      )}
 
-      <AddPlacesModal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }}
-      />
-
-      <FichePreviewModal
-        open={!!previewDraft}
-        onClose={() => setPreviewDraft(null)}
-        data={previewDraft}
-      />
+      <ConfirmModal open={!!publishTarget} title="Publier cette fiche" message={`Créer l'établissement public "${publishTarget?.name}" ? Les photos seront récupérées automatiquement.`} confirmLabel="Publier" onCancel={() => setPublishTarget(null)} onConfirm={publish} loading={busy} />
+      <ConfirmModal open={!!rejectTarget} title="Rejeter ce brouillon" message={`Rejeter "${rejectTarget?.name}" ? Il reste en base (non public).`} confirmLabel="Rejeter" onCancel={() => setRejectTarget(null)} onConfirm={reject} loading={busy} />
+      <EstablishmentEditSidebar establishmentId={editId} onClose={() => setEditId(null)} onRefresh={() => { load(); loadMeta(); }} />
+      <AddPlacesModal open={addOpen} onClose={() => setAddOpen(false)} onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }} />
+      <FichePreviewModal open={!!previewDraft} onClose={() => setPreviewDraft(null)} data={previewDraft} />
     </div>
   );
 }

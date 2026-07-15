@@ -20,8 +20,23 @@ Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
   const placeId = url.searchParams.get("place_id");
   const name = url.searchParams.get("name");
+  const iParam = url.searchParams.get("i");
 
   try {
+    // Mode vignette : ?place_id=X&i=N → renvoie directement l'image de la N-ème photo.
+    if (placeId && iParam !== null) {
+      const idx = Math.max(0, Number(iParam) || 0);
+      const maxW = Math.min(Number(url.searchParams.get("w")) || 400, 1600);
+      const dr = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`, { headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": "photos" } });
+      if (!dr.ok) return new Response("no photo", { status: 404, headers: cors });
+      const names = ((await dr.json()).photos || []).map((p: { name: string }) => p.name);
+      const target = names[idx];
+      if (!target) return new Response("no photo", { status: 404, headers: cors });
+      const g = await fetch(`https://places.googleapis.com/v1/${target}/media?maxWidthPx=${maxW}&key=${key}`);
+      if (!g.ok) return new Response("photo error", { status: 502, headers: cors });
+      return new Response(await g.arrayBuffer(), { status: 200, headers: { ...cors, "Content-Type": g.headers.get("Content-Type") || "image/jpeg", "Cache-Control": "public, max-age=86400" } });
+    }
+
     // Mode liste : renvoie les noms de ressources photo du lieu.
     if (placeId) {
       const r = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=fr`, {
