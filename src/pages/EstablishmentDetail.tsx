@@ -58,6 +58,8 @@ export default function EstablishmentDetail() {
   const { user, profile } = useAuth();
   const { categories } = useCategories();
   const isPremium = profile?.is_premium === true;
+  // Un admin (qui vient de l'espace d'admin) voit la fiche COMPLÈTE, même sans compte payant.
+  const showProContent = profile?.is_admin === true;
 
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [photos, setPhotos] = useState<EstablishmentPhoto[]>([]);
@@ -319,7 +321,7 @@ export default function EstablishmentDetail() {
           </button>
         </div>
 
-        {establishment.is_pro && establishment.description && (
+        {(establishment.is_pro || showProContent) && establishment.description && (
           <div className="space-y-3">
             {establishment.description.split(/\n{2,}|\n/).map((para) => para.trim()).filter(Boolean).map((para, i) => (
               <p key={i} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{para}</p>
@@ -327,7 +329,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {establishment.is_pro && (establishment.phone || establishment.website) && (
+        {(establishment.is_pro || showProContent) && (establishment.phone || establishment.website) && (
           <div className="flex flex-wrap gap-4 text-sm">
             {establishment.phone && (
               <a href={`tel:${establishment.phone}`} className="flex items-center gap-2 text-primary hover:underline">
@@ -342,7 +344,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {establishment.is_pro && establishment.amenities && establishment.amenities.length > 0 && (
+        {(establishment.is_pro || showProContent) && establishment.amenities && establishment.amenities.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Bon à savoir</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -359,7 +361,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {establishment.is_pro && photos.length > 0 && (
+        {(establishment.is_pro || showProContent) && photos.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Galerie</h2>
             <div className="grid grid-cols-3 gap-2">
