@@ -12,11 +12,16 @@ function host(url: string | null): string | null {
   if (!url) return null;
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return null; }
 }
-function dayKey(iso: string): string { return iso.slice(0, 10); }
+// Regroupement par JOUR CALENDAIRE Europe/Paris (gère l'heure d'été via Intl) —
+// pas d'UTC, sinon décalage de minuit. 'en-CA' formate en AAAA-MM-JJ.
+const PARIS_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" });
+function dayKey(iso: string): string { return PARIS_DAY.format(new Date(iso)); }
 function sinceIso(days: number): string { return new Date(Date.now() - days * 86400000).toISOString(); }
 function emptyDays(days: number): { date: string; value: number }[] {
+  // Ancre = aujourd'hui (Paris) à midi UTC : le pas de 24 h ne franchit jamais minuit (robuste au DST).
+  const anchor = new Date(`${PARIS_DAY.format(new Date())}T12:00:00Z`);
   const out: { date: string; value: number }[] = [];
-  for (let i = days - 1; i >= 0; i--) out.push({ date: new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), value: 0 });
+  for (let i = days - 1; i >= 0; i--) out.push({ date: PARIS_DAY.format(new Date(anchor.getTime() - i * 86400000)), value: 0 });
   return out;
 }
 
