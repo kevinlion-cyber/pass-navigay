@@ -30,8 +30,7 @@ function esc(s: unknown): string {
 
 interface Est {
   id: string; name: string; category: string; subcategory: string | null; city: string;
-  address: string | null; postal_code: string | null; description: string | null;
-  google_rating: number | null; google_rating_count: number | null; banner_url: string | null;
+  address: string | null; postal_code: string | null; description: string | null; banner_url: string | null;
   is_pro: boolean; is_sponsor: boolean; latitude: number | null; longitude: number | null;
   website: string | null; phone: string | null; created_at: string | null;
 }
@@ -42,19 +41,14 @@ async function sb(query: string): Promise<any[]> {
     return r.ok ? await r.json() : [];
   } catch { return []; }
 }
-const FIELDS = "id,name,category,subcategory,city,address,postal_code,description,google_rating,google_rating_count,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
-const allEstablishments = () => sb(`establishments?select=${FIELDS}&order=is_sponsor.desc,google_rating_count.desc&limit=5000`) as Promise<Est[]>;
+const FIELDS = "id,name,category,subcategory,city,address,postal_code,description,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
+const allEstablishments = () => sb(`establishments?select=${FIELDS}&order=is_sponsor.desc,created_at.desc&limit=5000`) as Promise<Est[]>;
 
 function snippet(desc: string | null, n = 160): string {
   if (!desc) return "";
   const clean = desc.replace(/\s+/g, " ").trim();
   return clean.length > n ? clean.slice(0, n).replace(/\s\S*$/, "") + "…" : clean;
 }
-function ratingStr(e: Est): string {
-  if (!e.google_rating) return "";
-  return `★ ${e.google_rating.toFixed(1)}${e.google_rating_count ? ` (${e.google_rating_count} avis)` : ""}`;
-}
-
 // ---------- Rendu commun ----------
 function page(opts: { title: string; description: string; canonical: string; noindex: boolean; jsonLd: object[]; body: string }): Response {
   const ld = opts.jsonLd.map((o) => `<script type="application/ld+json">${JSON.stringify(o)}</script>`).join("\n");
@@ -96,11 +90,10 @@ footer{border-top:1px solid #eee;padding:24px 20px;color:#999;font-size:13px}foo
 
 function venueCard(e: Est): string {
   const ph = e.banner_url ? ` style="background-image:url('${esc(e.banner_url)}')"` : "";
-  const rat = ratingStr(e);
   return `<div class="card"><a href="/establishment/${esc(e.id)}"><div class="ph"${ph}></div></a>
 <div class="bd"><h3><a href="/establishment/${esc(e.id)}">${esc(e.name)}</a></h3>
 <p class="meta">${esc(catLabel(e.category))}${e.subcategory ? " · " + esc(e.subcategory) : ""} · ${esc(e.city)}</p>
-${rat ? `<p class="rat">${esc(rat)}</p>` : ""}
+${e.address ? `<p class="rat" style="color:#888;font-weight:400">${esc(e.address)}</p>` : ""}
 ${e.description ? `<p class="snip">${esc(snippet(e.description))}</p>` : ""}</div></div>`;
 }
 
@@ -210,7 +203,6 @@ async function ficheMeta(id: string, context: any): Promise<Response> {
     address: { "@type": "PostalAddress", streetAddress: e.address || undefined, postalCode: e.postal_code || undefined, addressLocality: e.city, addressCountry: "FR" },
   };
   if (e.latitude && e.longitude) ld.geo = { "@type": "GeoCoordinates", latitude: e.latitude, longitude: e.longitude };
-  if (e.google_rating && e.google_rating_count) ld.aggregateRating = { "@type": "AggregateRating", ratingValue: e.google_rating, reviewCount: e.google_rating_count };
   if (e.phone) ld.telephone = e.phone;
   if (e.website) ld.sameAs = [e.website];
 
