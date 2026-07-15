@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /pros/
+Disallow: /messages
+Disallow: /favorites
+Disallow: /profile/settings
+Disallow: /auth/
+
+Sitemap: https://passnavigay.com/sitemap.xml

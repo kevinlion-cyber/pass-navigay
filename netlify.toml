@@ -1,0 +1,15 @@
+# SEO server-rendered (module 4) : une Edge Function sert le sitemap, les pages
+# programmatiques ville/catégorie en vraie HTML, et injecte les balises meta des
+# fiches. Le reste du SPA passe par le fallback /* -> /index.html (public/_redirects).
+
+[[edge_functions]]
+  path = "/sitemap.xml"
+  function = "seo"
+
+[[edge_functions]]
+  path = "/annuaire/*"
+  function = "seo"
+
+[[edge_functions]]
+  path = "/establishment/*"
+  function = "seo"

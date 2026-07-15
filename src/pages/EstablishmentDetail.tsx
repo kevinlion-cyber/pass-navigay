@@ -96,6 +96,14 @@ export default function EstablishmentDetail() {
     trackEstablishmentView(establishment.id);
   }, [establishment?.id, establishment?.owner_id, profile?.is_admin, user?.id]);
 
+  // Maillage interne : établissements de la même ville (liens crawlables vers d'autres fiches).
+  const [related, setRelated] = useState<Establishment[]>([]);
+  useEffect(() => {
+    if (!establishment?.city || !establishment?.id) { setRelated([]); return; }
+    supabase.from('establishments').select('id,name,category,city,banner_url').eq('city', establishment.city).neq('id', establishment.id).limit(6)
+      .then(({ data }) => setRelated((data as Establishment[]) || []));
+  }, [establishment?.city, establishment?.id]);
+
   const loadAll = async () => {
     setLoading(true);
     const [estRes, photosRes, eventsRes, promosRes, reviewsRes] = await Promise.all([
@@ -236,6 +244,7 @@ export default function EstablishmentDetail() {
     ? safetyReviews.reduce((s, r) => s + (r.safety_rating || 0), 0) / safetyReviews.length
     : 0;
   const categoryLabel = categories[establishment.category as CategoryKey]?.label || establishment.category;
+  const citySlug = (establishment.city || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const isOwner = user?.id === establishment.owner_id;
   const openingHours = establishment.opening_hours as OpeningHours | null;
 
@@ -462,6 +471,26 @@ export default function EstablishmentDetail() {
             </h2>
             <div className="card p-4">
               <OpeningHoursDisplay hours={openingHours} />
+            </div>
+          </div>
+        )}
+
+        {related.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">À proximité à {establishment.city}</h2>
+              {citySlug && <a href={`/annuaire/${citySlug}`} className="text-sm text-primary hover:underline">Voir tout</a>}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {related.map((r) => (
+                <a key={r.id} href={`/establishment/${r.id}`} className="card overflow-hidden hover:border-primary transition-colors">
+                  <div className="h-20 bg-gray-200 dark:bg-dark-border bg-center bg-cover" style={r.banner_url ? { backgroundImage: `url(${r.banner_url})` } : undefined} />
+                  <div className="p-2">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{categories[r.category as CategoryKey]?.label || r.category}</p>
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}
