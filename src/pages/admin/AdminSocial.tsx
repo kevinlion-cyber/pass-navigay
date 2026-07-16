@@ -29,26 +29,47 @@ const STATUS: Record<string, { label: string; icon: typeof Clock; color: string;
 
 const META_APP_ID = import.meta.env.VITE_META_APP_ID as string | undefined;
 const META_REDIRECT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oauth`;
-const META_SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,business_management';
+// instagram_manage_comments + pages_read_engagement = lire les commentaires laissés
+// sur nos posts (IG + FB). À demander DÈS la 1re autorisation, sinon il faut tout ré-autoriser.
+const META_SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,instagram_manage_comments,business_management';
 const metaOauthUrl = () => `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&scope=${META_SCOPES}&response_type=code`;
 
 interface Integration { page_name: string | null; ig_username: string | null; connected_at: string | null; }
+
+interface Cmt { id: string; platform: string; author: string | null; text: string | null; commented_at: string | null }
 
 export default function AdminSocial() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [integ, setInteg] = useState<Integration | null>(null);
+  const [comments, setComments] = useState<Cmt[]>([]);
+  const [fetchingC, setFetchingC] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('social_posts')
-      .select('*, establishments(name), events(title)')
-      .order('created_at', { ascending: false })
-      .limit(60);
-    setPosts((data as SocialPost[]) || []);
+    const [p, c] = await Promise.all([
+      supabase.from('social_posts').select('*, establishments(name), events(title)').order('created_at', { ascending: false }).limit(60),
+      supabase.from('social_comments').select('id,platform,author,text,commented_at').order('commented_at', { ascending: false }).limit(50),
+    ]);
+    setPosts((p.data as SocialPost[]) || []);
+    setComments((c.data as Cmt[]) || []);
     setLoading(false);
+  };
+
+  // Récupère les commentaires laissés sur nos posts Facebook + Instagram.
+  const fetchComments = async () => {
+    setFetchingC(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('social-comments', { body: {} });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${data.stored ?? 0} commentaire(s) récupéré(s) sur ${data.posts ?? 0} post(s)`);
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setFetchingC(false);
   };
 
   useEffect(() => {
@@ -112,6 +133,37 @@ export default function AdminSocial() {
           </a>
         ) : (
           <span className="text-xs text-gray-500 italic">Configuration Meta requise (App ID)</span>
+        )}
+      </div>
+
+      {/* Ce que les gens disent : commentaires laissés sur nos posts FB + IG */}
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Ce que les gens disent</h2>
+            <p className="text-xs text-gray-500">Commentaires laissés sur nos publications Facebook et Instagram.</p>
+          </div>
+          <button onClick={fetchComments} disabled={fetchingC || !integ?.connected_at}
+            className="text-sm flex items-center gap-1.5 py-2 px-4 border border-light-border dark:border-dark-border rounded-input text-gray-700 dark:text-gray-300 hover:border-primary disabled:opacity-50">
+            {fetchingC ? 'Récupération…' : 'Récupérer les commentaires'}
+          </button>
+        </div>
+        {comments.length === 0 ? (
+          <p className="text-sm text-gray-500">{integ?.connected_at ? 'Aucun commentaire pour le moment.' : 'Connectez Instagram + Facebook pour récupérer les commentaires.'}</p>
+        ) : (
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {comments.map((c) => (
+              <div key={c.id} className="flex items-start gap-2 text-sm border-b border-light-border dark:border-dark-border pb-2 last:border-0">
+                <span className="text-[10px] px-1.5 py-0.5 rounded shrink-0 mt-0.5" style={{ background: c.platform === 'instagram' ? 'rgba(225,48,108,0.15)' : 'rgba(24,119,242,0.15)', color: c.platform === 'instagram' ? '#e1306c' : '#1877f2' }}>
+                  {c.platform === 'instagram' ? 'IG' : 'FB'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-900 dark:text-white">{c.text || <em className="text-gray-500">(sans texte)</em>}</p>
+                  <p className="text-xs text-gray-500">{c.author || 'anonyme'}{c.commented_at ? ` · ${new Date(c.commented_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

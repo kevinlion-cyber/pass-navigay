@@ -76,6 +76,7 @@ Deno.serve(async (req: Request) => {
           google_rating_count: it.google_rating_count ?? null,
           google_primary_type: it.google_primary_type || "",
           raw: { editorial_summary: det.editorial_summary },
+          google_reviews: det.reviews || [],   // on CONSERVE les avis (ce que les gens pensent du lieu)
           category: it.category,
           discovery_query: it.discovery_query || "",
           ai_description: parsed.description || "",

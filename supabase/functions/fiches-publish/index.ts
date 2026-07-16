@@ -43,6 +43,7 @@ Deno.serve(async (req: Request) => {
       opening_hours: d.opening_hours || {},
       price_level: d.price_level,
       amenities: d.amenities || [],
+      google_reviews: d.google_reviews || [],   // on garde les avis Google sur la fiche publiée
     }).select("id").single();
     if (eErr) return jsonResponse({ error: eErr.message }, 500);
     const estId = est.id;
