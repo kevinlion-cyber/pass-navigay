@@ -32,3 +32,5 @@ supabase/.temp/
 .secrets/
 .claude/
 .netlify/
+_admin.mjs
+_run*.mjs
