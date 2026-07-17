@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ExternalLink, Crown, Trash2, Download, Gift } from 'lucide-react';
+import { ExternalLink, Crown, Trash2, Download, Gift, Mail, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -21,6 +21,35 @@ export default function AdminPartners() {
   const [giftTarget, setGiftTarget] = useState<PartnerRow | null>(null);
   const [giftMonths, setGiftMonths] = useState(1);
   const [gifting, setGifting] = useState(false);
+
+  // Message aux établissements inscrits (demande Kevin).
+  const [msgTarget, setMsgTarget] = useState<'all' | 'pro' | 'free'>('all');
+  const [msgSubject, setMsgSubject] = useState('');
+  const [msgBody, setMsgBody] = useState('');
+  const [msgCount, setMsgCount] = useState<number | null>(null);
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgConfirm, setMsgConfirm] = useState(false);
+
+  useEffect(() => {
+    supabase.functions.invoke('pros-message', { body: { mode: 'count', target: msgTarget } })
+      .then(({ data }) => setMsgCount(data && !data.error ? data.recipients : null));
+  }, [msgTarget]);
+
+  const sendMessage = async () => {
+    setMsgSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('pros-message', {
+        body: { mode: 'send', target: msgTarget, subject: msgSubject.trim(), message: msgBody.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${data.sent}/${data.recipients} message(s) envoyé(s)`);
+      setMsgSubject(''); setMsgBody(''); setMsgConfirm(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setMsgSending(false);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -141,6 +170,39 @@ export default function AdminPartners() {
         <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 690 EUR/an</p>
       </div>
 
+      {/* Message aux établissements inscrits */}
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Mail size={17} className="text-primary" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Envoyer un message aux établissements inscrits</h2>
+        </div>
+        <p className="text-xs text-gray-500 -mt-1">Un e-mail part vers les établissements qui ont créé un compte, à l'adresse de leur compte.</p>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {([['all', 'Tous les inscrits'], ['pro', 'Pro uniquement'], ['free', 'Gratuits uniquement']] as const).map(([v, label]) => (
+            <button key={v} onClick={() => setMsgTarget(v)}
+              className={`px-3 py-1.5 rounded-input text-sm font-medium border transition-colors ${msgTarget === v ? 'bg-primary/15 text-primary border-primary/40' : 'text-gray-500 border-light-border dark:border-dark-border hover:text-gray-900 dark:hover:text-white'}`}>
+              {label}
+            </button>
+          ))}
+          <span className="text-xs text-gray-500 ml-1">
+            {msgCount === null ? '…' : <><strong className="text-gray-900 dark:text-white">{msgCount}</strong> destinataire{msgCount > 1 ? 's' : ''}</>}
+          </span>
+        </div>
+
+        <input value={msgSubject} onChange={(e) => setMsgSubject(e.target.value)} placeholder="Objet de l'e-mail"
+          className="w-full px-3 py-2 text-sm rounded-input bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-gray-900 dark:text-white focus:outline-none focus:border-primary" />
+        <textarea value={msgBody} onChange={(e) => setMsgBody(e.target.value)} rows={5} placeholder="Votre message… (une ligne vide = un nouveau paragraphe)"
+          className="w-full px-3 py-2 text-sm rounded-input bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-gray-900 dark:text-white focus:outline-none focus:border-primary resize-y" />
+
+        <div className="flex items-center justify-end">
+          <button onClick={() => setMsgConfirm(true)} disabled={!msgSubject.trim() || !msgBody.trim() || !msgCount || msgSending}
+            className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4 disabled:opacity-50">
+            {msgSending ? <Loader2 size={15} className="animate-spin" /> : <Mail size={15} />} Envoyer{msgCount ? ` à ${msgCount}` : ''}
+          </button>
+        </div>
+      </div>
+
       {partners.length === 0 ? (
         <p className="text-center text-gray-500 py-12">Aucun partenaire.</p>
       ) : (
@@ -199,6 +261,16 @@ export default function AdminPartners() {
           </div>
         </>
       )}
+
+      <ConfirmModal
+        open={msgConfirm}
+        title="Envoyer le message"
+        message={`Envoyer « ${msgSubject} » à ${msgCount} établissement${(msgCount || 0) > 1 ? 's' : ''} inscrit${(msgCount || 0) > 1 ? 's' : ''} ? L'e-mail part immédiatement.`}
+        confirmLabel="Envoyer"
+        onCancel={() => setMsgConfirm(false)}
+        onConfirm={sendMessage}
+        loading={msgSending}
+      />
 
       <ConfirmModal
         open={!!deleteTarget}

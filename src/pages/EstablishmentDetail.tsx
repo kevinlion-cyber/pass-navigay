@@ -189,11 +189,7 @@ export default function EstablishmentDetail() {
       showAuthGate('Crée ton compte pour laisser un avis.');
       return;
     }
-    if (!isPremium) {
-      toast.error('Les avis sont reserves aux membres Premium.');
-      navigate('/pricing');
-      return;
-    }
+    // Avis ouverts à tous les membres (gratuit + Premium) — demande Kevin.
     if (newRating === 0) { toast.error('Choisis une note qualité.'); return; }
     setSubmittingReview(true);
 
@@ -512,18 +508,6 @@ export default function EstablishmentDetail() {
               <p className="text-sm text-gray-600 dark:text-gray-300">Crée ton compte pour laisser un avis.</p>
               <button onClick={() => showAuthGate('Crée ton compte pour laisser un avis.')} className="btn-primary text-sm">
                 Creer un compte
-              </button>
-            </div>
-          ) : !isPremium ? (
-            <div className="card p-5 mb-4 text-center space-y-2">
-              <p className="text-sm text-gray-700 dark:text-gray-200">
-                Les avis sont reserves aux membres <span className="text-primary font-semibold">Premium</span>.
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Passe Premium pour noter la qualite et le cote « Safe place » des etablissements.
-              </p>
-              <button onClick={() => navigate('/pricing')} className="btn-primary text-sm">
-                Passer Premium
               </button>
             </div>
           ) : (

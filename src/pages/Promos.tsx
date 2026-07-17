@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Tag, Clock, Search, X, Lock, Crown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Promotion } from '../lib/types';
+import { useCategories } from '../contexts/CategoriesContext';
+import type { Promotion, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
@@ -24,10 +25,13 @@ export default function Promos() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<PromoTypeFilter>('all');
   const [cityFilter, setCityFilter] = useState('all');
+  const [catFilter, setCatFilter] = useState('all');
+  const [subcatFilter, setSubcatFilter] = useState('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [usedPromoIds, setUsedPromoIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { categories } = useCategories();
 
   const isPremium = profile?.is_premium === true;
 
@@ -36,7 +40,7 @@ export default function Promos() {
       setLoading(true);
       const { data } = await supabase
         .from(isPremium ? 'promotions' : 'public_promotions')
-        .select('*, establishment:establishments(name, logo_url, city)')
+        .select('*, establishment:establishments(name, logo_url, city, category, subcategory)')
         .gte('valid_until', new Date().toISOString())
         .order('valid_until');
       if (data) setPromos(data as unknown as Promotion[]);
@@ -65,9 +69,19 @@ export default function Promos() {
     new Set(promos.map((p) => (p.establishment as any)?.city).filter(Boolean))
   ).sort() as string[];
 
+  // Filtres catégorie / sous-catégorie (demande Kevin) — calculés sur les promos en cours.
+  const cats = Array.from(new Set(promos.map((p) => (p.establishment as any)?.category).filter(Boolean))).sort() as string[];
+  const subcats = Array.from(new Set(
+    promos
+      .filter((p) => catFilter === 'all' || (p.establishment as any)?.category === catFilter)
+      .map((p) => (p.establishment as any)?.subcategory).filter(Boolean)
+  )).sort() as string[];
+
   const filtered = promos.filter((p) => {
     if (typeFilter !== 'all' && p.promo_type !== typeFilter) return false;
     if (cityFilter !== 'all' && (p.establishment as any)?.city !== cityFilter) return false;
+    if (catFilter !== 'all' && (p.establishment as any)?.category !== catFilter) return false;
+    if (subcatFilter !== 'all' && (p.establishment as any)?.subcategory !== subcatFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchTitle = p.title.toLowerCase().includes(q);
@@ -148,6 +162,22 @@ export default function Promos() {
             value={cityFilter}
             options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
             onChange={setCityFilter}
+          />
+        )}
+        {cats.length > 0 && (
+          <FilterDropdown
+            label="Catégorie"
+            value={catFilter}
+            options={[{ value: 'all', label: 'Toutes les catégories' }, ...cats.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
+            onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
+          />
+        )}
+        {subcats.length > 0 && (
+          <FilterDropdown
+            label="Sous-catégorie"
+            value={subcatFilter}
+            options={[{ value: 'all', label: 'Toutes les sous-catégories' }, ...subcats.map((s) => ({ value: s, label: s }))]}
+            onChange={setSubcatFilter}
           />
         )}
       </div>

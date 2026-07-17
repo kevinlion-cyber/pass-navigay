@@ -95,7 +95,9 @@ export default function Explore() {
       .from('establishments')
       .select('*')
       .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1)
+      // Priorité d'affichage (demande Kevin) : Sponsors → Pros → les autres, puis les plus récents.
       .order('is_sponsor', { ascending: false })
+      .order('is_pro', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (selectedCategory) {

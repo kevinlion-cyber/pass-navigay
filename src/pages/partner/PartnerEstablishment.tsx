@@ -420,13 +420,27 @@ export default function PartnerEstablishment() {
           </div>
         </div>
 
-        {/* SECTION 5: Gallery */}
+        {/* SECTION 5: Gallery — réservée aux établissements Pro (demande Kevin) */}
         <div className="mt-8 pt-8" style={{ borderTop: '1px solid var(--pn-border)' }}>
-          <EstablishmentGallerySection
-            establishmentId={establishment.id}
-            pendingPhotos={pendingPhotos}
-            onPendingChange={setPendingPhotos}
-          />
+          {establishment.is_pro ? (
+            <EstablishmentGallerySection
+              establishmentId={establishment.id}
+              pendingPhotos={pendingPhotos}
+              onPendingChange={setPendingPhotos}
+            />
+          ) : (
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <Camera size={17} style={{ color: '#7B2D8B' }} /> Galerie photo
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>Pro</span>
+              </h2>
+              <div className="rounded-card p-5 text-center space-y-2" style={{ background: 'rgba(123,45,139,0.06)', border: '1px solid rgba(123,45,139,0.25)' }}>
+                <p className="text-sm text-gray-700 dark:text-gray-300">La galerie photo est réservée aux établissements <strong>Pro</strong>.</p>
+                <p className="text-xs text-gray-500">Passez Pro pour présenter vos photos sur votre fiche et attirer plus de visiteurs.</p>
+                <a href="/pros/abonnement" className="inline-block text-xs font-semibold px-4 py-2 rounded-input" style={{ background: '#7B2D8B', color: '#fff' }}>Passer Pro</a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Desktop submit button */}
