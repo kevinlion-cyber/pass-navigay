@@ -60,7 +60,6 @@ export default function EstablishmentDetail() {
   const { categories } = useCategories();
   const isPremium = profile?.is_premium === true;
   // Un admin (qui vient de l'espace d'admin) voit la fiche COMPLÈTE, même sans compte payant.
-  const showProContent = profile?.is_admin === true;
 
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [photos, setPhotos] = useState<EstablishmentPhoto[]>([]);
@@ -341,7 +340,11 @@ export default function EstablishmentDetail() {
           </button>
         </div>
 
-        {(establishment.is_pro || showProContent) && establishment.description && (
+        {/* Fiche entièrement visible par tout le monde (décision Kevin, juillet 2026) :
+            la description, les contacts et les photos ne sont plus réservés aux Pro —
+            c'est ce qui fait exister la fiche pour les visiteurs ET pour Google.
+            L'avantage Pro reste : gérer SA galerie + priorité d'affichage dans l'annuaire. */}
+        {establishment.description && (
           <div className="space-y-3">
             {establishment.description.split(/\n{2,}|\n/).map((para) => para.trim()).filter(Boolean).map((para, i) => (
               <p key={i} className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{para}</p>
@@ -349,7 +352,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {(establishment.is_pro || showProContent) && (establishment.phone || establishment.website) && (
+        {(establishment.phone || establishment.website) && (
           <div className="flex flex-wrap gap-4 text-sm">
             {establishment.phone && (
               <a href={`tel:${establishment.phone}`} onClick={() => track('outbound_click', { kind: 'phone' }, establishment.id)} className="flex items-center gap-2 text-primary hover:underline">
@@ -381,7 +384,7 @@ export default function EstablishmentDetail() {
           </div>
         )}
 
-        {(establishment.is_pro || showProContent) && photos.length > 0 && (
+        {photos.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Galerie</h2>
             <div className="grid grid-cols-3 gap-2">

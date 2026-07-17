@@ -281,7 +281,7 @@ export default function PartnerDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.12)" vertical={false} />
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} interval="preserveStartEnd" tickFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' })} />
                     <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} width={26} />
-                    <Tooltip contentStyle={{ background: '#16161f', border: '1px solid #2a2a35', borderRadius: 8, fontSize: 13, color: '#fff' }} labelFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })} formatter={(v: number) => [v, 'Vues']} />
+                    <Tooltip contentStyle={{ background: '#16161f', border: '1px solid #2a2a35', borderRadius: 8, fontSize: 13, color: '#fff' }} labelFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })} formatter={(v) => [v as number, 'Vues']} />
                     <Area type="monotone" dataKey="value" stroke="#7B2D8B" strokeWidth={2} fill="url(#pnViews)" />
                   </AreaChart>
                 </ResponsiveContainer>

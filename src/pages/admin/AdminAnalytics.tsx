@@ -92,7 +92,7 @@ export default function AdminAnalytics() {
                   <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} allowDecimals={false} width={28} />
                   <Tooltip contentStyle={{ background: '#16161f', border: '1px solid #2a2a35', borderRadius: 8, fontSize: 13, color: '#fff' }}
                     labelFormatter={(d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })}
-                    formatter={(v: number, n: string) => [v, n === 'pageviews' ? 'Pages vues' : 'Visiteurs']} />
+                    formatter={(v, n) => [v as number, n === 'pageviews' ? 'Pages vues' : 'Visiteurs']} />
                   <Area type="monotone" dataKey="visitors" stroke="#1a7a3a" strokeWidth={2} fill="url(#gVi)" />
                   <Area type="monotone" dataKey="pageviews" stroke="#7B2D8B" strokeWidth={2} fill="url(#gPv)" />
                 </AreaChart>
