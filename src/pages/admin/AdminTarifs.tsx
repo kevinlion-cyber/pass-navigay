@@ -89,8 +89,8 @@ export default function AdminTarifs() {
       setUserPlans(cleanUser);
       setPros(merged);
       toast.success('Avantages enregistrés');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setSaving(false);
   };

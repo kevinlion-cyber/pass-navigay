@@ -195,8 +195,8 @@ export default function PartnerEstablishment() {
       setPendingPhotos([]);
       setUploadProgress('');
       reload();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la sauvegarde');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
     }
     setSaving(false);
     setUploadProgress('');

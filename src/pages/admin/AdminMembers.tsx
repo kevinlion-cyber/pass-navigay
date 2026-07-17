@@ -56,14 +56,14 @@ export default function AdminMembers() {
       toast.error(`Compte de ${deleteTarget.username} supprime.`);
       setDeleteTarget(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setDeleting(false);
   };
 
   const toggleVerified = async (member: Profile) => {
-    const newVal = !(member as any).is_verified;
+    const newVal = !member.is_verified;
     const { error } = await supabase.from('profiles').update({ is_verified: newVal }).eq('id', member.id);
     if (error) {
       toast.error('Erreur');
@@ -135,19 +135,19 @@ export default function AdminMembers() {
                   <tr key={m.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                     <td className="py-2.5 px-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center">
-                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{((m as any).prenom || m.username)?.charAt(0).toUpperCase()}</span>}
+                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{(m as any).prenom || '-'}</td>
-                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{(m as any).nom || '-'}</td>
-                    <td className="py-2.5 px-3 text-[13px] text-[#a0a0b0] max-w-[180px] truncate">{(m as any).email || '-'}</td>
+                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{m.prenom || '-'}</td>
+                    <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{m.nom || '-'}</td>
+                    <td className="py-2.5 px-3 text-[13px] text-[#a0a0b0] max-w-[180px] truncate">{m.email || '-'}</td>
                     <td className="py-2.5 px-3">{m.is_premium ? <span className="badge-sponsor text-xs">Premium</span> : <span className="text-gray-500 text-xs">Gratuit</span>}</td>
                     <td className="py-2.5 px-3">
                       <button
                         onClick={() => toggleVerified(m)}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${(m as any).is_verified ? 'bg-emerald-500' : 'bg-dark-border'}`}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${m.is_verified ? 'bg-emerald-500' : 'bg-dark-border'}`}
                       >
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${(m as any).is_verified ? 'left-5' : 'left-0.5'}`} />
+                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${m.is_verified ? 'left-5' : 'left-0.5'}`} />
                       </button>
                     </td>
                     <td className="py-2.5 px-3 text-gray-500 text-xs">{new Date(m.created_at).toLocaleDateString('fr-FR')}</td>
@@ -172,14 +172,14 @@ export default function AdminMembers() {
               <div key={m.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center shrink-0">
-                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{((m as any).prenom || m.username)?.charAt(0).toUpperCase()}</span>}
+                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{(m as any).prenom || ''} {(m as any).nom || ''}</p>
-                    <p className="text-xs text-gray-500 truncate">{(m as any).email || '-'}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.prenom || ''} {m.nom || ''}</p>
+                    <p className="text-xs text-gray-500 truncate">{m.email || '-'}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {(m as any).is_verified && <ShieldCheck size={14} className="text-emerald-500" />}
+                    {m.is_verified && <ShieldCheck size={14} className="text-emerald-500" />}
                     {m.is_premium && <span className="badge-sponsor text-xs">Premium</span>}
                     <button onClick={() => setSelectedId(m.id)} className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                       <Eye size={16} />
@@ -244,8 +244,8 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
       }
       toast.success('Membre cree !');
       onCreated();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setLoading(false);
   };

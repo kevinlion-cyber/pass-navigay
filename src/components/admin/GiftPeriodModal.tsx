@@ -139,8 +139,8 @@ export default function GiftPeriodModal({
       toast.success(`${label} offert a ${recipientName} jusqu'au ${formatDateFr(newExpiry)} !`);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de l\'attribution');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de l\'attribution');
     }
     setSubmitting(false);
   };

@@ -103,8 +103,8 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         is_active: p.is_active ?? true,
       });
       setImageUrl(p.image_url || null);
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors du chargement');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
   }, [promoId]);
@@ -186,9 +186,9 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
       setUploadProgress(null);
       onClose();
       onRefresh();
-    } catch (err: any) {
+    } catch (err) {
       setUploadProgress(null);
-      toast.error(err.message || 'Erreur');
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setSaving(false);
   };

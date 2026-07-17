@@ -53,8 +53,8 @@ export default function AdminSettings() {
         if (error) throw error;
       }
       toast.success('Parametres enregistres');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setSaving(false);
   };

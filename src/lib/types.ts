@@ -20,6 +20,8 @@ export interface Profile {
   id: string;
   username: string;
   email: string | null;
+  is_verified: boolean;
+  premium_billing_interval: string | null;
   avatar_url: string | null;
   gallery_urls?: string[];
   bio: string;

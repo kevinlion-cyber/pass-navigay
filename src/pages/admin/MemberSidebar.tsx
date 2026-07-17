@@ -62,8 +62,8 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
       setProfile(profileRes.data as Profile);
       setFavorites((favRes.data as unknown as FavoriteItem[]) || []);
       setMessageCount(msgRes.count ?? 0);
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors du chargement');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
   }, [memberId]);
@@ -103,8 +103,8 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
       setDeleteOpen(false);
       onClose();
       onRefresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setDeleting(false);
   };
@@ -122,8 +122,8 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
       setRevokeOpen(false);
       loadData();
       onRefresh();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setRevoking(false);
   };

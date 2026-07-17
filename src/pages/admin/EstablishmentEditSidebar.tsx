@@ -159,8 +159,8 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       DAYS_ORDER.forEach((day) => { h[day] = loadedHours[day] ?? null; });
       setOpeningHours(h);
       setGalleryPhotos((photosRes.data || []).map((p: any) => ({ id: p.id, url: p.url, order_index: p.order_index })));
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors du chargement');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
   }, [establishmentId]);
@@ -248,8 +248,8 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       const { error } = await supabase.from('establishment_photos').delete().eq('id', deletePhotoId);
       if (error) throw error;
       setGalleryPhotos((prev) => prev.filter((p) => p.id !== deletePhotoId));
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la suppression');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     }
     setDeletingPhoto(false);
     setDeletePhotoId(null);
@@ -349,9 +349,9 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       toast.success(isNew ? 'Etablissement cree !' : 'Etablissement mis a jour !');
       onClose();
       onRefresh();
-    } catch (err: any) {
+    } catch (err) {
       setUploadProgress(null);
-      toast.error(err.message || "Erreur lors de l'upload de l'image.");
+      toast.error((err instanceof Error ? err.message : 'Erreur') || "Erreur lors de l'upload de l'image.");
     }
     setSaving(false);
   };

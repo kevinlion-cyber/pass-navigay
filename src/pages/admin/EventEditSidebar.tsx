@@ -97,8 +97,8 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         max_capacity: ev.max_capacity ? String(ev.max_capacity) : '',
       });
       setImageUrl(ev.image_url || null);
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors du chargement');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
   }, [eventId]);
@@ -172,9 +172,9 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       setUploadProgress(null);
       onClose();
       onRefresh();
-    } catch (err: any) {
+    } catch (err) {
       setUploadProgress(null);
-      toast.error(err.message || 'Erreur');
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setSaving(false);
   };

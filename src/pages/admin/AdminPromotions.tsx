@@ -53,8 +53,8 @@ export default function AdminPromotions() {
       toast.success('Promotion supprimee');
       setDeleteTarget(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setDeleting(false);
   };

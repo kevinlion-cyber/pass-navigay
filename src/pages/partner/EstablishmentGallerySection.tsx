@@ -69,8 +69,8 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
       toast.success('Photo supprimée');
       setDeleteTarget(null);
       loadPhotos();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la suppression');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     }
     setDeleting(false);
   };

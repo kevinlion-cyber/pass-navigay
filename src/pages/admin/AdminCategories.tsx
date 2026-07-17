@@ -64,8 +64,8 @@ export default function AdminCategories() {
       await reload();
       setConfig(clean);
       toast.success('Catégories enregistrées');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setSaving(false);
   };

@@ -168,8 +168,8 @@ export default function PartnerEvents() {
       }
       setFormOpen(false);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la sauvegarde');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
     }
     setSaving(false);
   };
@@ -183,8 +183,8 @@ export default function PartnerEvents() {
       toast.success('Événement supprimé.');
       setDeleteTarget(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la suppression');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     }
     setDeleting(false);
   };

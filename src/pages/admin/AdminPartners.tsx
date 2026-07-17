@@ -87,8 +87,8 @@ export default function AdminPartners() {
       if (error) throw error;
       toast.success('Pro active !');
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
   };
 
@@ -109,8 +109,8 @@ export default function AdminPartners() {
       toast.success(`${giftMonths} mois offert${giftMonths > 1 ? 's' : ''} !`);
       setGiftTarget(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setGifting(false);
   };
@@ -124,8 +124,8 @@ export default function AdminPartners() {
       toast.success('Etablissement supprime');
       setDeleteTarget(null);
       load();
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setDeleting(false);
   };

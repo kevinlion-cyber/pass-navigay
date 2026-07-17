@@ -61,8 +61,8 @@ export default function AdminProsLanding() {
         .upsert({ key: PROS_SETTINGS_KEY, value: JSON.stringify(c), updated_at: new Date().toISOString() }, { onConflict: 'key' });
       if (error) throw error;
       toast.success('Landing Pros enregistrée');
-    } catch (e: any) {
-      toast.error(e.message || 'Erreur');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erreur');
     }
     setSaving(false);
   };
