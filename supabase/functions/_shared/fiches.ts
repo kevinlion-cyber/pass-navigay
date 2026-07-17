@@ -3,41 +3,42 @@
 // pas de signal gay-friendly : ça, c'est la communauté de l'app qui le définira dans le temps).
 // Aligné avec src/lib/constants.ts.
 
-// ⚠️ Les `queries` DOIVENT être LGBT-ciblées : Pass Navigay est un annuaire LGBT-friendly.
-// Avec des requêtes génériques ("bars", "restaurants"), Google renvoie n'importe quel
-// commerce de la ville → l'annuaire se remplit de lieux hors-sujet. En cherchant
-// "bar gay {ville}", Google s'appuie sur le contenu réel des avis/fiches et sort les
-// vrais lieux de la communauté. C'est notre signal LGBT depuis l'abandon de DataForSEO.
+// ⚠️ MODÈLE PRODUIT (décision Fred) : Pass Navigay N'EST PAS un annuaire de lieux gays.
+// C'est un annuaire de lieux de QUALITÉ et DIVERS, que LA COMMUNAUTÉ note ensuite —
+// ce sont les avis des membres qui révèlent le caractère accueillant, pas un pré-filtrage.
+// => Les `queries` restent GÉNÉRIQUES et on filtre sur la qualité (note + nb d'avis).
+// NE PAS les remplacer par « bar gay », « sauna gay »… : ça détruirait la diversité
+// (et c'est aussi pour ça que DataForSEO / le détecteur gay-friendly a été abandonné).
 export const PN_CATEGORIES: Record<string, { label: string; subcategories: string[]; queries: string[] }> = {
   se_loger: {
     label: "Se loger",
     subcategories: ["Maison d'hotes", "Hotel", "Location particuliere"],
-    queries: ["hôtel gay friendly", "chambre d'hôtes gay friendly", "hébergement lgbt"],
+    queries: ["hôtels", "maisons d'hôtes", "chambres d'hôtes"],
   },
   shopping: {
     label: "Shopping",
     subcategories: ["Vetements", "Deco", "Art", "Chaussures", "Sex-shop", "Jeux"],
-    queries: ["sex-shop gay", "boutique lgbt", "librairie lgbt", "boutique gay friendly"],
+    queries: ["boutique de vêtements", "concept store", "boutique déco", "sex-shop", "galerie d'art"],
   },
   manger: {
     label: "Manger",
     subcategories: ["Restaurant", "Fast-food", "Brunch", "Salon de the", "Bar a vins"],
-    queries: ["restaurant gay friendly", "brunch gay friendly", "café gay friendly"],
+    queries: ["restaurants", "brunch", "salon de thé", "bar à vins"],
   },
   soiree: {
     label: "Soiree",
     subcategories: ["Bar tranquille", "Bar musical", "Boite de nuit"],
-    queries: ["bar gay", "bar lesbien", "boîte de nuit gay", "bar lgbt"],
+    queries: ["bars", "bar à cocktails", "boîte de nuit"],
   },
   bien_etre: {
     label: "Bien-etre",
     subcategories: ["Sauna", "Massage", "Esthetique"],
-    queries: ["sauna gay", "spa gay friendly", "massage gay"],
+    queries: ["sauna", "spa", "institut de massage", "institut de beauté"],
   },
   culture: {
     label: "Culture",
     subcategories: ["Musee", "Visite guidee", "Concert", "Cinema", "Autres"],
-    queries: ["cabaret drag", "centre lgbt", "association lgbt", "théâtre lgbt"],
+    queries: ["cinéma", "salle de concert", "théâtre", "galerie d'art"],
   },
 };
 
