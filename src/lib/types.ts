@@ -19,6 +19,7 @@ export interface OpeningHours {
 export interface Profile {
   id: string;
   username: string;
+  email: string | null;
   avatar_url: string | null;
   gallery_urls?: string[];
   bio: string;

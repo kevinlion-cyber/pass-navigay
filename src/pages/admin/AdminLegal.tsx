@@ -55,7 +55,8 @@ export default function AdminLegal() {
     const { error } = await supabase
       .from('app_settings')
       .upsert({ key: activeTab, value: contents[activeTab], updated_at: new Date().toISOString() }, { onConflict: 'key' });
-    error ? toast.error(error.message) : toast.success('Contenu mis à jour !');
+    if (error) toast.error(error.message);
+    else toast.success('Contenu mis à jour !');
     setSaving(false);
   };
 

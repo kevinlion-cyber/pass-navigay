@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket, Phone } from 'lucide-react';
+import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket, Phone, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Overview {
@@ -201,7 +201,7 @@ export default function AdminAnalytics() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, sub }: { icon: any; label: string; value: number; sub?: string }) {
+function Kpi({ icon: Icon, label, value, sub }: { icon: LucideIcon; label: string; value: number; sub?: string }) {
   return (
     <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
       <div className="flex items-center gap-3 mb-2">
@@ -214,7 +214,7 @@ function Kpi({ icon: Icon, label, value, sub }: { icon: any; label: string; valu
   );
 }
 
-function FunnelStep({ icon: Icon, label, value, base, first }: { icon: any; label: string; value: number; base: number; first?: boolean }) {
+function FunnelStep({ icon: Icon, label, value, base, first }: { icon: LucideIcon; label: string; value: number; base: number; first?: boolean }) {
   const rate = base > 0 ? Math.round((value / base) * 100) : 0;
   return (
     <div className="rounded-input p-4 border border-light-border dark:border-dark-border" style={{ background: 'var(--pn-surface2, transparent)' }}>

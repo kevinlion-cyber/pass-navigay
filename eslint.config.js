@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  // Les Edge Functions tournent sous Deno (pas de DOM, pas de React) : les linter
+  // avec la config du front (globals navigateur + react-hooks) n'a pas de sens.
+  { ignores: ['dist', 'supabase/functions/**', 'netlify/edge-functions/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

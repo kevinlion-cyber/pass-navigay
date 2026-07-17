@@ -3,7 +3,9 @@ import { CATEGORIES as DEFAULT_CATEGORIES } from '../lib/constants';
 import type { CategoryKey } from '../lib/types';
 import { supabase } from '../lib/supabase';
 
-export type CategoriesMap = Record<CategoryKey, { label: string; subcategories: string[] }>;
+// Dictionnaire DYNAMIQUE : l'admin peut ajouter/supprimer/renommer des catégories,
+// donc on n'exige pas les 6 clés d'origine (sinon impossible de construire la map).
+export type CategoriesMap = Record<string, { label: string; subcategories: string[] }>;
 
 interface CategoriesState {
   categories: CategoriesMap;

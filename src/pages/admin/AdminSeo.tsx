@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Network, ExternalLink, RefreshCw, CheckCircle2, Clock, Building2, MapPin, Layers, FileText, Target, Sparkles } from 'lucide-react';
+import { Network, ExternalLink, RefreshCw, CheckCircle2, Clock, Building2, MapPin, Layers, FileText, Target, Sparkles, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
@@ -175,7 +175,7 @@ export default function AdminSeo() {
   );
 }
 
-function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function Kpi({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) {
   return (
     <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
       <div className="flex items-center gap-3 mb-2"><div className="w-9 h-9 rounded-input bg-primary/10 flex items-center justify-center"><Icon size={18} className="text-primary" /></div><span className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</span></div>
@@ -183,7 +183,7 @@ function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: nu
     </div>
   );
 }
-function Section({ icon: Icon, title, hint, children }: { icon: any; title: string; hint: string; children: ReactNode }) {
+function Section({ icon: Icon, title, hint, children }: { icon: LucideIcon; title: string; hint: string; children: ReactNode }) {
   return (
     <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
       <div className="flex items-center gap-2 mb-1"><Icon size={16} className="text-primary" /><h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2></div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   CalendarDays, Tag, Eye, CreditCard, TrendingUp,
-  ArrowRight, ChevronRight, Users, BarChart3, Phone, Globe, Map,
+  ArrowRight, ChevronRight, Users, BarChart3, Phone, Globe, Map, type LucideIcon,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { supabase } from '../../lib/supabase';
@@ -431,7 +431,7 @@ export default function PartnerDashboard() {
   );
 }
 
-function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function MiniStat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) {
   return (
     <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input p-3 text-center">
       <Icon size={16} className="mx-auto mb-1" style={{ color: '#7B2D8B' }} />
