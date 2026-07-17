@@ -16,7 +16,7 @@ export default function EstablishmentCard({ establishment }: EstablishmentCardPr
 
   return (
     <div
-      onClick={() => navigate(`/establishment/${establishment.id}`)}
+      onClick={() => navigate(`/lieu/${establishment.slug || establishment.id}`)}
       className="card-hover p-4 flex gap-4"
     >
       <div className="w-14 h-14 rounded-card bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">

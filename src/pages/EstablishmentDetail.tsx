@@ -54,7 +54,9 @@ function OpeningHoursDisplay({ hours }: { hours: OpeningHours }) {
 }
 
 export default function EstablishmentDetail() {
-  const { id } = useParams<{ id: string }>();
+  // URL propre `/lieu/:slug` (ou ancienne `/establishment/:id`, redirigée vers le slug).
+  const { id: idParam, slug } = useParams<{ id?: string; slug?: string }>();
+  const id = idParam;
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { categories } = useCategories();
@@ -78,9 +80,9 @@ export default function EstablishmentDetail() {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id && !slug) return;
     loadAll();
-  }, [id, user, isPremium]);
+  }, [id, slug, user, isPremium]);
 
   // Analytics : une vue de fiche par identifiant, MAIS on exclut les auto-vues
   // (propriétaire qui regarde sa propre fiche, admin) pour ne pas fausser le
@@ -99,21 +101,30 @@ export default function EstablishmentDetail() {
   const [related, setRelated] = useState<Establishment[]>([]);
   useEffect(() => {
     if (!establishment?.city || !establishment?.id) { setRelated([]); return; }
-    supabase.from('establishments').select('id,name,category,city,banner_url').eq('city', establishment.city).neq('id', establishment.id).limit(6)
+    supabase.from('establishments').select('id,slug,name,category,city,banner_url').eq('city', establishment.city).neq('id', establishment.id).limit(6)
       .then(({ data }) => setRelated((data as Establishment[]) || []));
   }, [establishment?.city, establishment?.id]);
 
   const loadAll = async () => {
     setLoading(true);
-    const [estRes, photosRes, eventsRes, promosRes, reviewsRes] = await Promise.all([
-      supabase.from('establishments').select('*').eq('id', id!).maybeSingle(),
-      supabase.from('establishment_photos').select('*').eq('establishment_id', id!).order('order_index'),
-      supabase.from('events').select('*').eq('establishment_id', id!).or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`).order('event_date'),
-      supabase.from(isPremium ? 'promotions' : 'public_promotions').select('*').eq('establishment_id', id!).gte('valid_until', new Date().toISOString()),
-      supabase.from('reviews').select('*').eq('establishment_id', id!).order('created_at', { ascending: false }),
+    // 1) Résoudre la fiche par slug (URL propre) ou par id (ancienne URL).
+    const estRes = await supabase.from('establishments').select('*')
+      .eq(slug ? 'slug' : 'id', (slug || id)!).maybeSingle();
+    const est = estRes.data as Establishment | null;
+    if (!est) { setEstablishment(null); setLoading(false); return; }
+    const eid = est.id;
+    // Ancienne URL /establishment/:id → on redirige vers l'URL propre /lieu/:slug.
+    if (!slug && est.slug) navigate(`/lieu/${est.slug}`, { replace: true });
+
+    // 2) Charger le reste à partir de l'id réel.
+    const [photosRes, eventsRes, promosRes, reviewsRes] = await Promise.all([
+      supabase.from('establishment_photos').select('*').eq('establishment_id', eid).order('order_index'),
+      supabase.from('events').select('*').eq('establishment_id', eid).or(`event_date.gte.${new Date().toISOString()},end_date.gte.${new Date().toISOString()}`).order('event_date'),
+      supabase.from(isPremium ? 'promotions' : 'public_promotions').select('*').eq('establishment_id', eid).gte('valid_until', new Date().toISOString()),
+      supabase.from('reviews').select('*').eq('establishment_id', eid).order('created_at', { ascending: false }),
     ]);
 
-    if (estRes.data) setEstablishment(estRes.data as Establishment);
+    setEstablishment(est);
     if (photosRes.data) setPhotos(photosRes.data as EstablishmentPhoto[]);
     if (eventsRes.data) setEvents(eventsRes.data as Event[]);
     if (promosRes.data) setPromotions(promosRes.data as Promotion[]);
@@ -137,7 +148,7 @@ export default function EstablishmentDetail() {
         .from('favorites')
         .select('id')
         .eq('user_id', user.id)
-        .eq('establishment_id', id!)
+        .eq('establishment_id', eid)
         .maybeSingle();
       setIsFavorite(!!fav);
     }
@@ -151,16 +162,17 @@ export default function EstablishmentDetail() {
   };
 
   const toggleFavorite = async () => {
+    if (!establishment) return;
     if (!user) {
       showAuthGate('Cree ton compte pour sauvegarder tes lieux favoris.');
       return;
     }
     if (isFavorite) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('establishment_id', id!);
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('establishment_id', establishment.id);
       setIsFavorite(false);
       toast.success('Retire des favoris');
     } else {
-      await supabase.from('favorites').insert({ user_id: user.id, establishment_id: id });
+      await supabase.from('favorites').insert({ user_id: user.id, establishment_id: establishment.id });
       setIsFavorite(true);
       toast.success('Ajoute aux favoris');
     }
@@ -184,6 +196,7 @@ export default function EstablishmentDetail() {
   };
 
   const submitReview = async () => {
+    if (!establishment) return;
     if (!user) {
       showAuthGate('Crée ton compte pour laisser un avis.');
       return;
@@ -194,7 +207,7 @@ export default function EstablishmentDetail() {
 
     const { error } = await supabase.from('reviews').upsert({
       user_id: user.id,
-      establishment_id: id,
+      establishment_id: establishment.id,
       rating: newRating,
       safety_rating: newSafetyRating > 0 ? newSafetyRating : null,
       comment: newComment,
@@ -273,7 +286,7 @@ export default function EstablishmentDetail() {
 
         <div className="absolute top-3 right-3 flex items-center gap-2">
           {isOwner && (
-            <button onClick={() => navigate(`/establishment/${id}/edit`)} aria-label="Modifier" className="w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
+            <button onClick={() => navigate(`/establishment/${establishment.id}/edit`)} aria-label="Modifier" className="w-9 h-9 rounded-full flex items-center justify-center bg-black/35 backdrop-blur-sm text-white hover:bg-black/55 transition-colors">
               <Edit size={17} />
             </button>
           )}
@@ -482,7 +495,7 @@ export default function EstablishmentDetail() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {related.map((r) => (
-                <a key={r.id} href={`/establishment/${r.id}`} className="card overflow-hidden hover:border-primary transition-colors">
+                <a key={r.id} href={`/lieu/${r.slug || r.id}`} className="card overflow-hidden hover:border-primary transition-colors">
                   <div className="h-20 bg-gray-200 dark:bg-dark-border bg-center bg-cover" style={r.banner_url ? { backgroundImage: `url(${r.banner_url})` } : undefined} />
                   <div className="p-2">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.name}</p>

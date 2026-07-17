@@ -66,6 +66,7 @@ export interface Profile {
 
 export interface Establishment {
   id: string;
+  slug: string | null;
   owner_id: string;
   name: string;
   address: string;

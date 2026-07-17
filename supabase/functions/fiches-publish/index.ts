@@ -26,8 +26,18 @@ Deno.serve(async (req: Request) => {
 
     const subcategory = d.ai_subcategory || PN_CATEGORIES[d.category]?.subcategories?.[0] || "";
 
+    // URL propre en français : /lieu/<nom-ville>. Unicité garantie (suffixe si collision).
+    const slugify = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+    let slug = slugify(`${d.name}-${d.city}`) || slugify(d.name) || String(d.place_id).slice(0, 8);
+    for (let i = 2; i <= 6; i++) {
+      const { data: clash } = await svc.from("establishments").select("id").eq("slug", slug).maybeSingle();
+      if (!clash) break;
+      slug = `${slugify(`${d.name}-${d.city}`)}-${i}`;
+    }
+
     // 1) Créer l'établissement (gratuit par défaut).
     const { data: est, error: eErr } = await svc.from("establishments").insert({
+      slug,
       name: d.name,
       description: d.ai_description || "",
       phone: d.phone || "",

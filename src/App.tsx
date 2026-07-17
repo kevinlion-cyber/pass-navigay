@@ -98,6 +98,7 @@ export default function App() {
               <Route path="/members" element={<Members />} />
               <Route path="/establishment/new" element={<EstablishmentForm />} />
               <Route path="/establishment/:id/edit" element={<EstablishmentForm />} />
+              <Route path="/lieu/:slug" element={<EstablishmentDetail />} />
               <Route path="/establishment/:id" element={<EstablishmentDetail />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/messages" element={<Messages />} />

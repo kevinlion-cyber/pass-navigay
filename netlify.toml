@@ -27,5 +27,9 @@
   function = "seo"
 
 [[edge_functions]]
+  path = "/lieu/*"
+  function = "seo"
+
+[[edge_functions]]
   path = "/establishment/*"
   function = "seo"

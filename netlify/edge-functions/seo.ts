@@ -57,7 +57,7 @@ function snippet(desc: string | null, n = 155): string {
 }
 
 interface Est {
-  id: string; name: string; category: string; subcategory: string | null; city: string;
+  id: string; slug: string | null; name: string; category: string; subcategory: string | null; city: string;
   address: string | null; postal_code: string | null; description: string | null; banner_url: string | null;
   is_pro: boolean; is_sponsor: boolean; latitude: number | null; longitude: number | null;
   website: string | null; phone: string | null; created_at: string | null;
@@ -69,7 +69,8 @@ async function sb(query: string): Promise<any[]> {
     return r.ok ? await r.json() : [];
   } catch { return []; }
 }
-const FIELDS = "id,name,category,subcategory,city,address,postal_code,description,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
+const FIELDS = "id,slug,name,category,subcategory,city,address,postal_code,description,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
+const ficheUrl = (e: { slug: string | null; id: string }) => `/lieu/${e.slug || e.id}`;
 const allEstablishments = () => sb(`establishments?select=${FIELDS}&order=is_sponsor.desc,created_at.desc&limit=5000`) as Promise<Est[]>;
 
 // citySlug -> { name, rows }
@@ -124,8 +125,9 @@ footer{border-top:1px solid #eee;padding:24px 20px;color:#999;font-size:13px}foo
 
 function card(e: Est): string {
   const ph = e.banner_url ? ` style="background-image:url('${esc(e.banner_url)}')"` : "";
-  return `<div class="card"><a href="/establishment/${esc(e.id)}"><div class="ph"${ph}></div></a>
-<div class="bd"><h3><a href="/establishment/${esc(e.id)}">${esc(e.name)}</a></h3>
+  const u = ficheUrl(e);
+  return `<div class="card"><a href="${u}"><div class="ph"${ph}></div></a>
+<div class="bd"><h3><a href="${u}">${esc(e.name)}</a></h3>
 <p class="meta">${esc(catLabel(e.category))}${e.subcategory ? " · " + esc(e.subcategory) : ""} · ${esc(e.city)}</p>
 ${e.address ? `<p class="addr">${esc(e.address)}</p>` : ""}
 ${e.description ? `<p class="snip">${esc(snippet(e.description))}</p>` : ""}</div></div>`;
@@ -134,7 +136,7 @@ interface Article { slug: string; type: string; title: string; h1: string | null
 const allArticles = () => sb(`seo_articles?select=slug,type,title,h1,meta_description,excerpt,hero_emoji,body_html,related_category,related_city,sort&published=eq.true&order=sort.desc`) as Promise<Article[]>;
 
 const breadcrumbLd = (items: [string, string][]): object => ({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items.map(([name, url], i) => ({ "@type": "ListItem", position: i + 1, name, item: url })) });
-const itemListLd = (rows: Est[]): object => ({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: rows.length, itemListElement: rows.slice(0, 50).map((e, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/establishment/${e.id}`, name: e.name })) });
+const itemListLd = (rows: Est[]): object => ({ "@context": "https://schema.org", "@type": "ItemList", numberOfItems: rows.length, itemListElement: rows.slice(0, 50).map((e, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + ficheUrl(e), name: e.name })) });
 
 // ---------- RACINE /annuaire ----------
 async function renderIndex(): Promise<Response> {
@@ -313,7 +315,7 @@ async function sitemap(): Promise<Response> {
     for (const e of g.rows) cc.set(e.category, (cc.get(e.category) || 0) + 1);
     for (const [c, n] of cc) if (n >= MIN_CITY_CAT) urls.push({ loc: `${SITE}/annuaire/${s}/${slugify(c)}`, pr: "0.7" });
   }
-  for (const e of all) urls.push({ loc: `${SITE}/establishment/${e.id}`, pr: "0.6" });
+  for (const e of all) urls.push({ loc: SITE + ficheUrl(e), pr: "0.6" });
   const arts = await allArticles();
   const editorial = arts.filter((a) => a.type !== "city");
   if (editorial.length) urls.push({ loc: `${SITE}/guides`, pr: "0.8" });
@@ -325,16 +327,19 @@ async function sitemap(): Promise<Response> {
   return new Response(xml, { status: 200, headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
 
-// ---------- LEAF /establishment/:id (injection meta) ----------
-async function ficheMeta(id: string, context: any): Promise<Response> {
-  const rows = await sb(`establishments?id=eq.${encodeURIComponent(id)}&select=${FIELDS}&limit=1`) as Est[];
+// ---------- LEAF /lieu/:slug (injection meta) ----------
+async function ficheMeta(key: string, byId: boolean, context: any): Promise<Response> {
+  const col = byId ? "id" : "slug";
+  const rows = await sb(`establishments?${col}=eq.${encodeURIComponent(key)}&select=${FIELDS}&limit=1`) as Est[];
   const e = rows[0];
+  if (!e) return context.next();
+  // Ancienne URL /establishment/:id → 301 vers l'URL propre /lieu/:slug.
+  if (byId && e.slug) return Response.redirect(SITE + ficheUrl(e), 301);
   const res = await context.next();
-  if (!e) return res;
   const html = await res.text();
   const title = `${e.name} — ${catLabel(e.category)} LGBT-friendly à ${e.city} | Pass Navigay`;
   const desc = e.description ? snippet(e.description) : `${e.name}, ${catLabel(e.category).toLowerCase()} LGBT-friendly à ${e.city}. Adresse, avis et infos pratiques sur Pass Navigay.`;
-  const canonical = `${SITE}/establishment/${e.id}`;
+  const canonical = SITE + ficheUrl(e);
   const img = e.banner_url || `${SITE}/logo-pass-navigay.png`;
   const ld: any = {
     "@context": "https://schema.org", "@type": "LocalBusiness", name: e.name, url: canonical, image: img,
@@ -368,10 +373,15 @@ export default async (request: Request, context: any) => {
       if (!parts[0]) return await renderIndex();
       return await renderHub(parts[0], parts[1] || null);
     }
-    if (pathname.startsWith("/establishment/")) {
+    if (pathname.startsWith("/lieu/")) {
+      const slug = pathname.split("/")[2] || "";
+      if (!slug) return context.next();
+      return await ficheMeta(slug, false, context);
+    }
+    if (pathname.startsWith("/establishment/") && !pathname.endsWith("/edit")) {
       const id = pathname.split("/")[2] || "";
       if (!id) return context.next();
-      return await ficheMeta(id, context);
+      return await ficheMeta(id, true, context);
     }
   } catch { /* fallback SPA en cas d'erreur */ }
   return context.next();

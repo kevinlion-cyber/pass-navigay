@@ -34,3 +34,7 @@ supabase/.temp/
 .netlify/
 _admin.mjs
 _run*.mjs
+_fill.mjs
+_fill.log
+_finish.mjs
+_finish.log
