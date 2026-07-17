@@ -117,6 +117,7 @@ export interface Event {
   theme: string;
   price: number;
   is_free: boolean;
+  max_capacity: number | null;
   image_url: string | null;
   is_featured: boolean;
   created_at: string;

@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X, Check, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import { geocodeAddress } from '../../lib/geocode';
+import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import type { Establishment, Event } from '../../lib/types';
 import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -56,7 +56,7 @@ export default function PartnerEvents() {
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Event | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<GeoFeature[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,7 +95,7 @@ export default function PartnerEvents() {
       custom_city: '',
       is_free: ev.is_free,
       price: ev.price || 0,
-      max_capacity: (ev as any).max_capacity ? String((ev as any).max_capacity) : '',
+      max_capacity: ev.max_capacity ? String(ev.max_capacity) : '',
       image_url: ev.image_url || '',
     });
     setCroppedBlob(null);
@@ -110,9 +110,9 @@ export default function PartnerEvents() {
     } catch { /* ignore */ }
   };
 
-  const selectEventAddress = (feature: any) => {
+  const selectEventAddress = (feature: GeoFeature) => {
     const ctx = feature.context || [];
-    const cityCtx = ctx.find((c: any) => c.id.startsWith('place'));
+    const cityCtx = ctx.find((c: { id: string; text: string }) => c.id.startsWith('place'));
     setForm(prev => ({
       ...prev,
       custom_address: feature.place_name,
@@ -140,7 +140,7 @@ export default function PartnerEvents() {
         image_url = urlData.publicUrl;
       }
 
-      const payload: any = {
+      const payload: Omit<Event, 'id' | 'created_at' | 'establishment'> = {
         establishment_id: establishment.id,
         title: form.title.trim(),
         description: form.description.trim(),
@@ -202,7 +202,7 @@ export default function PartnerEvents() {
       custom_city: '',
       is_free: ev.is_free,
       price: ev.price || 0,
-      max_capacity: (ev as any).max_capacity ? String((ev as any).max_capacity) : '',
+      max_capacity: ev.max_capacity ? String(ev.max_capacity) : '',
       image_url: ev.image_url || '',
     });
     setCroppedBlob(null);
@@ -317,8 +317,8 @@ export default function PartnerEvents() {
                         className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                       {addressSuggestions.length > 0 && (
                         <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
-                          {addressSuggestions.map((s: any) => (
-                            <button key={s.id} type="button" onClick={() => selectEventAddress(s)}
+                          {addressSuggestions.map((s: GeoFeature) => (
+                            <button key={s.place_name} type="button" onClick={() => selectEventAddress(s)}
                               className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
                               {s.place_name}
                             </button>

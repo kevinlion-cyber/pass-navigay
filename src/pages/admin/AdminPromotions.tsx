@@ -38,7 +38,7 @@ export default function AdminPromotions() {
 
   useEffect(() => {
     supabase.from('establishments').select('id, name, city').order('name').then(({ data }) => {
-      setEstablishments((data as any) || []);
+      setEstablishments(data || []);
     });
   }, []);
 
@@ -121,7 +121,7 @@ export default function AdminPromotions() {
               </thead>
               <tbody>
                 {promos.map((p) => {
-                  const est = p.establishment as any;
+                  const est = p.establishment;
                   return (
                     <tr key={p.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
@@ -132,8 +132,8 @@ export default function AdminPromotions() {
                       <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{p.title}</td>
                       <td className="py-2.5 px-3 text-gray-400">{est?.name || '-'}</td>
                       <td className="py-2.5 px-3"><span className="badge-pro text-xs">{promoLabel(p)}</span></td>
-                      <td className="py-2.5 px-3 text-gray-400 text-xs">{(p as any).is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</td>
-                      <td className="py-2.5 px-3">{(p as any).is_active !== false ? <span className="text-emerald-400 text-xs font-medium">Active</span> : <span className="text-gray-500 text-xs">Inactive</span>}</td>
+                      <td className="py-2.5 px-3 text-gray-400 text-xs">{p.is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</td>
+                      <td className="py-2.5 px-3">{p.is_active !== false ? <span className="text-emerald-400 text-xs font-medium">Active</span> : <span className="text-gray-500 text-xs">Inactive</span>}</td>
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditId(p.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"><Pencil size={15} /></button>
@@ -149,16 +149,16 @@ export default function AdminPromotions() {
 
           <div className="md:hidden space-y-3">
             {promos.map((p) => {
-              const est = p.establishment as any;
+              const est = p.establishment;
               return (
                 <div key={p.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.title}</p>
                     <span className="badge-pro text-xs shrink-0">{promoLabel(p)}</span>
                   </div>
-                  <p className="text-xs text-gray-500">{est?.name} · {(p as any).is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</p>
+                  <p className="text-xs text-gray-500">{est?.name} · {p.is_permanent ? 'Permanente' : `${formatDate(p.valid_from)} → ${formatDate(p.valid_until)}`}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs">{(p as any).is_active !== false ? <span className="text-emerald-400 font-medium">Active</span> : <span className="text-gray-500">Inactive</span>}</span>
+                    <span className="text-xs">{p.is_active !== false ? <span className="text-emerald-400 font-medium">Active</span> : <span className="text-gray-500">Inactive</span>}</span>
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditId(p.id)} className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><Pencil size={15} /></button>
                       <button onClick={() => setDeleteTarget(p)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>

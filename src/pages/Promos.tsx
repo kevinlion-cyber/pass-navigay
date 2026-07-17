@@ -59,34 +59,34 @@ export default function Promos() {
         .eq('user_id', user.id)
         .in('promotion_id', promoIds);
       if (data) {
-        setUsedPromoIds(new Set(data.map((d: any) => d.promotion_id)));
+        setUsedPromoIds(new Set(data.map((d) => d.promotion_id)));
       }
     };
     loadUses();
   }, [user, isPremium, promos]);
 
   const cities = Array.from(
-    new Set(promos.map((p) => (p.establishment as any)?.city).filter(Boolean))
+    new Set(promos.map((p) => p.establishment?.city).filter(Boolean))
   ).sort() as string[];
 
   // Filtres catégorie / sous-catégorie (demande Kevin) — calculés sur les promos en cours.
-  const cats = Array.from(new Set(promos.map((p) => (p.establishment as any)?.category).filter(Boolean))).sort() as string[];
+  const cats = Array.from(new Set(promos.map((p) => p.establishment?.category).filter(Boolean))).sort() as string[];
   const subcats = Array.from(new Set(
     promos
-      .filter((p) => catFilter === 'all' || (p.establishment as any)?.category === catFilter)
-      .map((p) => (p.establishment as any)?.subcategory).filter(Boolean)
+      .filter((p) => catFilter === 'all' || p.establishment?.category === catFilter)
+      .map((p) => p.establishment?.subcategory).filter(Boolean)
   )).sort() as string[];
 
   const filtered = promos.filter((p) => {
     if (typeFilter !== 'all' && p.promo_type !== typeFilter) return false;
-    if (cityFilter !== 'all' && (p.establishment as any)?.city !== cityFilter) return false;
-    if (catFilter !== 'all' && (p.establishment as any)?.category !== catFilter) return false;
-    if (subcatFilter !== 'all' && (p.establishment as any)?.subcategory !== subcatFilter) return false;
+    if (cityFilter !== 'all' && p.establishment?.city !== cityFilter) return false;
+    if (catFilter !== 'all' && p.establishment?.category !== catFilter) return false;
+    if (subcatFilter !== 'all' && p.establishment?.subcategory !== subcatFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchTitle = p.title.toLowerCase().includes(q);
       const matchDesc = p.description?.toLowerCase().includes(q);
-      const matchEst = (p.establishment as any)?.name?.toLowerCase().includes(q);
+      const matchEst = p.establishment?.name?.toLowerCase().includes(q);
       if (!matchTitle && !matchDesc && !matchEst) return false;
     }
     return true;
@@ -186,7 +186,7 @@ export default function Promos() {
         <div className="relative">
           <div className="space-y-3" style={{ filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
             {filtered.slice(0, 4).map((promo) => {
-              const est = promo.establishment as any;
+              const est = promo.establishment;
               return (
                 <div key={promo.id} className="card p-4">
                   <div className="flex items-start gap-4">
@@ -248,7 +248,7 @@ export default function Promos() {
       {isPremium && filtered.length > 0 && (
         <div className="space-y-3">
           {filtered.map((promo) => {
-            const est = promo.establishment as any;
+            const est = promo.establishment;
             const remaining = daysLeft(promo.valid_until);
             const urgent = remaining <= 3;
             const isUsed = usedPromoIds.has(promo.id);
