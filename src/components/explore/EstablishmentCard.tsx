@@ -20,8 +20,8 @@ export default function EstablishmentCard({ establishment }: EstablishmentCardPr
       className="card-hover p-4 flex gap-4"
     >
       <div className="w-14 h-14 rounded-card bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-        {establishment.logo_url ? (
-          <img src={establishment.logo_url} alt="" className="w-full h-full object-cover" />
+        {(establishment.logo_url || establishment.banner_url) ? (
+          <img src={establishment.logo_url || establishment.banner_url || ''} alt="" className="w-full h-full object-cover" />
         ) : (
           <span className="text-primary text-lg font-semibold">
             {establishment.name.charAt(0)}
