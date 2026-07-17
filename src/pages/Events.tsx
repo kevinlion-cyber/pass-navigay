@@ -47,21 +47,21 @@ export default function Events() {
   }, []);
 
   const cities = Array.from(
-    new Set(events.map((e) => (e.establishment as any)?.city).filter(Boolean))
+    new Set(events.map((e) => e.establishment?.city).filter(Boolean))
   ).sort() as string[];
 
   const filtered = events.filter((e) => {
     if (themeFilter !== 'Tous' && e.theme?.toLowerCase() !== themeFilter.toLowerCase()) return false;
     if (priceFilter === 'free' && !e.is_free) return false;
     if (priceFilter === 'paid' && e.is_free) return false;
-    if (cityFilter !== 'all' && (e.establishment as any)?.city !== cityFilter) return false;
+    if (cityFilter !== 'all' && e.establishment?.city !== cityFilter) return false;
     if (dateFrom && new Date(e.event_date) < new Date(dateFrom)) return false;
     if (dateTo && new Date(e.event_date) > new Date(`${dateTo}T23:59:59`)) return false;
     if (search) {
       const q = search.toLowerCase();
       const matchTitle = e.title.toLowerCase().includes(q);
       const matchAddr = e.address?.toLowerCase().includes(q);
-      const matchEst = (e.establishment as any)?.name?.toLowerCase().includes(q);
+      const matchEst = e.establishment?.name?.toLowerCase().includes(q);
       if (!matchTitle && !matchAddr && !matchEst) return false;
     }
     return true;
@@ -162,7 +162,7 @@ export default function Events() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((event) => {
-            const est = event.establishment as any;
+            const est = event.establishment;
             return (
               <div
                 key={event.id}

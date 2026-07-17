@@ -39,7 +39,7 @@ export default function AdminEvents() {
 
   useEffect(() => {
     supabase.from('establishments').select('id, name, city').order('name').then(({ data }) => {
-      setEstablishments((data as any) || []);
+      setEstablishments(data || []);
     });
   }, []);
 
@@ -115,7 +115,7 @@ export default function AdminEvents() {
               </thead>
               <tbody>
                 {events.map((ev) => {
-                  const est = ev.establishment as any;
+                  const est = ev.establishment;
                   return (
                     <tr key={ev.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
@@ -147,7 +147,7 @@ export default function AdminEvents() {
 
           <div className="md:hidden space-y-3">
             {events.map((ev) => {
-              const est = ev.establishment as any;
+              const est = ev.establishment;
               return (
                 <div key={ev.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
                   <div className="flex items-center gap-3">

@@ -52,6 +52,9 @@ function SectionTitle({ icon, children }: { icon: React.ReactNode; children: Rea
   );
 }
 
+// Avis affichés sur un profil public : la note + le lieu concerné (pas l'auteur).
+type ProfileReview = { rating: number; comment: string; created_at: string; establishment: { id: string; name: string } };
+
 export default function ProfilePublic() {
   const { userId } = useParams<{ userId: string }>();
   const { user, profile: myProfile } = useAuth();
@@ -59,7 +62,7 @@ export default function ProfilePublic() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [favorites, setFavorites] = useState<Establishment[]>([]);
-  const [reviews, setReviews] = useState<{ rating: number; comment: string; created_at: string; establishment: { id: string; name: string } }[]>([]);
+  const [reviews, setReviews] = useState<ProfileReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [premiumGateOpen, setPremiumGateOpen] = useState(false);
@@ -89,12 +92,12 @@ export default function ProfilePublic() {
     if (profileRes.data) setProfile(profileRes.data as Profile);
     if (favRes.data) {
       const establishments = favRes.data
-        .map((f: any) => f.establishment)
+        .map((f) => f.establishment as unknown as Establishment)
         .filter(Boolean);
       setFavorites(establishments);
     }
     if (reviewsRes.data) {
-      setReviews(reviewsRes.data as any);
+      setReviews(reviewsRes.data as unknown as ProfileReview[]);
     }
     setLoading(false);
   };
@@ -177,7 +180,7 @@ export default function ProfilePublic() {
           <div className="mt-4">
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-2xl font-bold text-white">{firstName}</h1>
-              {(profile as any).is_verified && (
+              {profile.is_verified && (
                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
                   <ShieldCheck size={11} />
                   Vérifié

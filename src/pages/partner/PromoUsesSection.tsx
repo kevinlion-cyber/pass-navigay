@@ -42,7 +42,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
   const [totalCount, setTotalCount] = useState(currentUses);
   const [loadingAll, setLoadingAll] = useState(false);
 
-  const enrichUses = async (rawUses: any[]): Promise<PromoUse[]> => {
+  const enrichUses = async (rawUses: { id: string; user_id: string; used_at: string }[]): Promise<PromoUse[]> => {
     if (rawUses.length === 0) return [];
     const userIds = rawUses.map((u) => u.user_id);
     const { data: profiles } = await supabase
@@ -50,7 +50,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
       .select('id, username, avatar_url')
       .in('id', userIds);
     const profileMap = new Map<string, { username: string; avatar_url: string | null }>();
-    (profiles || []).forEach((p: any) => {
+    (profiles || []).forEach((p) => {
       profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url });
     });
     return rawUses.map((u) => ({
@@ -88,7 +88,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
           filter: `promotion_id=eq.${promoId}`,
         },
         async (payload) => {
-          const enriched = await enrichUses([payload.new]);
+          const enriched = await enrichUses([payload.new as { id: string; user_id: string; used_at: string }]);
           if (enriched.length > 0) {
             setUses((prev) => [enriched[0], ...prev].slice(0, 5));
             setTotalCount((prev) => prev + 1);

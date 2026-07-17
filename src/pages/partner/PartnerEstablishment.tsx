@@ -5,7 +5,7 @@ import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { geocodeAddress } from '../../lib/geocode';
+import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
 import cropImage from '../../lib/cropImage';
@@ -40,7 +40,7 @@ export default function PartnerEstablishment() {
   const [description, setDescription] = useState(establishment.description);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
-  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<GeoFeature[]>([]);
 
   const initHours = (establishment.opening_hours as OpeningHours) || {};
   const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string } | null>>(() => {
@@ -75,14 +75,14 @@ export default function PartnerEstablishment() {
     } catch { /* ignore */ }
   };
 
-  const selectAddress = (feature: any) => {
+  const selectAddress = (feature: GeoFeature) => {
     setAddress(feature.place_name);
     setLongitude(String(feature.center[0]));
     setLatitude(String(feature.center[1]));
     const ctx = feature.context || [];
-    const cityCtx = ctx.find((c: any) => c.id.startsWith('place'));
+    const cityCtx = ctx.find((c: { id: string; text: string }) => c.id.startsWith('place'));
     if (cityCtx) setCity(cityCtx.text);
-    const pcCtx = ctx.find((c: any) => c.id.startsWith('postcode'));
+    const pcCtx = ctx.find((c: { id: string; text: string }) => c.id.startsWith('postcode'));
     if (pcCtx) setPostalCode(pcCtx.text);
     setAddressSuggestions([]);
   };
@@ -264,8 +264,8 @@ export default function PartnerEstablishment() {
                 className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
               {addressSuggestions.length > 0 && (
                 <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
-                  {addressSuggestions.map((s: any) => (
-                    <button key={s.id} type="button" onClick={() => selectAddress(s)}
+                  {addressSuggestions.map((s: GeoFeature) => (
+                    <button key={s.place_name} type="button" onClick={() => selectAddress(s)}
                       className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
                       {s.place_name}
                     </button>
@@ -480,7 +480,20 @@ export default function PartnerEstablishment() {
   );
 }
 
-function CropModal({ src, crop, zoom, aspect, cropShape, onCropChange, onZoomChange, onCropComplete, onConfirm, onCancel }: any) {
+interface CropModalProps {
+  src: string;
+  crop: { x: number; y: number };
+  zoom: number;
+  aspect: number;
+  cropShape: 'round' | 'rect';
+  onCropChange: (c: { x: number; y: number }) => void;
+  onZoomChange: (z: number) => void;
+  onCropComplete: (area: Area, pixels: Area) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function CropModal({ src, crop, zoom, aspect, cropShape, onCropChange, onZoomChange, onCropComplete, onConfirm, onCancel }: CropModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-md overflow-hidden">

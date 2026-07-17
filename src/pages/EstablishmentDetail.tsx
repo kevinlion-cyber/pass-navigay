@@ -121,13 +121,13 @@ export default function EstablishmentDetail() {
       const reviewsData = reviewsRes.data as unknown as Review[];
       // Auteurs récupérés via la vue publique (la table profiles n'est plus lisible en direct).
       const authorIds = [...new Set(reviewsData.map((r) => r.user_id).filter(Boolean))];
-      let authorsMap: Record<string, any> = {};
+      let authorsMap: Record<string, { username: string; avatar_url: string | null }> = {};
       if (authorIds.length) {
         const { data: authors } = await supabase
           .from('public_profiles')
           .select('id, username, avatar_url')
           .in('id', authorIds);
-        authorsMap = Object.fromEntries((authors || []).map((a: any) => [a.id, { username: a.username, avatar_url: a.avatar_url }]));
+        authorsMap = Object.fromEntries((authors || []).map((a) => [a.id, { username: a.username, avatar_url: a.avatar_url }]));
       }
       setReviews(reviewsData.map((r) => ({ ...r, user: authorsMap[r.user_id] })));
     }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, Building2, CalendarDays, Tag, Crown, TrendingUp, Percent } from 'lucide-react';
+import { Users, Building2, CalendarDays, Tag, Crown, TrendingUp, Percent, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Stats {
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
         ]);
 
         const estData = estRes.data || [];
-        const proCount = estData.filter((e: any) => e.is_pro).length;
+        const proCount = estData.filter((e) => e.is_pro).length;
 
         const totalMembers = membersRes.count ?? 0;
         const totalPremium = premiumRes.count ?? 0;
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
           establishments: {
             total: totalEst,
             pro: proCount,
-            sponsors: estData.filter((e: any) => e.is_sponsor).length,
+            sponsors: estData.filter((e) => e.is_sponsor).length,
           },
           upcomingEvents: eventsRes.count ?? 0,
           activePromos: promosRes.count ?? 0,
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
         });
 
         const grouped: Record<string, number> = {};
-        (chartRes.data || []).forEach((p: any) => {
+        (chartRes.data || []).forEach((p) => {
           const d = p.created_at.slice(0, 10);
           grouped[d] = (grouped[d] || 0) + 1;
         });
@@ -103,8 +103,8 @@ export default function AdminDashboard() {
           chartData.push({ date: d, count: grouped[d] || 0 });
         }
         setChart(chartData);
-        setRecentMembers((rmRes.data as any) || []);
-        setRecentEstablishments((reRes.data as any) || []);
+        setRecentMembers(rmRes.data || []);
+        setRecentEstablishments(reRes.data || []);
       } catch { /* handled */ }
       setLoading(false);
     };
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
+function MetricCard({ icon: Icon, label, value, sub }: { icon: LucideIcon; label: string; value: string; sub?: string }) {
   return (
     <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
       <div className="flex items-center gap-3 mb-2">

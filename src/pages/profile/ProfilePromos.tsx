@@ -98,7 +98,7 @@ export default function ProfilePromos({ userId }: ProfilePromosProps) {
                 </p>
                 {promo.establishment && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-                    {(promo.establishment as any).name}
+                    {(promo.establishment).name}
                   </p>
                 )}
               </div>

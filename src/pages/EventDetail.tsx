@@ -45,7 +45,7 @@ export default function EventDetail() {
     );
   }
 
-  const est = event.establishment as any;
+  const est = event.establishment;
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('fr-FR', {

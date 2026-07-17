@@ -60,13 +60,13 @@ export default function AdminPartners() {
         .not('owner_id', 'is', null)
         .order('created_at', { ascending: false });
 
-      const rows: PartnerRow[] = (data || []).map((d: any) => ({
+      const rows: PartnerRow[] = (data || []).map((d) => ({
         id: d.id,
         name: d.name,
         is_pro: d.is_pro,
         pro_expires_at: d.pro_expires_at,
         owner_id: d.owner_id,
-        owner_username: d.owner?.username || 'Inconnu',
+        owner_username: (d.owner as unknown as { username?: string } | null)?.username || 'Inconnu',
       }));
       setPartners(rows);
     } catch { /* handled */ }

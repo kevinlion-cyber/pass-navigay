@@ -77,7 +77,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
     try {
       const estRes = await supabase.from('establishments').select('id, name').order('name');
       setEstablishments(
-        (estRes.data || []).map((e: any) => ({ value: e.id, label: e.name }))
+        (estRes.data || []).map((e) => ({ value: e.id, label: e.name }))
       );
 
       if (isNew) {

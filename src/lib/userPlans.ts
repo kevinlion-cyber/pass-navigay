@@ -42,10 +42,10 @@ export function mergeUserPlans(raw: unknown): UserPlans {
   const s = (raw && typeof raw === 'object' ? raw : {}) as Partial<UserPlans>;
   return {
     freeFeatures: Array.isArray(s.freeFeatures)
-      ? s.freeFeatures.filter((f: any) => f && typeof f.label === 'string').map((f: any) => ({ label: f.label, included: !!f.included }))
+      ? s.freeFeatures.filter((f) => f && typeof f.label === 'string').map((f) => ({ label: f.label, included: !!f.included }))
       : d.freeFeatures,
     premiumFeatures: Array.isArray(s.premiumFeatures)
-      ? s.premiumFeatures.filter((x: any) => typeof x === 'string')
+      ? s.premiumFeatures.filter((x) => typeof x === 'string')
       : d.premiumFeatures,
   };
 }

@@ -74,7 +74,7 @@ export default function PromoDetail() {
     );
   }
 
-  const est = promo.establishment as any;
+  const est = promo.establishment;
 
   const promoLabel = () => {
     if (promo.promo_type === 'percentage' && promo.value) return `-${promo.value}%`;

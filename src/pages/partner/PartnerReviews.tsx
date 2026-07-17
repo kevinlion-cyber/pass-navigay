@@ -29,10 +29,10 @@ export default function PartnerReviews() {
         .order('created_at', { ascending: false });
       const list = (revs as Review[]) || [];
       const authorIds = [...new Set(list.map((r) => r.user_id).filter(Boolean))];
-      let authors: Record<string, any> = {};
+      let authors: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
       if (authorIds.length) {
         const { data } = await supabase.from('public_profiles').select('id, username, avatar_url').in('id', authorIds);
-        authors = Object.fromEntries((data || []).map((a: any) => [a.id, a]));
+        authors = Object.fromEntries((data || []).map((a) => [a.id, a]));
       }
       setReviews(list.map((r) => ({ ...r, user: authors[r.user_id] })));
       setDrafts(Object.fromEntries(list.map((r) => [r.id, r.reply || ''])));

@@ -158,7 +158,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       const h: Record<string, { open: string; close: string } | null> = {};
       DAYS_ORDER.forEach((day) => { h[day] = loadedHours[day] ?? null; });
       setOpeningHours(h);
-      setGalleryPhotos((photosRes.data || []).map((p: any) => ({ id: p.id, url: p.url, order_index: p.order_index })));
+      setGalleryPhotos((photosRes.data || []).map((p) => ({ id: p.id, url: p.url, order_index: p.order_index })));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }

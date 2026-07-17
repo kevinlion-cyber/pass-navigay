@@ -68,12 +68,12 @@ export default function AdminGifts() {
       ]);
 
       const userMap = new Map<string, string>();
-      (usersRes.data || []).forEach((u: any) => {
+      (usersRes.data || []).forEach((u) => {
         userMap.set(u.id, u.prenom || u.username || u.id.substring(0, 8));
       });
 
       const estMap = new Map<string, string>();
-      (estsRes.data || []).forEach((e: any) => {
+      (estsRes.data || []).forEach((e) => {
         estMap.set(e.id, e.name || e.id.substring(0, 8));
       });
 
@@ -109,7 +109,7 @@ export default function AdminGifts() {
       <div className="flex items-center gap-2">
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value as any)}
+          onChange={(e) => setFilter(e.target.value as 'all' | 'premium' | 'pro')}
           className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2"
         >
           <option value="all">Tous</option>

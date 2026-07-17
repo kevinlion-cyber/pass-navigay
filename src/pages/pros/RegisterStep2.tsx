@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { geocodeAddress } from '../../lib/geocode';
+import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
 
@@ -28,7 +28,7 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
   const { categories, categoryKeys } = useCategories();
   const CATEGORY_OPTIONS = categoryKeys.map((k) => ({ value: k, label: categories[k].label }));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<GeoFeature[]>([]);
 
   const set = <K extends keyof Step2Data>(field: K, value: Step2Data[K]) => {
     onChange({ ...data, [field]: value });
@@ -43,10 +43,10 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     } catch { /* skip */ }
   };
 
-  const selectAddress = (feature: any) => {
+  const selectAddress = (feature: GeoFeature) => {
     const ctx = feature.context || [];
-    const cityCtx = ctx.find((c: any) => c.id.startsWith('place'));
-    const postCtx = ctx.find((c: any) => c.id.startsWith('postcode'));
+    const cityCtx = ctx.find((c: { id: string; text: string }) => c.id.startsWith('place'));
+    const postCtx = ctx.find((c: { id: string; text: string }) => c.id.startsWith('postcode'));
     onChange({
       ...data,
       address: feature.place_name,
@@ -176,9 +176,9 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
             className="absolute z-20 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-[10px]"
             style={{ background: '#14141e', border: '1px solid #2a2a3a' }}
           >
-            {suggestions.map((s: any) => (
+            {suggestions.map((s: GeoFeature) => (
               <button
-                key={s.id}
+                key={s.place_name}
                 type="button"
                 onClick={() => selectAddress(s)}
                 className="w-full text-left px-4 py-2.5 text-[13px] text-[#c0c0d0] transition-colors hover:bg-[#1e1e2e]"

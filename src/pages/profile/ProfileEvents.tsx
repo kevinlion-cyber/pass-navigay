@@ -99,7 +99,7 @@ export default function ProfileEvents({ userId }: ProfileEventsProps) {
                 </p>
                 {evt.establishment && (
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-                    {(evt.establishment as any).name}
+                    {evt.establishment?.name}
                   </p>
                 )}
               </div>

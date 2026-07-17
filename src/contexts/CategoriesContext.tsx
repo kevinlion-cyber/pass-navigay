@@ -21,11 +21,11 @@ const CategoriesContext = createContext<CategoriesState | undefined>(undefined);
 function normalizeConfig(raw: unknown): CategoriesMap | null {
   if (!raw || typeof raw !== 'object') return null;
   const out: CategoriesMap = {};
-  for (const [k, c] of Object.entries(raw as Record<string, any>)) {
+  for (const [k, c] of Object.entries(raw as Record<string, { label?: unknown; subcategories?: unknown }>)) {
     if (!k || !c || typeof c !== 'object') continue;
     const label = typeof c.label === 'string' && c.label.trim() ? c.label.trim() : k;
     const subcategories = Array.isArray(c.subcategories)
-      ? c.subcategories.filter((s: any) => typeof s === 'string' && s.trim())
+      ? c.subcategories.filter((s): s is string => typeof s === 'string' && !!s.trim())
       : [];
     out[k] = { label, subcategories };
   }

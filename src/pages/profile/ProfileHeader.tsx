@@ -195,7 +195,7 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
             <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight">
               {profile.prenom || profile.username}
             </h1>
-            {(profile as any).is_verified && (
+            {profile.is_verified && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <ShieldCheck size={12} />
                 Vérifié

@@ -173,7 +173,7 @@ export interface Review {
   created_at: string;
   reply: string | null;
   reply_at: string | null;
-  user?: Profile;
+  user?: { username: string; avatar_url: string | null };
 }
 
 // Cles « historiques » conservees pour l'autocompletion ; (string & {}) autorise

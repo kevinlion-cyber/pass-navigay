@@ -31,8 +31,8 @@ export default function AdminSettings() {
         const { data } = await supabase.from('app_settings').select('key, value');
         if (data) {
           const map = { ...DEFAULTS };
-          data.forEach((r: any) => {
-            if (r.key in map) (map as any)[r.key] = r.value || '';
+          data.forEach((r) => {
+            if (r.key in map) (map as Record<string, string>)[r.key] = r.value || '';
           });
           setSettings(map);
         }
