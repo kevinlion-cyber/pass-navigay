@@ -32,6 +32,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminSeo from './pages/admin/AdminSeo';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
+import AdminCities from './pages/admin/AdminCities';
 import AdminSocial from './pages/admin/AdminSocial';
 import AdminClaims from './pages/admin/AdminClaims';
 import AdminEvents from './pages/admin/AdminEvents';
@@ -116,6 +117,7 @@ export default function App() {
               <Route path="seo" element={<AdminSeo />} />
               <Route path="establishments" element={<AdminEstablishments />} />
               <Route path="drafts" element={<AdminDrafts />} />
+              <Route path="villes" element={<AdminCities />} />
               <Route path="social" element={<AdminSocial />} />
               <Route path="claims" element={<AdminClaims />} />
               <Route path="events" element={<AdminEvents />} />
