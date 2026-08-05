@@ -32,7 +32,17 @@ const META_REDIRECT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-oa
 // instagram_manage_comments + pages_read_engagement = lire les commentaires laissés
 // sur nos posts (IG + FB). À demander DÈS la 1re autorisation, sinon il faut tout ré-autoriser.
 const META_SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish,instagram_manage_comments,business_management';
-const metaOauthUrl = () => `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&scope=${META_SCOPES}&response_type=code`;
+// Les apps Meta de type « Entreprise » passent par « Connexion Facebook pour les
+// entreprises », où les permissions viennent d'une CONFIGURATION créée dans le
+// tableau de bord (paramètre config_id) plutôt que de `scope`. Meta accepte encore
+// `scope`, mais recommande config_id. On gère les deux : si VITE_META_CONFIG_ID est
+// renseignée on l'utilise, sinon on retombe sur les scopes. Ça évite d'avoir à
+// redéployer si la connexion par scopes se fait refuser.
+const META_CONFIG_ID = import.meta.env.VITE_META_CONFIG_ID as string | undefined;
+const metaOauthUrl = () => {
+  const auth = META_CONFIG_ID ? `config_id=${META_CONFIG_ID}` : `scope=${META_SCOPES}`;
+  return `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&${auth}&response_type=code`;
+};
 
 interface Integration { page_name: string | null; ig_username: string | null; connected_at: string | null; }
 
