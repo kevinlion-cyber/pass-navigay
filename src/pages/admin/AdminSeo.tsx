@@ -21,7 +21,13 @@ function slugify(s: string): string {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-interface Row { id: string; name: string; city: string; category: string }
+interface Row { id: string; name: string; city: string; city_slug: string | null; category: string }
+/**
+ * Clé de regroupement = la ville de RATTACHEMENT, comme dans seo.ts. Un lieu à
+ * Lattes compte pour Montpellier : sinon cette page annoncerait des pages ville
+ * qui n'existent pas et des seuils d'indexation faux.
+ */
+const cityKey = (r: { city: string; city_slug: string | null }) => (r.city_slug || slugify(r.city)).trim();
 interface Article { slug: string; title: string; h1: string | null; type: string; hero_emoji: string | null; related_city: string | null }
 
 export default function AdminSeo() {
@@ -34,14 +40,14 @@ export default function AdminSeo() {
 
   const coverage = useMemo(() => {
     const m = new Map<string, number>();
-    for (const r of rows) m.set(`${slugify(r.city)}|${r.category}`, (m.get(`${slugify(r.city)}|${r.category}`) || 0) + 1);
+    for (const r of rows) m.set(`${cityKey(r)}|${r.category}`, (m.get(`${cityKey(r)}|${r.category}`) || 0) + 1);
     return m;
   }, [rows]);
 
   const load = async () => {
     setLoading(true);
     const [est, arts] = await Promise.all([
-      supabase.from('establishments').select('id,name,city,category').limit(5000),
+      supabase.from('establishments').select('id,name,city,city_slug,category').limit(5000),
       supabase.from('seo_articles').select('slug,title,h1,type,hero_emoji,related_city').eq('published', true).order('sort', { ascending: false }),
     ]);
     setRows((est.data as Row[]) || []);
@@ -56,8 +62,10 @@ export default function AdminSeo() {
     const cities = new Map<string, { name: string; n: number; cats: Map<string, number> }>();
     const cats = new Map<string, number>();
     for (const r of rows) {
-      const cs = slugify(r.city); if (!cs) continue;
+      const cs = cityKey(r); if (!cs) continue;
       const c = cities.get(cs) || { name: r.city, n: 0, cats: new Map() };
+      // Nom affiché : la commune qui porte le slug (« Montpellier »), pas la première venue.
+      if (slugify(r.city) === cs) c.name = r.city;
       c.n++; c.cats.set(r.category, (c.cats.get(r.category) || 0) + 1); cities.set(cs, c);
       cats.set(r.category, (cats.get(r.category) || 0) + 1);
     }

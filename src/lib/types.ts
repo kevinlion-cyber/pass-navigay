@@ -71,6 +71,8 @@ export interface Establishment {
   name: string;
   address: string;
   city: string;
+  /** Ville de rattachement (« montpellier »), indépendante de l'adresse ci-dessus. */
+  city_slug: string | null;
   postal_code: string;
   latitude: number;
   longitude: number;

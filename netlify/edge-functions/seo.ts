@@ -47,6 +47,10 @@ function slugify(s: string): string {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
+/** « aix-en-provence » → « Aix-en-Provence » : nom de repli d'une ville de rattachement. */
+function prettifyCity(slug: string): string {
+  return slug.split("-").map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w)).join("-");
+}
 function esc(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -58,6 +62,8 @@ function snippet(desc: string | null, n = 155): string {
 
 interface Est {
   id: string; slug: string | null; name: string; category: string; subcategory: string | null; city: string;
+  /** Ville de rattachement (tag), indépendante de l'adresse : pilote /annuaire/:ville. */
+  city_slug: string | null;
   address: string | null; postal_code: string | null; description: string | null; banner_url: string | null;
   is_pro: boolean; is_sponsor: boolean; latitude: number | null; longitude: number | null;
   website: string | null; phone: string | null; created_at: string | null;
@@ -69,14 +75,26 @@ async function sb(query: string): Promise<any[]> {
     return r.ok ? await r.json() : [];
   } catch { return []; }
 }
-const FIELDS = "id,slug,name,category,subcategory,city,address,postal_code,description,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
+const FIELDS = "id,slug,name,category,subcategory,city,city_slug,address,postal_code,description,banner_url,is_pro,is_sponsor,latitude,longitude,website,phone,created_at";
 const ficheUrl = (e: { slug: string | null; id: string }) => `/lieu/${e.slug || e.id}`;
 const allEstablishments = () => sb(`establishments?select=${FIELDS}&order=is_sponsor.desc,created_at.desc&limit=5000`) as Promise<Est[]>;
 
 // citySlug -> { name, rows }
 function groupCities(all: Est[]): Map<string, { name: string; rows: Est[] }> {
   const m = new Map<string, { name: string; rows: Est[] }>();
-  for (const e of all) { const s = slugify(e.city); if (!s) continue; const g = m.get(s) || { name: e.city, rows: [] }; g.rows.push(e); m.set(s, g); }
+  // On regroupe sur la VILLE DE RATTACHEMENT (`city_slug`), pas sur l'adresse :
+  // un lieu à Lattes ou Pérols appartient à la page Montpellier. Sans ça, chaque
+  // commune devenait une « ville » avec 1 ou 2 fiches, donc non indexable.
+  // Repli sur l'adresse pour une fiche antérieure à la migration du tag.
+  for (const e of all) {
+    const s = (e.city_slug || slugify(e.city) || "").trim();
+    if (!s) continue;
+    const g = m.get(s) || { name: e.city_slug && slugify(e.city) !== e.city_slug ? prettifyCity(s) : e.city, rows: [] };
+    // Le nom affiché est celui de la commune qui porte le slug quand elle existe.
+    if (slugify(e.city) === s) g.name = e.city;
+    g.rows.push(e);
+    m.set(s, g);
+  }
   return m;
 }
 

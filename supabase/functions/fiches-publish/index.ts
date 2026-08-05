@@ -44,6 +44,8 @@ Deno.serve(async (req: Request) => {
       website: d.website || "",
       address: d.address || "",
       city: d.city || "",
+      // Ville de rattachement reprise du brouillon (tag), distincte de l'adresse.
+      city_slug: d.city_slug || null,
       postal_code: d.postal_code || "",
       category: d.category,
       subcategory,

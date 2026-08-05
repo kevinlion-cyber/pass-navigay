@@ -97,13 +97,19 @@ export default function EstablishmentDetail() {
     trackEstablishmentView(establishment.id);
   }, [establishment?.id, establishment?.owner_id, profile?.is_admin, user?.id]);
 
-  // Maillage interne : établissements de la même ville (liens crawlables vers d'autres fiches).
+  // Maillage interne : les autres lieux de la même ville de rattachement (liens
+  // crawlables). On filtre sur `city_slug` et non sur l'adresse : une fiche à
+  // Lattes proposait sinon les 1 ou 2 lieux de Lattes au lieu de ceux de Montpellier.
   const [related, setRelated] = useState<Establishment[]>([]);
   useEffect(() => {
-    if (!establishment?.city || !establishment?.id) { setRelated([]); return; }
-    supabase.from('establishments').select('id,slug,name,category,city,banner_url').eq('city', establishment.city).neq('id', establishment.id).limit(6)
+    if (!establishment?.id) { setRelated([]); return; }
+    const q = supabase.from('establishments').select('id,slug,name,category,city,city_slug,banner_url');
+    const scoped = establishment.city_slug
+      ? q.eq('city_slug', establishment.city_slug)
+      : q.eq('city', establishment.city);
+    scoped.neq('id', establishment.id).limit(6)
       .then(({ data }) => setRelated((data as Establishment[]) || []));
-  }, [establishment?.city, establishment?.id]);
+  }, [establishment?.city, establishment?.city_slug, establishment?.id]);
 
   const loadAll = async () => {
     setLoading(true);

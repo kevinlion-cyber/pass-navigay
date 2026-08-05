@@ -54,6 +54,11 @@ Deno.serve(async (req: Request) => {
     // Google facturé, c'est le principal levier de coût d'une ville.
     const photos = Math.max(0, Math.min(Number(body.photos ?? 5), 5));
 
+    // Ville de rattachement (tag), indépendante de l'adresse du lieu : un sauna à
+    // Lattes balayé pour Montpellier est un lieu DE Montpellier. C'est ce tag qui
+    // pilote l'annuaire et les pages /annuaire/:ville, pas la commune postale.
+    const citySlug = String(body.city_slug || "").trim() || null;
+
     // Garde-fou clé.
     let capped = false;
     let toProcess = items;
@@ -98,6 +103,7 @@ Deno.serve(async (req: Request) => {
           name: it.name,
           address: it.address || "",
           city: it.city || "",
+          city_slug: citySlug,
           postal_code: it.postal_code || "",
           latitude: it.latitude ?? null,
           longitude: it.longitude ?? null,
