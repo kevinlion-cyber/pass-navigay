@@ -28,6 +28,10 @@ Deno.serve(async (req: Request) => {
     const items: any[] = Array.isArray(body.items) ? body.items : [];
     if (!items.length) return jsonResponse({ error: "Aucun lieu sélectionné" }, 400);
 
+    // Nombre de photos à télécharger par fiche (0 à 5). Chaque photo = un appel
+    // Google facturé, c'est le principal levier de coût d'une ville.
+    const photos = Math.max(0, Math.min(Number(body.photos ?? 5), 5));
+
     // Garde-fou clé.
     let capped = false;
     let toProcess = items;
@@ -43,7 +47,12 @@ Deno.serve(async (req: Request) => {
       if (!it?.place_id || !it?.category) continue;
       try {
         const det = await placeDetails(placesKey, it.place_id);
-        const reviewData = { provider: "google5", confidence: "low", editorial_summary: det.editorial_summary, reviews: det.reviews };
+        // Si l'appelant a déjà récupéré des avis en profondeur (DataForSEO), on les
+        // utilise : la fiche est bien plus juste qu'avec les 5 avis de Google.
+        const deep: any[] = Array.isArray(it.dfs_reviews) ? it.dfs_reviews : [];
+        const reviewData = deep.length
+          ? { provider: "dataforseo", confidence: "high", editorial_summary: det.editorial_summary, reviews: deep }
+          : { provider: "google5", confidence: "low", editorial_summary: det.editorial_summary, reviews: det.reviews };
         const { parsed, usage } = await enrichWithClaude(anthropicKey, model, it, reviewData);
         inTok += usage?.input_tokens || 0;
         outTok += usage?.output_tokens || 0;
@@ -52,7 +61,7 @@ Deno.serve(async (req: Request) => {
         // Photos : téléchargées UNE fois et stockées en Storage (réutilisées vignette/aperçu/publication).
         const photoUrls: string[] = [];
         try {
-          const names = await getPhotoNames(placesKey, it.place_id, 5);
+          const names = photos > 0 ? await getPhotoNames(placesKey, it.place_id, photos) : [];
           for (let i = 0; i < names.length; i++) {
             const bytes = await fetchPhotoMedia(placesKey, names[i], i === 0 ? 1400 : 900);
             if (!bytes) continue;
@@ -75,8 +84,8 @@ Deno.serve(async (req: Request) => {
           google_rating: it.google_rating ?? null,
           google_rating_count: it.google_rating_count ?? null,
           google_primary_type: it.google_primary_type || "",
-          raw: { editorial_summary: det.editorial_summary },
-          google_reviews: det.reviews || [],   // on CONSERVE les avis (ce que les gens pensent du lieu)
+          raw: { editorial_summary: det.editorial_summary, reviews_provider: reviewData.provider, reviews_count: reviewData.reviews?.length || 0 },
+          google_reviews: reviewData.reviews || [],   // on CONSERVE les avis (ce que les gens pensent du lieu)
           category: it.category,
           discovery_query: it.discovery_query || "",
           ai_description: parsed.description || "",

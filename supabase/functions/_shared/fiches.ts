@@ -280,3 +280,78 @@ export function validSubcat(category: string, proposed: string): string {
   const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
   return allowed.find((a) => norm(a) === norm(proposed)) || allowed[0] || proposed;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DataForSEO — avis Google en profondeur (option payante, compte de Kevin).
+//
+// ⚠️ L'API est ASYNCHRONE : on poste des tâches, elles mettent 8 à 15 min à
+// être prêtes, puis on les relit. Il n'existe pas de mode direct (testé : 404).
+// D'où le découpage en deux temps `post` puis `collect`.
+//
+// Google Places ne renvoie que 5 avis ; DataForSEO permet d'en lire des
+// centaines, ce qui donne des fiches nettement plus riches et plus justes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function dfsAuth(): string | null {
+  const login = Deno.env.get("DATAFORSEO_LOGIN");
+  const password = Deno.env.get("DATAFORSEO_PASSWORD");
+  if (!login || !password) return null;
+  return "Basic " + btoa(`${login}:${password}`);
+}
+
+/** Poste un lot de tâches d'avis (max 100 par appel). Renvoie place_id -> task_id. */
+export async function dfsPostReviewTasks(
+  auth: string,
+  places: { place_id: string }[],
+  depth: number,
+): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  for (let i = 0; i < places.length; i += 100) {
+    const chunk = places.slice(i, i + 100);
+    const body = chunk.map((p, k) => ({
+      place_id: p.place_id,
+      location_name: "France",
+      language_code: "fr",
+      depth: Math.max(10, Math.min(depth, 1000)),
+      sort_by: "newest",
+      priority: 1, // normal : moitié prix, on n'est pas pressé
+      tag: `pn-${i + k}`,
+    }));
+    const r = await fetch("https://api.dataforseo.com/v3/business_data/google/reviews/task_post", {
+      method: "POST",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    for (const t of j.tasks || []) {
+      const idx = Number(String(t?.data?.tag || "").replace("pn-", ""));
+      const place = places[idx];
+      if (place && t?.id) out[place.place_id] = t.id;
+    }
+  }
+  return out;
+}
+
+/** Relit une tâche. Renvoie null si elle n'est pas encore prête (HTTP 404 côté DataForSEO). */
+export async function dfsFetchReviews(
+  auth: string,
+  taskId: string,
+): Promise<{ rating: number | null; text: string; date: string }[] | null> {
+  const r = await fetch(
+    `https://api.dataforseo.com/v3/business_data/google/reviews/task_get/${taskId}`,
+    { headers: { Authorization: auth } },
+  );
+  const j = await r.json().catch(() => null);
+  const task = j?.tasks?.[0];
+  if (task?.status_code !== 20000) return null;
+  const items = (task.result?.[0]?.items || []).filter(
+    (x: any) => x.type === "google_reviews_search",
+  );
+  return items
+    .map((x: any) => ({
+      rating: x.rating?.value ?? null,
+      text: String(x.review_text || "").replace(/\s+/g, " ").trim(),
+      date: String(x.timestamp || "").slice(0, 10),
+    }))
+    .filter((x: any) => x.text);
+}
