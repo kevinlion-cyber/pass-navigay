@@ -25,8 +25,30 @@ Deno.serve(async (req: Request) => {
     const flpowerCap = Number(Deno.env.get("FICHES_FLPOWER_CAP") || 5);
 
     const body = await req.json().catch(() => ({}));
+
+    // Sonde : permet à l'admin de savoir À QUI appartient la clé Claude
+    // configurée, AVANT de lancer quoi que ce soit. Ne consomme rien.
+    if (body.probe) {
+      return jsonResponse({ owner, cap: flpowerCap, bulkAllowed: owner === "kevin" });
+    }
+
     const items: any[] = Array.isArray(body.items) ? body.items : [];
     if (!items.length) return jsonResponse({ error: "Aucun lieu sélectionné" }, 400);
+
+    // ⛔ GARDE-FOU RENFORCÉ : le traitement de masse (création d'une ville entière)
+    //    est INTERDIT tant que la clé Claude configurée n'est pas celle de Kevin.
+    //    Sans ça, une boucle côté interface contournerait le plafond par appel et
+    //    ferait payer des centaines de fiches au propriétaire de la clé de dev.
+    if (body.bulk && owner !== "kevin") {
+      return jsonResponse({
+        error:
+          "Traitement de masse bloqué : la clé Claude configurée n'appartient pas à Kevin " +
+          `(ANTHROPIC_KEY_OWNER = "${owner}"). Renseignez la clé Anthropic de Kevin et passez ` +
+          'ANTHROPIC_KEY_OWNER à "kevin" avant de créer une ville.',
+        owner,
+        bulkAllowed: false,
+      }, 403);
+    }
 
     // Nombre de photos à télécharger par fiche (0 à 5). Chaque photo = un appel
     // Google facturé, c'est le principal levier de coût d'une ville.

@@ -12,8 +12,14 @@ import { useCategories } from '../../contexts/CategoriesContext';
 const MIN_CITY = 3;
 const MIN_CITY_CAT = 2;
 
-/** Rayon de regroupement : une commune à moins de 25 km fait partie de l'agglo. */
-const AGGLO_KM = 25;
+/**
+ * Rayon de regroupement : une commune à moins de 45 km fait partie de l'agglo.
+ * Mesuré sur les données réelles — toutes les communes de l'Hérault rattachées à
+ * Montpellier sont entre 4 et 44 km (Sète 27, Péret 39, Saint-Thibéry 44).
+ */
+const AGGLO_KM = 45;
+/** Un brouillon isolé est rattaché à l'agglo la plus proche jusqu'à 60 km. */
+const DRAFT_KM = 60;
 
 /**
  * Tarifs unitaires (août 2026). Les prix Google sont des ordres de grandeur
@@ -54,7 +60,7 @@ function km(a: { lat: number; lng: number }, b: { lat: number; lng: number }): n
 
 const money = (n: number) => (n < 1 ? `${(n * 100).toFixed(0)} ¢` : `${n.toFixed(2)} $`);
 
-interface Commune { name: string; slug: string; total: number; lat: number; lng: number }
+interface Commune { name: string; slug: string; total: number }
 interface Agglo {
   name: string;
   slug: string;
@@ -62,6 +68,8 @@ interface Agglo {
   byCategory: Record<string, number>;
   pending: number;
   lastAdded: string | null;
+  lat: number;
+  lng: number;
   communes: Commune[];
 }
 
@@ -81,6 +89,7 @@ async function fetchAll<T>(table: string, columns: string): Promise<T[]> {
 export default function AdminCities() {
   const { categories, categoryKeys } = useCategories();
   const [agglos, setAgglos] = useState<Agglo[]>([]);
+  const [orphanDrafts, setOrphanDrafts] = useState<{ city: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'total' | 'name' | 'pending'>('total');
@@ -92,32 +101,27 @@ export default function AdminCities() {
         fetchAll<{ city: string; category: string; created_at: string; latitude: number | null; longitude: number | null }>(
           'establishments', 'city, category, created_at, latitude, longitude',
         ),
-        fetchAll<{ city: string; status: string }>('establishment_drafts', 'city, status'),
+        fetchAll<{ city: string; status: string; latitude: number | null; longitude: number | null }>(
+          'establishment_drafts', 'city, status, latitude, longitude',
+        ),
       ]);
 
-      // 1) Agrégation par commune
+      // 1) Agrégation par commune — UNIQUEMENT les fiches publiées. Une commune
+      //    qui n'a que des brouillons n'est pas une ville : elle sera rattachée
+      //    plus bas à l'agglo la plus proche.
       const byCommune = new Map<string, {
         name: string; total: number; byCategory: Record<string, number>;
-        lat: number; lng: number; n: number; last: string | null; pending: number;
+        lat: number; lng: number; n: number; last: string | null;
       }>();
       for (const e of rows) {
         const name = (e.city || '').trim();
         if (!name) continue;
         const k = name.toLowerCase();
-        const c = byCommune.get(k) || { name, total: 0, byCategory: {}, lat: 0, lng: 0, n: 0, last: null, pending: 0 };
+        const c = byCommune.get(k) || { name, total: 0, byCategory: {}, lat: 0, lng: 0, n: 0, last: null };
         c.total += 1;
         if (e.category) c.byCategory[e.category] = (c.byCategory[e.category] || 0) + 1;
         if (e.latitude && e.longitude) { c.lat += e.latitude; c.lng += e.longitude; c.n += 1; }
         if (e.created_at && (!c.last || e.created_at > c.last)) c.last = e.created_at;
-        byCommune.set(k, c);
-      }
-      for (const d of drafts) {
-        if (d.status !== 'enriched') continue;
-        const name = (d.city || '').trim();
-        if (!name) continue;
-        const k = name.toLowerCase();
-        const c = byCommune.get(k) || { name, total: 0, byCategory: {}, lat: 0, lng: 0, n: 0, last: null, pending: 0 };
-        c.pending += 1;
         byCommune.set(k, c);
       }
 
@@ -125,7 +129,7 @@ export default function AdminCities() {
         .map((c) => ({ ...c, lat: c.n ? c.lat / c.n : 0, lng: c.n ? c.lng / c.n : 0 }))
         .sort((a, b) => b.total - a.total);
 
-      // 2) Regroupement en agglos : la plus grosse commune absorbe ses voisines.
+      // 2) Regroupement : la commune la plus fournie absorbe ses voisines.
       const used = new Set<string>();
       const out: Agglo[] = [];
       for (const main of communes) {
@@ -140,21 +144,56 @@ export default function AdminCities() {
           }
         }
         const byCategory: Record<string, number> = {};
-        let total = 0, pending = 0, last: string | null = null;
+        let total = 0, last: string | null = null;
         for (const g of group) {
           total += g.total;
-          pending += g.pending;
           for (const [k, v] of Object.entries(g.byCategory)) byCategory[k] = (byCategory[k] || 0) + v;
           if (g.last && (!last || g.last > last)) last = g.last;
         }
         out.push({
-          name: main.name, slug: slugify(main.name), total, byCategory, pending, lastAdded: last,
-          communes: group.map((g) => ({ name: g.name, slug: slugify(g.name), total: g.total, lat: g.lat, lng: g.lng })),
+          name: main.name, slug: slugify(main.name), total, byCategory, pending: 0, lastAdded: last,
+          lat: main.lat, lng: main.lng,
+          communes: group.map((g) => ({ name: g.name, slug: slugify(g.name), total: g.total })),
         });
       }
+
+      // 3) Brouillons : rattachés à l'agglo la plus proche. Au-delà de 60 km, on
+      //    les signale à part plutôt que d'inventer une ville sans aucune fiche.
+      const far: { city: string; count: number }[] = [];
+      const byDraftCity = new Map<string, { name: string; lat: number; lng: number; n: number; count: number }>();
+      for (const d of drafts) {
+        if (d.status !== 'enriched') continue;
+        const name = (d.city || '').trim();
+        if (!name) continue;
+        const k = name.toLowerCase();
+        const c = byDraftCity.get(k) || { name, lat: 0, lng: 0, n: 0, count: 0 };
+        c.count += 1;
+        if (d.latitude && d.longitude) { c.lat += d.latitude; c.lng += d.longitude; c.n += 1; }
+        byDraftCity.set(k, c);
+      }
+      for (const d of byDraftCity.values()) {
+        const p = { lat: d.n ? d.lat / d.n : 0, lng: d.n ? d.lng / d.n : 0 };
+        let best: Agglo | null = null;
+        let bestKm = Infinity;
+        if (p.lat && p.lng) {
+          for (const a of out) {
+            if (!a.lat || !a.lng) continue;
+            const k = km({ lat: a.lat, lng: a.lng }, p);
+            if (k < bestKm) { bestKm = k; best = a; }
+          }
+        }
+        // Une commune déjà dans l'agglo est rattachée par son nom, sinon par distance.
+        const byName = out.find((a) => a.communes.some((c) => c.name.toLowerCase() === d.name.toLowerCase()));
+        if (byName) byName.pending += d.count;
+        else if (best && bestKm <= DRAFT_KM) best.pending += d.count;
+        else far.push({ city: d.name, count: d.count });
+      }
+
       setAgglos(out);
+      setOrphanDrafts(far);
     } catch {
       setAgglos([]);
+      setOrphanDrafts([]);
     }
     setLoading(false);
   }, []);
@@ -244,10 +283,17 @@ export default function AdminCities() {
         )}
       </div>
 
+      {orphanDrafts.length > 0 && (
+        <p className="text-xs text-gray-500">
+          Brouillons situés hors de toute agglomération couverte :{' '}
+          {orphanDrafts.map((o) => `${o.city} (${o.count})`).join(', ')} — à valider ou à supprimer dans « Fiches auto ».
+        </p>
+      )}
+
       <p className="text-xs text-gray-500">
-        Une ville regroupe sa commune principale et celles situées à moins de {AGGLO_KM} km (Montpellier inclut donc
-        Castelnau-le-Lez, Lattes…). Une page ville devient indexable à partir de <strong>{MIN_CITY} fiches</strong>,
-        une page ville × catégorie à partir de <strong>{MIN_CITY_CAT}</strong>.
+        Une ville regroupe sa commune principale et celles situées à moins de {AGGLO_KM} km : Montpellier inclut donc
+        Castelnau-le-Lez, Lattes, Sète, Mauguio… Une page ville devient indexable à partir de{' '}
+        <strong>{MIN_CITY} fiches</strong>, une page ville × catégorie à partir de <strong>{MIN_CITY_CAT}</strong>.
       </p>
     </div>
   );
@@ -269,6 +315,16 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
   const [analyzing, setAnalyzing] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  // À qui appartient la clé Claude configurée : on refuse la création de ville
+  // tant que ce n'est pas celle de Kevin (sinon c'est FL POWER qui paie).
+  const [keyOwner, setKeyOwner] = useState<{ owner: string; bulkAllowed: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!open || keyOwner) return;
+    supabase.functions.invoke('fiches-enrich', { body: { probe: true } }).then(({ data }) => {
+      if (data && typeof data.owner === 'string') setKeyOwner({ owner: data.owner, bulkAllowed: !!data.bulkAllowed });
+    });
+  }, [open, keyOwner]);
 
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, step: '' });
@@ -346,8 +402,9 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
       let done = 0;
       for (let i = 0; i < items.length; i += 5) {
         const batch = items.slice(i, i + 5).map((it) => ({ ...it, dfs_reviews: dfsReviews[it.place_id] || null }));
-        const { data, error } = await supabase.functions.invoke('fiches-enrich', { body: { items: batch, photos } });
+        const { data, error } = await supabase.functions.invoke('fiches-enrich', { body: { items: batch, photos, bulk: true } });
         if (error) throw error;
+        if (data?.error) throw new Error(data.error);
         done += data?.enriched || 0;
         setProgress({ done, total: items.length, step: `Rédaction des fiches… ${done}/${items.length}` });
       }
@@ -484,8 +541,22 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
                     évoluent et certains lieux ont beaucoup plus d'avis que d'autres.
                   </p>
 
+                  {keyOwner && !keyOwner.bulkAllowed && (
+                    <div className="mt-3 rounded-input bg-alert/10 border border-alert/30 p-3">
+                      <p className="text-xs text-alert flex items-start gap-1.5">
+                        <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Création bloquée :</strong> la clé Claude configurée n'est pas celle de Kevin
+                          (<code>ANTHROPIC_KEY_OWNER = « {keyOwner.owner} »</code>). Créer une ville entière la ferait
+                          payer par ce compte. Renseignez la clé de Kevin dans Supabase et passez cette variable à
+                          « kevin ».
+                        </span>
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button onClick={create} disabled={running || n === 0} className="btn-primary text-sm flex items-center gap-2">
+                    <button onClick={create} disabled={running || n === 0 || (keyOwner ? !keyOwner.bulkAllowed : false)} className="btn-primary text-sm flex items-center gap-2">
                       {running ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
                       {running ? 'Création en cours…' : `Créer la ville (${n} fiches)`}
                     </button>
