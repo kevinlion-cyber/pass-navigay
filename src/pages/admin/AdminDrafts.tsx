@@ -71,6 +71,8 @@ export default function AdminDrafts() {
   const [addOpen, setAddOpen] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<Draft | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkRun, setBulkRun] = useState<{ done: number; total: number; failed: number } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -115,6 +117,62 @@ export default function AdminDrafts() {
       toast.error(err instanceof Error ? err.message : 'Erreur à la publication');
     }
     setBusy(false);
+  };
+
+  /**
+   * Ids de TOUS les brouillons à valider correspondant aux filtres en cours,
+   * pas seulement ceux de la page affichée. (`range` par 1000 : PostgREST ne
+   * renvoie jamais plus.)
+   */
+  const idsAPublier = async (): Promise<string[]> => {
+    const out: string[] = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase.from('establishment_drafts').select('id').eq('status', 'enriched');
+      if (cityFilter !== 'all') q = q.eq('city', cityFilter);
+      if (catFilter !== 'all') q = q.eq('category', catFilter);
+      if (search.trim()) q = q.ilike('name', `%${search.trim()}%`);
+      const { data } = await q.range(from, from + PAGE - 1);
+      if (!data?.length) break;
+      out.push(...data.map((d) => (d as { id: string }).id));
+      if (data.length < PAGE) break;
+    }
+    return out;
+  };
+
+  /**
+   * Publication en masse. Une ville entière fait plusieurs centaines de fiches :
+   * les publier une par une avec une confirmation à chaque fois n'est pas tenable.
+   * On garde `fiches-publish` (photos stockées, dédup du slug) et on l'appelle
+   * en parallèle limité, pour ne pas saturer les Edge Functions.
+   */
+  const publishAll = async () => {
+    setBulkOpen(false);
+    const ids = await idsAPublier();
+    if (!ids.length) { toast('Aucune fiche à publier avec ces filtres.'); return; }
+
+    let done = 0, failed = 0, cursor = 0;
+    setBulkRun({ done: 0, total: ids.length, failed: 0 });
+    const worker = async () => {
+      while (cursor < ids.length) {
+        const id = ids[cursor++];
+        try {
+          const { data, error } = await supabase.functions.invoke('fiches-publish', { body: { draftId: id } });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          done++;
+        } catch {
+          failed++; // la fiche reste « à valider », on la reverra au prochain passage
+        }
+        setBulkRun({ done, total: ids.length, failed });
+      }
+    };
+    await Promise.all(Array.from({ length: 4 }, worker));
+
+    setBulkRun(null);
+    if (failed) toast.error(`${done} fiches publiées, ${failed} en échec (elles restent à valider).`);
+    else toast.success(`${done} fiches publiées avec leurs photos.`);
+    load(); loadMeta();
   };
 
   const reject = async () => {
@@ -196,11 +254,36 @@ export default function AdminDrafts() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Fiches auto</h1>
         </div>
         <div className="flex items-center gap-2">
+          {statusFilter === 'enriched' && total > 0 && (
+            <button
+              onClick={() => setBulkOpen(true)}
+              disabled={!!bulkRun}
+              className="text-sm flex items-center gap-1.5 py-2 px-4 rounded-input border border-success/40 bg-success/10 text-success font-semibold hover:bg-success/20 disabled:opacity-50 transition-colors"
+            >
+              <Check size={16} /> Tout publier ({total})
+            </button>
+          )}
           <button onClick={() => setAddOpen(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4"><Plus size={16} /> Ajouter des lieux</button>
           <button onClick={() => { load(); loadMeta(); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><RefreshCw size={15} /> Rafraîchir</button>
         </div>
       </div>
       <p className="text-sm text-gray-500 -mt-2">Candidats découverts automatiquement puis décrits par l'IA. Rien n'est public tant que vous n'avez pas publié.</p>
+
+      {bulkRun && (
+        <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="font-medium text-gray-900 dark:text-white">
+              Publication en cours… {bulkRun.done}/{bulkRun.total}
+              {bulkRun.failed > 0 && <span className="text-alert font-normal"> · {bulkRun.failed} en échec</span>}
+            </span>
+            <span className="text-gray-500">{Math.round(((bulkRun.done + bulkRun.failed) / bulkRun.total) * 100)} %</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden">
+            <div className="h-full bg-success transition-all" style={{ width: `${Math.round(((bulkRun.done + bulkRun.failed) / bulkRun.total) * 100)}%` }} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Les photos sont téléchargées et stockées pour chaque fiche. Gardez cet onglet ouvert.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1 bg-light-surface dark:bg-dark-surface p-1 rounded-input border border-light-border dark:border-dark-border">
@@ -303,6 +386,15 @@ export default function AdminDrafts() {
           <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
         </div>
       )}
+
+      <ConfirmModal
+        open={bulkOpen}
+        title={`Publier ${total} fiches`}
+        message={`Créer les ${total} établissements publics correspondant aux filtres en cours ? Les photos de chacun seront récupérées et stockées. Comptez environ ${Math.max(1, Math.round(total / 60))} min.`}
+        confirmLabel="Tout publier"
+        onCancel={() => setBulkOpen(false)}
+        onConfirm={publishAll}
+      />
 
       <ConfirmModal open={!!publishTarget} title="Publier cette fiche" message={`Créer l'établissement public "${publishTarget?.name}" ? Les photos seront récupérées automatiquement.`} confirmLabel="Publier" onCancel={() => setPublishTarget(null)} onConfirm={publish} loading={busy} />
       <ConfirmModal open={!!rejectTarget} title="Rejeter ce brouillon" message={`Rejeter "${rejectTarget?.name}" ? Il reste en base (non public).`} confirmLabel="Rejeter" onCancel={() => setRejectTarget(null)} onConfirm={reject} loading={busy} />

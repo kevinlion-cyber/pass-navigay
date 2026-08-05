@@ -34,6 +34,16 @@ const TOKENS_OUT = 500;
 
 const QUERIES_PER_CITY = 23; // buildQueries() : 3+5+4+3+4+4 requêtes
 
+/**
+ * Récupération des avis DataForSEO. `fiches-reviews` n'en relit que 40 par appel
+ * (durée max d'une Edge Function), donc c'est à l'interface de balayer toute la
+ * liste par paquets. 30 min de patience : une tâche met 8 à 15 min, et une ville
+ * de 600 lieux en pose plusieurs centaines.
+ */
+const DFS_CHUNK = 40;
+const DFS_WAIT_MS = 20_000;
+const DFS_DEADLINE_MS = 30 * 60 * 1000;
+
 function slugify(s: string): string {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -319,6 +329,7 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
     setRunning(true);
     const items = [...candidates];
     const dfsReviews: Record<string, unknown[]> = {};
+    let missingReviews = 0;
 
     try {
       // 1) Avis en profondeur (optionnel, asynchrone chez DataForSEO)
@@ -330,19 +341,33 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
         if (error || posted?.error) throw new Error(posted?.error || 'Échec DataForSEO');
         let tasks: Record<string, string> = posted.tasks || {};
 
-        // DataForSEO met 8 à 15 min : on repasse régulièrement récupérer ce qui est prêt.
-        for (let round = 0; round < 40 && Object.keys(tasks).length; round++) {
-          await new Promise((r) => setTimeout(r, 20000));
-          const { data: col } = await supabase.functions.invoke('fiches-reviews', { body: { action: 'collect', tasks } });
-          for (const [pid, revs] of Object.entries(col?.ready || {})) dfsReviews[pid] = revs as unknown[];
+        // DataForSEO met 8 à 15 min par tâche. ⛔ Avant, on envoyait TOUTE la liste
+        // à `collect` toutes les 20 s : la fonction n'en regarde que 40 par appel,
+        // donc sur une ville de 600 lieux les mêmes 40 étaient relus en boucle et
+        // la plupart des fiches retombaient en silence sur les 5 avis de Google.
+        // Ici on balaie l'intégralité du reste, par paquets de 40, à chaque tour.
+        const deadline = Date.now() + DFS_DEADLINE_MS;
+        while (Object.keys(tasks).length && Date.now() < deadline) {
+          const entries = Object.entries(tasks);
           const stillPending: Record<string, string> = {};
-          for (const pid of col?.pending || []) if (tasks[pid]) stillPending[pid] = tasks[pid];
+          for (let i = 0; i < entries.length; i += DFS_CHUNK) {
+            const slice = Object.fromEntries(entries.slice(i, i + DFS_CHUNK));
+            const { data: col } = await supabase.functions.invoke('fiches-reviews', { body: { action: 'collect', tasks: slice } });
+            for (const [pid, revs] of Object.entries(col?.ready || {})) dfsReviews[pid] = revs as unknown[];
+            for (const pid of col?.pending || []) if (tasks[pid]) stillPending[pid] = tasks[pid];
+            const got = Object.keys(dfsReviews).length;
+            const mins = Math.max(0, Math.round((deadline - Date.now()) / 60000));
+            setProgress({ done: got, total: items.length, step: `Récupération des avis… ${got}/${items.length} (${mins} min restantes au plus)` });
+          }
           tasks = stillPending;
-          setProgress({
-            done: Object.keys(dfsReviews).length,
-            total: items.length,
-            step: `Récupération des avis… ${Object.keys(dfsReviews).length}/${items.length}`,
-          });
+          if (Object.keys(tasks).length) await new Promise((r) => setTimeout(r, DFS_WAIT_MS));
+        }
+
+        // Jamais en silence : on dit combien de fiches seront écrites avec les
+        // 5 avis de Google au lieu des avis en profondeur.
+        missingReviews = Object.keys(tasks).length;
+        if (missingReviews > 0) {
+          toast(`${missingReviews} lieux n'ont pas rendu leurs avis à temps : ces fiches seront écrites avec les 5 avis de Google.`, { icon: '⚠️', duration: 8000 });
         }
       }
 
@@ -359,7 +384,10 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
         setProgress({ done, total: items.length, step: `Rédaction des fiches… ${done}/${items.length}` });
       }
 
-      toast.success(`${done} fiches créées pour ${city.trim()}. À valider dans « Fiches auto ».`);
+      const detail = useDfs
+        ? ` (${Object.keys(dfsReviews).length} avec avis en profondeur${missingReviews ? `, ${missingReviews} avec les 5 avis de Google` : ''})`
+        : '';
+      toast.success(`${done} fiches créées pour ${city.trim()}${detail}. À publier dans « Fiches auto ».`);
       setCandidates(null);
       setCity('');
       onDone();
