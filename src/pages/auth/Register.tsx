@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Send, Eye, EyeOff, CheckCircle, Loader2, X } from 'lucide-react';
+import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -279,8 +279,9 @@ export default function Register() {
             <button
               type="button"
               onClick={handleClose}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary underline underline-offset-2 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-input border border-primary/40 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/10 hover:border-primary transition-colors"
             >
+              <ArrowLeft size={16} className="shrink-0" />
               Pas maintenant, je veux d'abord voir le site
             </button>
           </div>
