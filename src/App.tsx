@@ -4,7 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
 import AppLayout from './components/layout/AppLayout';
-import Landing from './pages/Landing';
+import WelcomeModal from './components/WelcomeModal';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Verify from './pages/auth/Verify';
@@ -84,30 +84,40 @@ export default function App() {
             }}
           />
           <Routes>
-            <Route path="/" element={<Landing />} />
             <Route path="/auth/register" element={<Register />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/verify" element={<Verify />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
 
             <Route element={<AppLayout />}>
+              {/*
+                L'accueil, c'est le site lui-même : on arrive directement dans
+                l'annuaire, et le mot de bienvenue s'affiche PAR-DESSUS. Avant,
+                `/` était un écran d'accueil séparé sans aucun contenu, donc
+                invisible pour Google et sans issue pour un visiteur non inscrit.
+              */}
+              <Route path="/" element={<><Explore /><WelcomeModal /></>} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:eventId" element={<EventDetail />} />
               <Route path="/promos" element={<Promos />} />
               <Route path="/promos/:promoId" element={<PromoDetail />} />
+              <Route path="/lieu/:slug" element={<EstablishmentDetail />} />
+              <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/revendiquer/:id" element={<Revendiquer />} />
+            </Route>
+
+            {/* Espace membre : demande un compte, quel que soit le réglage. */}
+            <Route element={<AppLayout requireAuth />}>
               <Route path="/members" element={<Members />} />
               <Route path="/establishment/new" element={<EstablishmentForm />} />
               <Route path="/establishment/:id/edit" element={<EstablishmentForm />} />
-              <Route path="/lieu/:slug" element={<EstablishmentDetail />} />
-              <Route path="/establishment/:id" element={<EstablishmentDetail />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/messages/:userId" element={<Conversation />} />
               <Route path="/profile/settings" element={<ProfileSettings />} />
               <Route path="/profile/:userId" element={<ProfilePublic />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/revendiquer/:id" element={<Revendiquer />} />
             </Route>
 
             <Route path="/admin" element={<AdminRoot />}>

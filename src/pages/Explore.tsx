@@ -30,7 +30,9 @@ export default function Explore() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // On arrive sur Montpellier (DEFAULT_CENTER). C'est là qu'est le catalogue :
+  // centrer sur la position réelle du visiteur l'ouvrait sur une carte vide.
+  const [userLocation] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -42,13 +44,6 @@ export default function Explore() {
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const listContainerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setUserLocation(DEFAULT_CENTER)
-    );
-  }, []);
 
   useEffect(() => {
     supabase.from('app_settings').select('value').eq('key', 'explore_empty_text').maybeSingle()
