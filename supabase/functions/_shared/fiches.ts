@@ -355,3 +355,76 @@ export async function dfsFetchReviews(
     }))
     .filter((x: any) => x.text);
 }
+
+/**
+ * Rédige UNE fiche et l'enregistre en brouillon.
+ *
+ * Extrait de `fiches-enrich` pour que le traitement en tâche de fond
+ * (`city-worker`, qui continue même navigateur fermé) produise EXACTEMENT la
+ * même chose que le bouton de l'interface. Toute évolution du contenu d'une
+ * fiche se fait ici, jamais en double.
+ */
+export async function writeDraft(
+  svc: { from: (t: string) => any; storage: { from: (b: string) => any } },
+  keys: { placesKey: string; anthropicKey: string; model: string },
+  it: Record<string, any>,
+  opts: { photos: number; citySlug: string | null; deepReviews?: unknown[] | null },
+): Promise<{ tokensIn: number; tokensOut: number; deep: boolean }> {
+  const det = await placeDetails(keys.placesKey, it.place_id);
+
+  // Avis en profondeur (DataForSEO) si on les a, sinon les 5 avis de Google.
+  const deep = Array.isArray(opts.deepReviews) ? opts.deepReviews : [];
+  const reviewData = deep.length
+    ? { provider: "dataforseo", confidence: "high", editorial_summary: det.editorial_summary, reviews: deep }
+    : { provider: "google5", confidence: "low", editorial_summary: det.editorial_summary, reviews: det.reviews };
+
+  const { parsed, usage } = await enrichWithClaude(keys.anthropicKey, keys.model, it, reviewData);
+  const subcategory = validSubcat(it.category, parsed.subcategory);
+
+  // Photos téléchargées UNE fois et stockées : plus aucune facturation Google à l'affichage.
+  const photoUrls: string[] = [];
+  try {
+    const names = opts.photos > 0 ? await getPhotoNames(keys.placesKey, it.place_id, opts.photos) : [];
+    for (let i = 0; i < names.length; i++) {
+      const bytes = await fetchPhotoMedia(keys.placesKey, names[i], i === 0 ? 1400 : 900);
+      if (!bytes) continue;
+      const path = `${it.place_id}/${i}.jpg`;
+      const up = await svc.storage.from("place-photos").upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+      if (!up.error) photoUrls.push(svc.storage.from("place-photos").getPublicUrl(path).data.publicUrl);
+    }
+  } catch { /* photos best-effort : une fiche sans photo vaut mieux qu'une fiche perdue */ }
+
+  const { error } = await svc.from("establishment_drafts").upsert({
+    place_id: it.place_id,
+    name: it.name,
+    address: it.address || "",
+    city: it.city || "",
+    city_slug: opts.citySlug,
+    postal_code: it.postal_code || "",
+    latitude: it.latitude ?? null,
+    longitude: it.longitude ?? null,
+    phone: it.phone || "",
+    website: it.website || "",
+    google_rating: it.google_rating ?? null,
+    google_rating_count: it.google_rating_count ?? null,
+    google_primary_type: it.google_primary_type || "",
+    raw: { editorial_summary: det.editorial_summary, reviews_provider: reviewData.provider, reviews_count: reviewData.reviews?.length || 0 },
+    google_reviews: reviewData.reviews || [],
+    category: it.category,
+    discovery_query: it.discovery_query || "",
+    ai_description: parsed.description || "",
+    ai_subcategory: subcategory,
+    ai_tags: parsed.tags || [],
+    thumb_url: photoUrls[0] ?? null,
+    photo_urls: photoUrls,
+    opening_hours: det.opening_hours || {},
+    price_level: det.price_level,
+    amenities: det.amenities || [],
+    ai_model: keys.model,
+    ai_generated_at: new Date().toISOString(),
+    status: "enriched",
+  }, { onConflict: "place_id" });
+  if (error) throw error;
+
+  return { tokensIn: usage?.input_tokens || 0, tokensOut: usage?.output_tokens || 0, deep: deep.length > 0 };
+}

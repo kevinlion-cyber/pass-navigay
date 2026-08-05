@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapPin, Plus, Search, Building2, Globe, Sparkles, ExternalLink, CheckCircle2,
   AlertTriangle, ArrowUpDown, Loader2, Camera, MessageSquare, Wallet, Play,
@@ -34,15 +34,6 @@ const TOKENS_OUT = 500;
 
 const QUERIES_PER_CITY = 23; // buildQueries() : 3+5+4+3+4+4 requêtes
 
-/**
- * Récupération des avis DataForSEO. `fiches-reviews` n'en relit que 40 par appel
- * (durée max d'une Edge Function), donc c'est à l'interface de balayer toute la
- * liste par paquets. 30 min de patience : une tâche met 8 à 15 min, et une ville
- * de 600 lieux en pose plusieurs centaines.
- */
-const DFS_CHUNK = 40;
-const DFS_WAIT_MS = 20_000;
-const DFS_DEADLINE_MS = 30 * 60 * 1000;
 
 function slugify(s: string): string {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
@@ -86,6 +77,8 @@ export default function AdminCities() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'total' | 'name' | 'pending'>('total');
+  /** Incrémenté au lancement d'une création, pour que le suivi se rafraîchisse tout de suite. */
+  const [jobKey, setJobKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,7 +192,8 @@ export default function AdminCities() {
         </p>
       </div>
 
-      <AddCityPanel existing={agglos} onDone={load} />
+      <CityJobPanel onFinished={load} refreshKey={jobKey} />
+      <AddCityPanel existing={agglos} onJob={() => setJobKey((k) => k + 1)} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={MapPin} label="Villes couvertes" value={String(totals.villes)} sub={`${totals.indexable} avec une page indexable`} />
@@ -254,11 +248,97 @@ export default function AdminCities() {
   );
 }
 
+/* ─────────────────── Suivi d'une création en cours (serveur) ─────────────────── */
+
+interface CityJob {
+  id: string; city: string; status: string; step: string;
+  total: number; done: number; failed: number; shallow: number;
+  error: string | null; created_at: string; finished_at: string | null;
+}
+
+/**
+ * La création tourne sur le serveur : ce bloc ne fait que la regarder avancer.
+ * On peut fermer la page et revenir, l'avancement est en base.
+ */
+function CityJobPanel({ onFinished, refreshKey }: { onFinished: () => void; refreshKey: number }) {
+  const [job, setJob] = useState<CityJob | null>(null);
+  const wasRunning = useRef(false);
+
+  useEffect(() => {
+    let stop = false;
+    const tick = async () => {
+      const { data } = await supabase.from('city_jobs')
+        .select('id,city,status,step,total,done,failed,shallow,error,created_at,finished_at')
+        .order('created_at', { ascending: false }).limit(1);
+      if (stop) return;
+      const j = (data?.[0] as CityJob) || null;
+      setJob(j);
+      const running = !!j && ['queued', 'reviews', 'writing'].includes(j.status);
+      // La ville vient de se terminer : on recharge la liste des villes.
+      if (wasRunning.current && !running) onFinished();
+      wasRunning.current = running;
+    };
+    tick();
+    const id = setInterval(tick, 5000);
+    return () => { stop = true; clearInterval(id); };
+  }, [onFinished, refreshKey]);
+
+  if (!job || job.status === 'cancelled') return null;
+  const running = ['queued', 'reviews', 'writing'].includes(job.status);
+  if (!running && job.status !== 'done' && job.status !== 'failed') return null;
+  // Une ville terminée il y a plus d'une heure n'a plus besoin d'être affichée.
+  if (!running && job.finished_at && Date.now() - new Date(job.finished_at).getTime() > 3600_000) return null;
+
+  const pct = job.total ? Math.round(((job.done + job.failed) / job.total) * 100) : 0;
+  const cancel = async () => {
+    await supabase.functions.invoke('city-worker', { body: { action: 'cancel', job_id: job.id } });
+  };
+
+  return (
+    <div className="bg-light-surface dark:bg-dark-surface border border-primary/30 rounded-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
+          {running && <Loader2 size={16} className="animate-spin text-primary" />}
+          {job.status === 'done' && <CheckCircle2 size={16} className="text-success" />}
+          {job.status === 'failed' && <AlertTriangle size={16} className="text-alert" />}
+          {job.city}
+        </span>
+        {running && job.total > 0 && <span className="text-sm text-gray-500 tabular-nums">{pct} %</span>}
+      </div>
+
+      {job.total > 0 && (
+        <div className="h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden mb-2">
+          <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+
+      <p className="text-sm text-gray-500">{job.error || job.step}</p>
+      {job.status === 'done' && job.shallow > 0 && (
+        <p className="text-xs text-sponsor mt-1">
+          {job.shallow} fiches écrites avec les 5 avis de Google, faute d'avis en profondeur rendus à temps.
+        </p>
+      )}
+      {running && (
+        <div className="flex items-center gap-3 mt-2">
+          <p className="text-xs text-gray-400 flex-1">
+            Le travail se fait sur le serveur. Vous pouvez fermer cette page, il continue.
+          </p>
+          <button onClick={cancel} className="text-xs text-alert hover:underline">Annuler</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ───────────────────────── Module d'ajout d'une ville ───────────────────────── */
 
-interface Candidate { place_id: string; name: string; city: string; category: string; [k: string]: unknown }
+interface Candidate {
+  place_id: string; name: string; city: string; category: string;
+  google_rating?: number | null; google_rating_count?: number | null;
+  [k: string]: unknown;
+}
 
-function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => void }) {
+function AddCityPanel({ existing, onJob }: { existing: Agglo[]; onJob: () => void }) {
   const [open, setOpen] = useState(false);
   const [city, setCity] = useState('');
   const [photos, setPhotos] = useState(3);
@@ -269,6 +349,8 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
 
   const [analyzing, setAnalyzing] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
+  /** Filtres avec lesquels l'analyse a été faite : en dessous, la liste est incomplète. */
+  const [base, setBase] = useState<{ minRating: number; minReviews: number } | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   // À qui appartient la clé Claude configurée : on refuse la création de ville
   // tant que ce n'est pas celle de Kevin (sinon c'est FL POWER qui paie).
@@ -282,15 +364,26 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
   }, [open, keyOwner]);
 
   const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState({ done: 0, total: 0, step: '' });
 
   // Le tag posé sur chaque fiche créée : c'est lui qui rattache le lieu à la
   // ville, quelle que soit sa commune d'adresse.
   const citySlug = slugify(city);
   const known = existing.some((a) => a.slug === citySlug);
 
-  /** Estimation tant qu'on n'a pas analysé ; chiffre réel ensuite. */
-  const n = candidates?.length ?? 0;
+  /**
+   * L'analyse renvoie chaque lieu AVEC sa note et son nombre d'avis. Durcir les
+   * filtres se recalcule donc ici, sans repayer une analyse : on connaît déjà la
+   * liste. Seul un ÉLARGISSEMENT (filtres plus bas que ceux de l'analyse) oblige
+   * à relancer, puisque les lieux écartés n'ont jamais été rapportés.
+   */
+  const filtered = useMemo(() => {
+    if (!candidates) return null;
+    return candidates.filter((c) =>
+      (c.google_rating ?? 0) >= minRating && (c.google_rating_count ?? 0) >= minReviews);
+  }, [candidates, minRating, minReviews]);
+
+  const tropLarge = !!base && (minRating < base.minRating || minReviews < base.minReviews);
+  const n = filtered?.length ?? 0;
   const cost = useMemo(() => {
     const reviewsPerFiche = useDfs ? depth : 5;
     const tokensIn = TOKENS_BASE_IN + reviewsPerFiche * TOKENS_PER_REVIEW;
@@ -313,6 +406,7 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setCandidates(data.candidates || []);
+      setBase({ minRating, minReviews });
       if (useDfs) {
         const { data: b } = await supabase.functions.invoke('fiches-reviews', { body: { action: 'balance' } });
         if (typeof b?.balance === 'number') setBalance(b.balance);
@@ -324,78 +418,39 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
     setAnalyzing(false);
   };
 
+  /**
+   * On ne fait plus tourner la création dans le navigateur : on dépose une
+   * commande, et le serveur la traite (cron toutes les minutes). Fred peut
+   * fermer l'onglet, éteindre son ordinateur, la ville continue de se
+   * construire. L'interface ne fait plus que suivre l'avancement.
+   */
   const create = async () => {
-    if (!candidates?.length) return;
+    if (!n) return;
     setRunning(true);
-    const items = [...candidates];
-    const dfsReviews: Record<string, unknown[]> = {};
-    let missingReviews = 0;
-
     try {
-      // 1) Avis en profondeur (optionnel, asynchrone chez DataForSEO)
-      if (useDfs) {
-        setProgress({ done: 0, total: items.length, step: 'Demande des avis à DataForSEO…' });
-        const { data: posted, error } = await supabase.functions.invoke('fiches-reviews', {
-          body: { action: 'post', items: items.map((i) => ({ place_id: i.place_id })), depth },
-        });
-        if (error || posted?.error) throw new Error(posted?.error || 'Échec DataForSEO');
-        let tasks: Record<string, string> = posted.tasks || {};
-
-        // DataForSEO met 8 à 15 min par tâche. ⛔ Avant, on envoyait TOUTE la liste
-        // à `collect` toutes les 20 s : la fonction n'en regarde que 40 par appel,
-        // donc sur une ville de 600 lieux les mêmes 40 étaient relus en boucle et
-        // la plupart des fiches retombaient en silence sur les 5 avis de Google.
-        // Ici on balaie l'intégralité du reste, par paquets de 40, à chaque tour.
-        const deadline = Date.now() + DFS_DEADLINE_MS;
-        while (Object.keys(tasks).length && Date.now() < deadline) {
-          const entries = Object.entries(tasks);
-          const stillPending: Record<string, string> = {};
-          for (let i = 0; i < entries.length; i += DFS_CHUNK) {
-            const slice = Object.fromEntries(entries.slice(i, i + DFS_CHUNK));
-            const { data: col } = await supabase.functions.invoke('fiches-reviews', { body: { action: 'collect', tasks: slice } });
-            for (const [pid, revs] of Object.entries(col?.ready || {})) dfsReviews[pid] = revs as unknown[];
-            for (const pid of col?.pending || []) if (tasks[pid]) stillPending[pid] = tasks[pid];
-            const got = Object.keys(dfsReviews).length;
-            const mins = Math.max(0, Math.round((deadline - Date.now()) / 60000));
-            setProgress({ done: got, total: items.length, step: `Récupération des avis… ${got}/${items.length} (${mins} min restantes au plus)` });
-          }
-          tasks = stillPending;
-          if (Object.keys(tasks).length) await new Promise((r) => setTimeout(r, DFS_WAIT_MS));
-        }
-
-        // Jamais en silence : on dit combien de fiches seront écrites avec les
-        // 5 avis de Google au lieu des avis en profondeur.
-        missingReviews = Object.keys(tasks).length;
-        if (missingReviews > 0) {
-          toast(`${missingReviews} lieux n'ont pas rendu leurs avis à temps : ces fiches seront écrites avec les 5 avis de Google.`, { icon: '⚠️', duration: 8000 });
-        }
-      }
-
-      // 2) Génération des fiches, par lots (la fonction plafonne à 5 par appel)
-      let done = 0;
-      for (let i = 0; i < items.length; i += 5) {
-        const batch = items.slice(i, i + 5).map((it) => ({ ...it, dfs_reviews: dfsReviews[it.place_id] || null }));
-        const { data, error } = await supabase.functions.invoke('fiches-enrich', {
-          body: { items: batch, photos, bulk: true, city_slug: citySlug },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        done += data?.enriched || 0;
-        setProgress({ done, total: items.length, step: `Rédaction des fiches… ${done}/${items.length}` });
-      }
-
-      const detail = useDfs
-        ? ` (${Object.keys(dfsReviews).length} avec avis en profondeur${missingReviews ? `, ${missingReviews} avec les 5 avis de Google` : ''})`
-        : '';
-      toast.success(`${done} fiches créées pour ${city.trim()}${detail}. À publier dans « Fiches auto ».`);
+      const { data, error } = await supabase.functions.invoke('city-worker', {
+        body: {
+          action: 'create',
+          city: city.trim(),
+          city_slug: citySlug,
+          photos,
+          use_dfs: useDfs,
+          depth,
+          min_rating: minRating,
+          min_reviews: minReviews,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success('Création lancée. Elle continue même si vous fermez cette page.');
       setCandidates(null);
+      setBase(null);
       setCity('');
-      onDone();
+      onJob();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erreur pendant la création');
+      toast.error(e instanceof Error ? e.message : 'Impossible de lancer la création');
     }
     setRunning(false);
-    setProgress({ done: 0, total: 0, step: '' });
   };
 
   return (
@@ -466,10 +521,12 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {/* Ces deux-là ne remettent PAS l'analyse à zéro : on recalcule
+                    sur la liste déjà obtenue (voir `filtered`). */}
                 <Slider icon={Sparkles} label="Note minimum" value={minRating} min={0} max={4.8} step={0.1}
-                  onChange={(v) => { setMinRating(v); setCandidates(null); }} hint={`${minRating.toFixed(1)} ★ et plus`} />
+                  onChange={setMinRating} hint={`${minRating.toFixed(1)} ★ et plus`} />
                 <Slider icon={Sparkles} label="Avis minimum" value={minReviews} min={0} max={200} step={10}
-                  onChange={(v) => { setMinReviews(v); setCandidates(null); }} hint={`${minReviews} avis et plus`} />
+                  onChange={setMinReviews} hint={`${minReviews} avis et plus`} />
               </div>
               <p className="text-xs text-gray-500">
                 Ces deux filtres déterminent combien de lieux sortiront : plus ils sont hauts, moins il y a de fiches,
@@ -533,25 +590,37 @@ function AddCityPanel({ existing, onDone }: { existing: Agglo[]; onDone: () => v
                     </div>
                   )}
 
+                  {/* Filtres plus bas que ceux de l'analyse : les lieux écartés
+                      n'ont jamais été rapportés, il faut réanalyser. */}
+                  {tropLarge && (
+                    <div className="mt-3 rounded-input bg-sponsor/10 border border-sponsor/30 p-3">
+                      <p className="text-xs text-sponsor flex items-start gap-1.5">
+                        <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+                        <span>
+                          Vous avez élargi les filtres sous ceux de l'analyse ({base?.minRating.toFixed(1)} ★ /{' '}
+                          {base?.minReviews} avis). Les lieux en dessous n'ont pas été rapportés : relancez l'analyse
+                          pour les voir.
+                        </span>
+                      </p>
+                      <button onClick={analyze} disabled={analyzing} className="mt-2 text-xs font-semibold text-sponsor underline underline-offset-2">
+                        {analyzing ? 'Analyse en cours…' : 'Relancer l’analyse'}
+                      </button>
+                    </div>
+                  )}
+
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button onClick={create} disabled={running || n === 0 || (keyOwner ? !keyOwner.bulkAllowed : false)} className="btn-primary text-sm flex items-center gap-2">
+                    <button onClick={create} disabled={running || n === 0 || tropLarge || (keyOwner ? !keyOwner.bulkAllowed : false)} className="btn-primary text-sm flex items-center gap-2">
                       {running ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
-                      {running ? 'Création en cours…' : `Créer la ville (${n} fiches)`}
+                      {running ? 'Lancement…' : `Créer la ville (${n} fiches)`}
                     </button>
-                    <button onClick={() => setCandidates(null)} disabled={running} className="btn-ghost text-sm">
-                      Modifier les réglages
+                    <button onClick={() => { setCandidates(null); setBase(null); }} disabled={running} className="btn-ghost text-sm">
+                      Nouvelle analyse
                     </button>
                   </div>
 
-                  {running && progress.total > 0 && (
-                    <div className="mt-3">
-                      <div className="h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden">
-                        <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1.5">{progress.step}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Gardez cet onglet ouvert jusqu'à la fin.</p>
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    La création se fait sur le serveur : vous pouvez fermer cette page, elle continue toute seule.
+                  </p>
                 </>
               )}
             </div>
@@ -577,11 +646,28 @@ function Slider({
   icon: LucideIcon; label: string; value: number; min: number; max: number; step?: number;
   onChange: (v: number) => void; hint?: string;
 }) {
+  // La valeur est affichée en clair à côté du libellé, et deux boutons permettent
+  // de l'ajuster au cran près : viser un curseur fin à la souris est pénible, et
+  // on ne voit pas toujours qu'il a bougé.
+  const clamp = (v: number) => Math.min(max, Math.max(min, Number(v.toFixed(2))));
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-1.5">
-        <Icon size={13} /> {label}
-      </label>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+          <Icon size={13} /> {label}
+        </label>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => onChange(clamp(value - step))} disabled={value <= min}
+            aria-label={`Diminuer ${label}`}
+            className="w-6 h-6 rounded border border-light-border dark:border-dark-border text-gray-500 hover:text-primary hover:border-primary disabled:opacity-30 leading-none">−</button>
+          <span className="min-w-[2.5rem] text-center text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
+            {Number.isInteger(step) ? value : value.toFixed(1)}
+          </span>
+          <button type="button" onClick={() => onChange(clamp(value + step))} disabled={value >= max}
+            aria-label={`Augmenter ${label}`}
+            className="w-6 h-6 rounded border border-light-border dark:border-dark-border text-gray-500 hover:text-primary hover:border-primary disabled:opacity-30 leading-none">+</button>
+        </div>
+      </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-primary" />
       {hint && <p className="text-xs text-gray-500 mt-0.5">{hint}</p>}
