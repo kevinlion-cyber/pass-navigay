@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Users, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { markWelcomeSeen, welcomeSeen } from '../lib/welcome';
+import { markWelcomeNever, markWelcomeSeen, welcomeSeen } from '../lib/welcome';
 
 /**
  * Mot de bienvenue affiché PAR-DESSUS le site, sur la page d'accueil.
@@ -47,9 +47,12 @@ export default function WelcomeModal() {
   const close = async () => {
     setOpen(false);
     markWelcomeSeen();
-    if (dontShowAgain && user) {
-      await supabase.from('profiles').update({ show_onboarding: false }).eq('id', user.id);
-    }
+    if (!dontShowAgain) return;
+    // Un membre a un profil où le noter ; un visiteur non connecté, non : pour
+    // lui on retient le choix dans son navigateur, sinon la case ne servirait
+    // à rien et le message reviendrait à chaque visite.
+    if (user) await supabase.from('profiles').update({ show_onboarding: false }).eq('id', user.id);
+    else markWelcomeNever();
   };
 
   // Fermeture au clavier : une modale qui ne se ferme pas à Échap est une impasse.
@@ -125,17 +128,17 @@ export default function WelcomeModal() {
             </button>
           )}
 
-          {user && (
-            <label className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              Ne plus afficher ce message
-            </label>
-          )}
+          {/* Proposée à TOUT LE MONDE : un visiteur non connecté doit aussi
+              pouvoir couper ce message, c'est lui qui le voit le plus souvent. */}
+          <label className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={dontShowAgain}
+              onChange={(e) => setDontShowAgain(e.target.checked)}
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            Ne plus afficher ce message
+          </label>
         </div>
       </div>
     </div>
