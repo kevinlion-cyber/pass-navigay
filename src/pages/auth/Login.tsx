@@ -54,8 +54,9 @@ export default function Login() {
     }
   };
 
+  // Fermer rend la main à l'annuaire (cf. même choix dans Register).
   const handleClose = () => {
-    navigate(-1);
+    navigate('/', { replace: true });
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -84,8 +84,6 @@ export default function App() {
             }}
           />
           <Routes>
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/verify" element={<Verify />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
 
@@ -97,6 +95,15 @@ export default function App() {
                 invisible pour Google et sans issue pour un visiteur non inscrit.
               */}
               <Route path="/" element={<><Explore /><WelcomeModal /></>} />
+              {/*
+                Inscription et connexion sont déjà des modales (`fixed inset-0`).
+                On les rend DANS la coquille du site, avec l'annuaire derrière :
+                en route de premier niveau, il n'y avait rien dessous, on quittait
+                donc le site pour un formulaire plein écran. Ici on reste dedans,
+                et fermer la modale rend simplement la main à l'annuaire.
+              */}
+              <Route path="/auth/register" element={<><Explore /><Register /></>} />
+              <Route path="/auth/login" element={<><Explore /><Login /></>} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:eventId" element={<EventDetail />} />

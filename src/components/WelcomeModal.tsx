@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Users, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { markWelcomeSeen, welcomeSeen } from '../lib/welcome';
 
 /**
  * Mot de bienvenue affiché PAR-DESSUS le site, sur la page d'accueil.
@@ -30,9 +31,11 @@ export default function WelcomeModal() {
   const [requireSignup, setRequireSignup] = useState(true);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  // Un membre qui a demandé à ne plus voir ce message ne le revoit jamais.
+  // Un membre qui a demandé à ne plus voir ce message ne le revoit jamais ;
+  // un visiteur qui l'a déjà écarté ne le revoit pas de la visite.
   useEffect(() => {
     if (user && profile && !profile.show_onboarding) { setOpen(false); return; }
+    if (!user && welcomeSeen()) { setOpen(false); return; }
     setOpen(true);
   }, [user, profile]);
 
@@ -43,6 +46,7 @@ export default function WelcomeModal() {
 
   const close = async () => {
     setOpen(false);
+    markWelcomeSeen();
     if (dontShowAgain && user) {
       await supabase.from('profiles').update({ show_onboarding: false }).eq('id', user.id);
     }

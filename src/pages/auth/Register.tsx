@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import PlanSelection, { type PlanType, type BillingInterval } from '../../components/ui/PlanSelection';
 import { track } from '../../lib/analytics';
+import { markWelcomeSeen } from '../../lib/welcome';
 
 type TunnelStep = 'plan' | 'chat' | 'verify';
 type ChatStep = 'username' | 'email' | 'password' | 'submitting' | 'done';
@@ -207,8 +208,12 @@ export default function Register() {
 
   const isInputDisabled = chatStep === 'submitting' || chatStep === 'done' || animatingBot;
 
+  // On change d'avis : on ferme et on retombe sur l'annuaire, pas sur une page
+  // blanche. `navigate(-1)` ne menait nulle part quand on arrivait ici en direct
+  // (lien d'une pub, favori, redirection depuis une page réservée aux membres).
   const handleClose = () => {
-    navigate(-1);
+    markWelcomeSeen();
+    navigate('/', { replace: true });
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -263,6 +268,23 @@ export default function Register() {
         </button>
 
         {stepIndicator}
+
+        {/*
+          Sortie de secours : on peut changer d'avis et aller voir le site sans
+          créer de compte tout de suite. Sans ce lien, la seule issue visible
+          était la petite croix, ce qui ressemble à une obligation de s'inscrire.
+        */}
+        {tunnelStep === 'plan' && (
+          <div className="px-4 pt-3 shrink-0">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary underline underline-offset-2 transition-colors"
+            >
+              Pas maintenant, je veux d'abord voir le site
+            </button>
+          </div>
+        )}
 
         {tunnelStep === 'plan' && (
           <div className="overflow-y-auto flex-1 min-h-0">
