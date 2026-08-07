@@ -129,6 +129,9 @@ export default function Explore() {
         setUserLocation(p);
         setAroundMe(true);
         setLocating(false);
+        // La carte va sur le visiteur DANS TOUS LES CAS, même s'il n'y a aucun
+        // lieu à côté : il doit voir où il est, pas rester sur la vue d'avant.
+        setMapFlyTo(p);
 
         const nearest = cities
           .map((c) => ({ c, km: distanceKm(p, c) }))
@@ -137,7 +140,6 @@ export default function Explore() {
         if (nearest && nearest.km <= AROUND_ME_KM) {
           // Une ville couverte est à portée : on l'affiche entièrement.
           setCitySlug(nearest.c.slug);
-          setMapFlyTo(p);
           setAroundInfo(null);
         } else {
           // Rien à proximité : on l'annonce plutôt que de montrer un écran vide.
