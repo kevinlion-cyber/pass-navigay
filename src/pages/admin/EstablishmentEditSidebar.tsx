@@ -36,6 +36,8 @@ interface FormData {
   website: string;
   address: string;
   city: string;
+  /** Ville de l'annuaire (tag), indépendante de l'adresse. */
+  city_slug: string;
   postal_code: string;
   category: string;
   subcategory: string;
@@ -54,10 +56,17 @@ const initialForm: FormData = {
   website: '',
   address: '',
   city: '',
+  city_slug: '',
   postal_code: '',
   category: 'manger',
   subcategory: '',
 };
+
+/** Normalise une ville en identifiant d'annuaire : « Aix-en-Provence » → « aix-en-provence ». */
+function slugifyCity(s: string): string {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
@@ -75,6 +84,22 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 
 export default function EstablishmentEditSidebar({ establishmentId, onClose, onRefresh }: Props) {
   const isNew = establishmentId === 'new';
+  /** Villes déjà couvertes, proposées en autocomplétion du rattachement. */
+  const [cityOptions, setCityOptions] = useState<{ slug: string; name: string; n: number }[]>([]);
+
+  useEffect(() => {
+    supabase.from('public_city_list').select('city_slug,city,n').then(({ data }) => {
+      const rows = (data as { city_slug: string; city: string; n: number }[]) || [];
+      const by = new Map<string, { slug: string; name: string; n: number }>();
+      for (const r of rows) {
+        const g = by.get(r.city_slug) || { slug: r.city_slug, name: '', n: 0 };
+        g.n += r.n;
+        if (!g.name || slugifyCity(r.city) === r.city_slug) g.name = r.city;
+        by.set(r.city_slug, g);
+      }
+      setCityOptions([...by.values()].sort((a, b) => b.n - a.n));
+    });
+  }, []);
   const { categories, categoryKeys } = useCategories();
   const categoryOptions = categoryKeys.map((k) => ({ value: k, label: categories[k as CategoryKey].label }));
   const [form, setForm] = useState<FormData>(initialForm);
@@ -146,6 +171,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
         website: d.website || '',
         address: d.address || '',
         city: d.city || '',
+        city_slug: d.city_slug || '',
         postal_code: d.postal_code || '',
         category: d.category || 'manger',
         subcategory: d.subcategory || '',
@@ -275,6 +301,9 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           website: form.website,
           address: form.address,
           city: form.city,
+          // Sans rattachement explicite, on reprend la ville de l'adresse :
+          // une fiche sans ville n'apparaît sur aucune page de l'annuaire.
+          city_slug: form.city_slug || slugifyCity(form.city) || null,
           postal_code: form.postal_code,
           category: form.category,
           subcategory: form.subcategory,
@@ -332,6 +361,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             website: form.website,
             address: form.address,
             city: form.city,
+            city_slug: form.city_slug || slugifyCity(form.city) || null,
             postal_code: form.postal_code,
             category: form.category,
             subcategory: form.subcategory,
@@ -427,6 +457,27 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
         <SidebarField label="Code postal">
           <SidebarInput value={form.postal_code} onChange={(v) => set('postal_code', v)} />
         </SidebarField>
+
+        {/* Ville de rattachement : c'est elle qui décide sur quelle page de
+            l'annuaire le lieu apparaît, indépendamment de son adresse. Sans
+            elle, une fiche créée à la main n'apparaît nulle part. */}
+        <SidebarField label="Ville de l'annuaire">
+          <input
+            list="villes-annuaire"
+            value={form.city_slug}
+            onChange={(e) => set('city_slug', slugifyCity(e.target.value))}
+            placeholder={slugifyCity(form.city) || 'montpellier'}
+            className="w-full bg-[#0f0f17] border border-[#2a2a3a] rounded-md px-3 py-2 text-[14px] text-white outline-none focus:border-[#7B2D8B]"
+          />
+          <datalist id="villes-annuaire">
+            {cityOptions.map((c) => <option key={c.slug} value={c.slug}>{`${c.name} (${c.n} fiches)`}</option>)}
+          </datalist>
+        </SidebarField>
+        <p className="text-[11px] text-[#606070] italic mb-5">
+          Page où la fiche apparaîtra. Laissez vide pour reprendre la ville de l'adresse
+          {slugifyCity(form.city) ? ` (« ${slugifyCity(form.city)} »)` : ''}. Choisissez une ville existante dans la
+          liste, ou tapez-en une nouvelle pour ouvrir une page.
+        </p>
 
         <p className="text-[11px] text-[#606070] italic mb-5">Les coordonnees GPS seront recalculees automatiquement.</p>
 
