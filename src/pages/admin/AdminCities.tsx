@@ -263,6 +263,25 @@ interface CityJob {
 function CityJobPanel({ onFinished, refreshKey }: { onFinished: () => void; refreshKey: number }) {
   const [job, setJob] = useState<CityJob | null>(null);
   const wasRunning = useRef(false);
+  // Au lancement, la confirmation apparaît ICI, au-dessus du formulaire, pendant
+  // que celui-ci se vide plus bas : on ne voit pas que c'est parti. On amène donc
+  // le bandeau sous les yeux et on le met en évidence quelques secondes.
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [highlight, setHighlight] = useState(false);
+  const lastKey = useRef(refreshKey);
+
+  useEffect(() => {
+    if (refreshKey === lastKey.current) return;
+    lastKey.current = refreshKey;
+    setHighlight(true);
+    const t = setTimeout(() => setHighlight(false), 6000);
+    return () => clearTimeout(t);
+  }, [refreshKey]);
+
+  useEffect(() => {
+    if (!highlight || !job || !boxRef.current) return;
+    boxRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlight, job]);
 
   useEffect(() => {
     let stop = false;
@@ -295,7 +314,12 @@ function CityJobPanel({ onFinished, refreshKey }: { onFinished: () => void; refr
   };
 
   return (
-    <div className="bg-light-surface dark:bg-dark-surface border border-primary/30 rounded-card p-4">
+    <div
+      ref={boxRef}
+      className={`bg-light-surface dark:bg-dark-surface rounded-card p-4 transition-all ${
+        highlight ? 'border-2 border-primary ring-4 ring-primary/20' : 'border border-primary/30'
+      }`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <span className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
           {running && <Loader2 size={16} className="animate-spin text-primary" />}
@@ -442,10 +466,11 @@ function AddCityPanel({ existing, onJob }: { existing: Agglo[]; onJob: () => voi
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success('Création lancée. Elle continue même si vous fermez cette page.');
+      toast.success(`Création de ${city.trim()} lancée. Suivez l'avancement ci-dessus, elle continue même si vous fermez cette page.`, { duration: 7000 });
       setCandidates(null);
       setBase(null);
       setCity('');
+      setOpen(false); // on replie le formulaire : le suivi devient la seule chose à regarder
       onJob();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Impossible de lancer la création');
