@@ -98,12 +98,12 @@ export default function AdminCities() {
       // vraie adresse. Le tag étant explicite, aucune ville fantôme ne peut
       // apparaître ici (avant, on devinait par distance : 16 fausses villes).
       const groups = new Map<string, {
-        slug: string; names: Map<string, number>; total: number;
+        slug: string; names: Map<string, number>; draftNames: Map<string, number>; total: number;
         byCategory: Record<string, number>; last: string | null; pending: number;
       }>();
       const group = (slug: string) => {
         const g = groups.get(slug)
-          || { slug, names: new Map<string, number>(), total: 0, byCategory: {}, last: null, pending: 0 };
+          || { slug, names: new Map<string, number>(), draftNames: new Map<string, number>(), total: 0, byCategory: {}, last: null, pending: 0 };
         groups.set(slug, g);
         return g;
       };
@@ -124,7 +124,12 @@ export default function AdminCities() {
         if (d.status !== 'enriched') continue;
         const slug = (d.city_slug || slugify(d.city)).trim();
         if (!slug) continue;
-        group(slug).pending += 1;
+        const g = group(slug);
+        g.pending += 1;
+        // Sert à nommer une ville qui n'a encore aucune fiche publiée : sans ça
+        // on retombait sur le slug et on affichait « Beziers » sans accent.
+        const commune = (d.city || '').trim();
+        if (commune) g.draftNames.set(commune, (g.draftNames.get(commune) || 0) + 1);
       }
 
       // Nom affiché : la commune qui porte le slug (« Montpellier »), sinon la
@@ -134,8 +139,10 @@ export default function AdminCities() {
           .map(([name, total]) => ({ name, total }))
           .sort((a, b) => b.total - a.total);
         const exact = communes.find((c) => slugify(c.name) === g.slug);
+        const drafted = [...g.draftNames.entries()].sort((a, b) => b[1] - a[1]);
+        const exactDraft = drafted.find(([name]) => slugify(name) === g.slug)?.[0];
         return {
-          name: exact?.name || communes[0]?.name || prettify(g.slug),
+          name: exact?.name || communes[0]?.name || exactDraft || drafted[0]?.[0] || prettify(g.slug),
           slug: g.slug,
           total: g.total,
           byCategory: g.byCategory,
@@ -720,13 +727,23 @@ function AggloRow({
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-gray-900 dark:text-white">{agglo.name}</h3>
+            {/* « manquantes » ne veut rien dire pour un lecteur : ce qui compte est
+                de savoir si Google voit la page, et ce qu'il reste à faire pour ça. */}
             {indexable ? (
-              <span className="badge text-xs bg-success/10 text-success flex items-center gap-1"><CheckCircle2 size={12} /> Page indexable</span>
+              <span className="badge text-xs bg-success/10 text-success flex items-center gap-1" title="Cette page est visible par Google">
+                <CheckCircle2 size={12} /> Visible sur Google
+              </span>
             ) : (
-              <span className="badge text-xs bg-alert/10 text-alert flex items-center gap-1"><AlertTriangle size={12} /> {missing} fiche{missing > 1 ? 's' : ''} manquante{missing > 1 ? 's' : ''}</span>
+              <span className="badge text-xs bg-alert/10 text-alert flex items-center gap-1"
+                title={`Une page ville n'est proposée à Google qu'à partir de ${MIN_CITY} fiches publiées.`}>
+                <AlertTriangle size={12} /> Pas encore sur Google : {missing} fiche{missing > 1 ? 's' : ''} à publier
+              </span>
             )}
             {agglo.pending > 0 && (
-              <span className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1"><Sparkles size={12} /> {agglo.pending} à valider</span>
+              <span className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1"
+                title="Fiches rédigées et en attente dans « Fiches auto ». Elles ne sont pas encore publiques.">
+                <Sparkles size={12} /> {agglo.pending} fiche{agglo.pending > 1 ? 's' : ''} prête{agglo.pending > 1 ? 's' : ''} à publier
+              </span>
             )}
           </div>
 
