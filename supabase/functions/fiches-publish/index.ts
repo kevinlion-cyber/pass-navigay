@@ -9,11 +9,19 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
   try {
-    const user = await getAuthenticatedUser(req);
-    if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
     const svc = serviceClient();
-    const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+
+    // Deux appelants légitimes : un admin depuis l'interface, ou le worker de
+    // création de ville (`city-worker`), qui publie tout seul en fin de course
+    // avec le secret partagé du cron.
+    const secret = Deno.env.get("SOCIAL_CRON_SECRET");
+    const fromWorker = !!secret && req.headers.get("x-cron-secret") === secret;
+    if (!fromWorker) {
+      const user = await getAuthenticatedUser(req);
+      if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
+      const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
+      if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    }
 
     const { draftId } = await req.json().catch(() => ({}));
     if (!draftId) return jsonResponse({ error: "draftId requis" }, 400);

@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
         if (owner !== "kevin") {
           return jsonResponse({ error: `Création bloquée : la clé Claude configurée n'appartient pas à Kevin (ANTHROPIC_KEY_OWNER = "${owner}").` }, 403);
         }
-        const { data: running } = await svc.from("city_jobs").select("id,city").in("status", ["queued", "reviews", "writing"]).limit(1);
+        const { data: running } = await svc.from("city_jobs").select("id,city").in("status", ["queued", "reviews", "writing", "publishing"]).limit(1);
         if (running?.length) return jsonResponse({ error: `Une création est déjà en cours (${running[0].city}). Attendez qu'elle finisse.` }, 409);
 
         const { data: created, error } = await svc.from("city_jobs").insert({
@@ -57,6 +57,8 @@ Deno.serve(async (req: Request) => {
           params: {
             photos: body.photos, use_dfs: !!body.use_dfs, depth: body.depth,
             min_rating: body.min_rating, min_reviews: body.min_reviews,
+            // Par défaut la commande va jusqu'à la mise en ligne.
+            auto_publish: body.auto_publish !== false,
           },
         }).select().single();
         if (error) return jsonResponse({ error: error.message }, 500);
@@ -78,7 +80,7 @@ Deno.serve(async (req: Request) => {
     const now = new Date().toISOString();
     const { data: jobs } = await svc.from("city_jobs")
       .select("*")
-      .in("status", ["queued", "reviews", "writing"])
+      .in("status", ["queued", "reviews", "writing", "publishing"])
       .or(`locked_until.is.null,locked_until.lt.${now}`)
       .order("created_at", { ascending: true })
       .limit(1);
@@ -219,17 +221,74 @@ Deno.serve(async (req: Request) => {
 
       if (cursor >= candidates.length) {
         await svc.from("city_job_reviews").delete().eq("job_id", job.id);
+        // Enchaîner sur la mise en ligne : s'arrêter à des brouillons alors que
+        // la commande était « crée cette ville » n'a pas de sens.
+        if (params.auto_publish !== false) {
+          await save({
+            status: "publishing",
+            step: `${done} fiches rédigées. Mise en ligne…`,
+            candidates: [],
+            locked_until: null,
+          });
+        } else {
+          await save({
+            status: "done",
+            step: `${done} fiches créées${failed ? `, ${failed} en échec` : ""}. À publier dans « Fiches auto ».`,
+            candidates: [],
+            locked_until: null,
+            finished_at: new Date().toISOString(),
+          });
+        }
+      } else {
+        await save({ locked_until: null });
+      }
+      return jsonResponse({ job: job.id, done, failed, cursor, total: candidates.length });
+    }
+
+    // ── 4) Mise en ligne ─────────────────────────────────────────────────────
+    if (job.status === "publishing") {
+      let published = job.published || 0;
+      let publishFailed = job.publish_failed || 0;
+      const secretHeader = Deno.env.get("SOCIAL_CRON_SECRET") || "";
+
+      while (timeLeft() > 15_000) {
+        const { data: batch } = await svc.from("establishment_drafts")
+          .select("id").eq("city_slug", job.city_slug).eq("status", "enriched").limit(4);
+        if (!batch?.length) break;
+
+        await Promise.all(batch.map(async (d: { id: string }) => {
+          try {
+            const r = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fiches-publish`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-cron-secret": secretHeader },
+              body: JSON.stringify({ draftId: d.id }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok || j.error) throw new Error(j.error || "echec");
+            published++;
+          } catch {
+            // On sort la fiche de la file pour ne pas boucler dessus indéfiniment ;
+            // elle reste visible dans « Fiches auto » pour un nouvel essai.
+            publishFailed++;
+            await svc.from("establishment_drafts").update({ status: "pending" }).eq("id", d.id);
+          }
+        }));
+        await save({ published, publish_failed: publishFailed, step: `Mise en ligne… ${published}/${job.done}` });
+      }
+
+      const { count } = await svc.from("establishment_drafts")
+        .select("id", { count: "exact", head: true }).eq("city_slug", job.city_slug).eq("status", "enriched");
+      if (!count) {
         await save({
           status: "done",
-          step: `${done} fiches créées${failed ? `, ${failed} en échec` : ""}. À publier dans « Fiches auto ».`,
-          candidates: [], // on n'a plus besoin de garder la liste
+          step: `${published} fiches en ligne${publishFailed ? `, ${publishFailed} à reprendre` : ""}.`,
           locked_until: null,
           finished_at: new Date().toISOString(),
         });
       } else {
         await save({ locked_until: null });
       }
-      return jsonResponse({ job: job.id, done, failed, cursor, total: candidates.length });
+      return jsonResponse({ job: job.id, published, publishFailed, reste: count });
     }
 
     await save({ locked_until: null });

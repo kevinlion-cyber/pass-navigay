@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { draftIdsToPublish, publishDraftIds } from '../../lib/publishDrafts';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
@@ -120,55 +121,18 @@ export default function AdminDrafts() {
   };
 
   /**
-   * Ids de TOUS les brouillons à valider correspondant aux filtres en cours,
-   * pas seulement ceux de la page affichée. (`range` par 1000 : PostgREST ne
-   * renvoie jamais plus.)
-   */
-  const idsAPublier = async (): Promise<string[]> => {
-    const out: string[] = [];
-    const PAGE = 1000;
-    for (let from = 0; ; from += PAGE) {
-      let q = supabase.from('establishment_drafts').select('id').eq('status', 'enriched');
-      if (cityFilter !== 'all') q = q.eq('city', cityFilter);
-      if (catFilter !== 'all') q = q.eq('category', catFilter);
-      if (search.trim()) q = q.ilike('name', `%${search.trim()}%`);
-      const { data } = await q.range(from, from + PAGE - 1);
-      if (!data?.length) break;
-      out.push(...data.map((d) => (d as { id: string }).id));
-      if (data.length < PAGE) break;
-    }
-    return out;
-  };
-
-  /**
-   * Publication en masse. Une ville entière fait plusieurs centaines de fiches :
-   * les publier une par une avec une confirmation à chaque fois n'est pas tenable.
-   * On garde `fiches-publish` (photos stockées, dédup du slug) et on l'appelle
-   * en parallèle limité, pour ne pas saturer les Edge Functions.
+   * Publication en masse de ce qui est filtré. La mécanique est partagée avec la
+   * page « Villes » (src/lib/publishDrafts.ts) : une seule façon de publier.
    */
   const publishAll = async () => {
     setBulkOpen(false);
-    const ids = await idsAPublier();
+    const ids = await draftIdsToPublish({
+      city: cityFilter !== 'all' ? cityFilter : undefined,
+      category: catFilter !== 'all' ? catFilter : undefined,
+      search,
+    });
     if (!ids.length) { toast('Aucune fiche à publier avec ces filtres.'); return; }
-
-    let done = 0, failed = 0, cursor = 0;
-    setBulkRun({ done: 0, total: ids.length, failed: 0 });
-    const worker = async () => {
-      while (cursor < ids.length) {
-        const id = ids[cursor++];
-        try {
-          const { data, error } = await supabase.functions.invoke('fiches-publish', { body: { draftId: id } });
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
-          done++;
-        } catch {
-          failed++; // la fiche reste « à valider », on la reverra au prochain passage
-        }
-        setBulkRun({ done, total: ids.length, failed });
-      }
-    };
-    await Promise.all(Array.from({ length: 4 }, worker));
-
+    const { done, failed } = await publishDraftIds(ids, setBulkRun);
     setBulkRun(null);
     if (failed) toast.error(`${done} fiches publiées, ${failed} en échec (elles restent à valider).`);
     else toast.success(`${done} fiches publiées avec leurs photos.`);

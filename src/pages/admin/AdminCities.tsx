@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapPin, Plus, Search, Building2, Globe, Sparkles, ExternalLink, CheckCircle2,
   AlertTriangle, ArrowUpDown, Loader2, Camera, MessageSquare, Wallet, Play,
-  ChevronDown, ChevronRight, ArrowRight, type LucideIcon,
+  ChevronDown, ChevronRight, type LucideIcon,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { draftIdsToPublish, publishDraftIds } from '../../lib/publishDrafts';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 import { useCategories } from '../../contexts/CategoriesContext';
 
 /** Seuils d'indexation — alignés sur netlify/edge-functions/seo.ts */
@@ -80,6 +81,8 @@ export default function AdminCities() {
   const [sort, setSort] = useState<'total' | 'name' | 'pending'>('total');
   /** Incrémenté au lancement d'une création, pour que le suivi se rafraîchisse tout de suite. */
   const [jobKey, setJobKey] = useState(0);
+  const [publishTarget, setPublishTarget] = useState<Agglo | null>(null);
+  const [publishRun, setPublishRun] = useState<{ done: number; failed: number; total: number } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,6 +165,20 @@ export default function AdminCities() {
 
   useEffect(() => { load(); }, [load]);
 
+  /** Met en ligne les fiches d'une ville, depuis la page où on l'a créée. */
+  const publishCity = async () => {
+    if (!publishTarget) return;
+    const ville = publishTarget;
+    setPublishTarget(null);
+    const ids = await draftIdsToPublish({ citySlug: ville.slug });
+    if (!ids.length) { toast('Aucune fiche à publier pour cette ville.'); return; }
+    const { done, failed } = await publishDraftIds(ids, setPublishRun);
+    setPublishRun(null);
+    if (failed) toast.error(`${done} fiches publiées, ${failed} en échec (elles restent à valider).`);
+    else toast.success(`${done} fiches publiées à ${ville.name}, avec leurs photos.`);
+    load();
+  };
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     const list = q ? agglos.filter((a) => a.name.toLowerCase().includes(q) || a.communes.some((c) => c.name.toLowerCase().includes(q))) : agglos;
@@ -201,6 +218,34 @@ export default function AdminCities() {
       </div>
 
       <CityJobPanel onFinished={load} refreshKey={jobKey} />
+
+      {publishRun && (
+        <div className="bg-light-surface dark:bg-dark-surface border border-success/40 rounded-card p-4">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="font-medium text-gray-900 dark:text-white">
+              Publication en cours… {publishRun.done}/{publishRun.total}
+              {publishRun.failed > 0 && <span className="text-alert font-normal"> · {publishRun.failed} en échec</span>}
+            </span>
+            <span className="text-gray-500 tabular-nums">
+              {Math.round(((publishRun.done + publishRun.failed) / publishRun.total) * 100)} %
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-light-border dark:bg-dark-border overflow-hidden">
+            <div className="h-full bg-success transition-all"
+              style={{ width: `${Math.round(((publishRun.done + publishRun.failed) / publishRun.total) * 100)}%` }} />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Les photos de chaque fiche sont téléchargées et rangées. Gardez cet onglet ouvert.</p>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!publishTarget}
+        title={`Publier ${publishTarget?.pending ?? 0} fiches`}
+        message={`Mettre en ligne les ${publishTarget?.pending ?? 0} fiches de ${publishTarget?.name ?? ''} ? Les photos de chacune seront récupérées et stockées. Comptez environ ${Math.max(1, Math.round((publishTarget?.pending ?? 0) / 60))} min.`}
+        confirmLabel="Publier"
+        onCancel={() => setPublishTarget(null)}
+        onConfirm={publishCity}
+      />
       <AddCityPanel existing={agglos} onJob={() => setJobKey((k) => k + 1)} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -240,7 +285,8 @@ export default function AdminCities() {
         ) : (
           <ul className="divide-y divide-light-border dark:divide-dark-border">
             {visible.map((a) => (
-              <AggloRow key={a.slug} agglo={a} categories={categories} categoryKeys={categoryKeys as string[]} />
+              <AggloRow key={a.slug} agglo={a} categories={categories} categoryKeys={categoryKeys as string[]}
+                onPublish={setPublishTarget} busy={!!publishRun} />
             ))}
           </ul>
         )}
@@ -300,7 +346,7 @@ function CityJobPanel({ onFinished, refreshKey }: { onFinished: () => void; refr
       if (stop) return;
       const j = (data?.[0] as CityJob) || null;
       setJob(j);
-      const running = !!j && ['queued', 'reviews', 'writing'].includes(j.status);
+      const running = !!j && ['queued', 'reviews', 'writing', 'publishing'].includes(j.status);
       // La ville vient de se terminer : on recharge la liste des villes.
       if (wasRunning.current && !running) onFinished();
       wasRunning.current = running;
@@ -311,7 +357,7 @@ function CityJobPanel({ onFinished, refreshKey }: { onFinished: () => void; refr
   }, [onFinished, refreshKey]);
 
   if (!job || job.status === 'cancelled') return null;
-  const running = ['queued', 'reviews', 'writing'].includes(job.status);
+  const running = ['queued', 'reviews', 'writing', 'publishing'].includes(job.status);
   if (!running && job.status !== 'done' && job.status !== 'failed') return null;
   // Une ville terminée il y a plus d'une heure n'a plus besoin d'être affichée.
   if (!running && job.finished_at && Date.now() - new Date(job.finished_at).getTime() > 3600_000) return null;
@@ -378,6 +424,8 @@ function AddCityPanel({ existing, onJob }: { existing: Agglo[]; onJob: () => voi
   const [depth, setDepth] = useState(100);
   const [minRating, setMinRating] = useState(4.0);
   const [minReviews, setMinReviews] = useState(20);
+  /** La commande va jusqu'au bout par défaut : créer sans mettre en ligne n'a pas de sens. */
+  const [autoPublish, setAutoPublish] = useState(true);
 
   const [analyzing, setAnalyzing] = useState(false);
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
@@ -470,6 +518,7 @@ function AddCityPanel({ existing, onJob }: { existing: Agglo[]; onJob: () => voi
           depth,
           min_rating: minRating,
           min_reviews: minReviews,
+          auto_publish: autoPublish,
         },
       });
       if (error) throw error;
@@ -565,6 +614,17 @@ function AddCityPanel({ existing, onJob }: { existing: Agglo[]; onJob: () => voi
                 Ces deux filtres déterminent combien de lieux sortiront : plus ils sont hauts, moins il y a de fiches,
                 mais elles sont de meilleure qualité.
               </p>
+
+              <label className="flex items-start gap-3 cursor-pointer rounded-input border border-light-border dark:border-dark-border p-3">
+                <input type="checkbox" checked={autoPublish} onChange={(e) => setAutoPublish(e.target.checked)} className="mt-0.5" />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900 dark:text-white">Mettre les fiches en ligne à la fin</span>
+                  <span className="block text-xs text-gray-500 mt-0.5">
+                    La ville se publie toute seule dès qu'elle est rédigée, sans rien à faire de plus.
+                    Décochez pour relire chaque fiche dans « Fiches auto » avant de la rendre publique.
+                  </span>
+                </span>
+              </label>
             </div>
 
             {/* ── Estimation ───────────────────────────────────────────── */}
@@ -711,11 +771,13 @@ function Slider({
 /* ───────────────────────────── Liste des villes ─────────────────────────────── */
 
 function AggloRow({
-  agglo, categories, categoryKeys,
+  agglo, categories, categoryKeys, onPublish, busy,
 }: {
   agglo: Agglo;
   categories: Record<string, { label: string; subcategories: string[] }>;
   categoryKeys: string[];
+  onPublish: (a: Agglo) => void;
+  busy: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const indexable = agglo.total >= MIN_CITY;
@@ -740,15 +802,11 @@ function AggloRow({
                 <AlertTriangle size={12} /> Pas encore sur Google : {missing} fiche{missing > 1 ? 's' : ''} à publier
               </span>
             )}
-            {/* Le bouton « Tout publier » est sur l'autre page : on y emmène
-                directement, sinon on cherche où publier. */}
             {agglo.pending > 0 && (
-              <Link to="/admin/drafts"
-                className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1 hover:bg-sponsor/20 transition-colors"
-                title="Fiches rédigées, pas encore publiques. Cliquez pour aller les publier dans « Fiches auto ».">
+              <span className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1"
+                title="Fiches rédigées, pas encore publiques.">
                 <Sparkles size={12} /> {agglo.pending} fiche{agglo.pending > 1 ? 's' : ''} prête{agglo.pending > 1 ? 's' : ''} à publier
-                <ArrowRight size={12} />
-              </Link>
+              </span>
             )}
           </div>
 
@@ -790,9 +848,19 @@ function AggloRow({
           )}
         </div>
 
-        <a href={`/annuaire/${agglo.slug}`} target="_blank" rel="noreferrer" className="btn-ghost text-sm flex items-center gap-1.5 shrink-0">
-          <ExternalLink size={15} /> Voir la page
-        </a>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* On publie là où on vient de créer la ville : aller sur une autre
+              page pour ça n'avait aucun sens. */}
+          {agglo.pending > 0 && (
+            <button onClick={() => onPublish(agglo)} disabled={busy}
+              className="text-sm flex items-center gap-1.5 py-2 px-4 rounded-input border border-success/40 bg-success/10 text-success font-semibold hover:bg-success/20 disabled:opacity-50 transition-colors">
+              <CheckCircle2 size={15} /> Publier les {agglo.pending} fiches
+            </button>
+          )}
+          <a href={`/annuaire/${agglo.slug}`} target="_blank" rel="noreferrer" className="btn-ghost text-sm flex items-center gap-1.5">
+            <ExternalLink size={15} /> Voir la page
+          </a>
+        </div>
       </div>
     </li>
   );
