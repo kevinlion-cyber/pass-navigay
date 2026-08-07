@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapPin, Plus, Search, Building2, Globe, Sparkles, ExternalLink, CheckCircle2,
   AlertTriangle, ArrowUpDown, Loader2, Camera, MessageSquare, Wallet, Play,
-  ChevronDown, ChevronRight, type LucideIcon,
+  ChevronDown, ChevronRight, ArrowRight, type LucideIcon,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -739,11 +740,15 @@ function AggloRow({
                 <AlertTriangle size={12} /> Pas encore sur Google : {missing} fiche{missing > 1 ? 's' : ''} à publier
               </span>
             )}
+            {/* Le bouton « Tout publier » est sur l'autre page : on y emmène
+                directement, sinon on cherche où publier. */}
             {agglo.pending > 0 && (
-              <span className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1"
-                title="Fiches rédigées et en attente dans « Fiches auto ». Elles ne sont pas encore publiques.">
+              <Link to="/admin/drafts"
+                className="badge text-xs bg-sponsor/10 text-sponsor flex items-center gap-1 hover:bg-sponsor/20 transition-colors"
+                title="Fiches rédigées, pas encore publiques. Cliquez pour aller les publier dans « Fiches auto ».">
                 <Sparkles size={12} /> {agglo.pending} fiche{agglo.pending > 1 ? 's' : ''} prête{agglo.pending > 1 ? 's' : ''} à publier
-              </span>
+                <ArrowRight size={12} />
+              </Link>
             )}
           </div>
 
