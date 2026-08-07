@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Establishment, CategoryKey } from '../lib/types';
 import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
 import CategoryFilters from '../components/explore/CategoryFilters';
+import CityFilter, { type CityOption } from '../components/explore/CityFilter';
 import EstablishmentCard from '../components/explore/EstablishmentCard';
 import FeaturedEvents from '../components/explore/FeaturedEvents';
 import MapView from '../components/explore/MapView';
@@ -17,6 +18,11 @@ import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModa
 import { trackSearch } from '../lib/analytics';
 
 type Bounds = { north: number; south: number; east: number; west: number };
+
+/** Même règle que côté administration : sert à reconnaître la commune qui donne son nom à la ville. */
+const slugify = (s: string) =>
+  (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 export default function Explore() {
   const navigate = useNavigate();
@@ -30,9 +36,14 @@ export default function Explore() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
-  // On arrive sur Montpellier (DEFAULT_CENTER). C'est là qu'est le catalogue :
-  // centrer sur la position réelle du visiteur l'ouvrait sur une carte vide.
-  const [userLocation] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
+  // On arrive sur la ville la mieux fournie (voir plus bas), pas sur la position
+  // du visiteur : ouvrir la carte sur une zone sans aucun lieu ne sert à rien.
+  // « Autour de moi » redonne la main à sa position quand il la demande.
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [citySlug, setCitySlug] = useState<string | null>(null);
+  const [aroundMe, setAroundMe] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -49,6 +60,60 @@ export default function Explore() {
     supabase.from('app_settings').select('value').eq('key', 'explore_empty_text').maybeSingle()
       .then(({ data }) => { if (data?.value) setEmptyText(data.value); });
   }, []);
+
+  // Villes couvertes : une ligne par commune dans la vue, qu'on regroupe par
+  // ville de rattachement. Une ville ajoutée en administration apparaît ici
+  // toute seule. Le centre est la moyenne pondérée de ses communes.
+  useEffect(() => {
+    supabase.from('public_city_list').select('city_slug,city,n,lat,lng')
+      .then(({ data }) => {
+        const rows = (data as { city_slug: string; city: string; n: number; lat: number; lng: number }[]) || [];
+        const by = new Map<string, { slug: string; name: string; n: number; lat: number; lng: number }>();
+        for (const r of rows) {
+          const g = by.get(r.city_slug) || { slug: r.city_slug, name: '', n: 0, lat: 0, lng: 0 };
+          g.lat += r.lat * r.n;
+          g.lng += r.lng * r.n;
+          g.n += r.n;
+          // Nom affiché : la commune qui porte le nom de la ville, sinon la plus fournie.
+          if (!g.name || slugify(r.city) === r.city_slug) g.name = r.city;
+          by.set(r.city_slug, g);
+        }
+        const list = [...by.values()]
+          .map((g) => ({ ...g, lat: g.lat / g.n, lng: g.lng / g.n }))
+          .sort((a, b) => b.n - a.n);
+        setCities(list);
+        // Au premier chargement on ouvre sur la ville la mieux fournie.
+        setCitySlug((s) => s ?? list[0]?.slug ?? null);
+        if (list[0]) setUserLocation({ lat: list[0].lat, lng: list[0].lng });
+      });
+  }, []);
+
+  const selectCity = (c: CityOption) => {
+    setAroundMe(false);
+    setCitySlug(c.slug);
+    setMapFlyTo({ lat: c.lat, lng: c.lng });
+  };
+
+  /** Rend la main à la position réelle du visiteur : la carte pilote l'affichage. */
+  const goAroundMe = () => {
+    if (!navigator.geolocation) { toast.error("Votre navigateur ne partage pas votre position."); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(p);
+        setMapFlyTo(p);
+        setCitySlug(null);
+        setAroundMe(true);
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        toast.error("Position indisponible. Autorisez la localisation pour utiliser « Autour de moi ».");
+      },
+      { timeout: 8000 },
+    );
+  };
 
   useEffect(() => {
     const premiumParam = searchParams.get('premium');
@@ -106,7 +171,12 @@ export default function Explore() {
         `name.ilike.%${debouncedSearch.trim()}%,city.ilike.%${debouncedSearch.trim()}%,address.ilike.%${debouncedSearch.trim()}%,description.ilike.%${debouncedSearch.trim()}%`
       );
     }
-    if (bounds && !debouncedSearch.trim()) {
+    // Une ville choisie prime sur le cadrage de la carte : on veut TOUS ses
+    // lieux, pas seulement ceux visibles à l'écran. « Autour de moi » fait
+    // l'inverse et laisse la carte décider.
+    if (citySlug) {
+      query = query.eq('city_slug', citySlug);
+    } else if (bounds && !debouncedSearch.trim()) {
       query = query
         .gte('latitude', bounds.south)
         .lte('latitude', bounds.north)
@@ -161,11 +231,11 @@ export default function Explore() {
     }
     setLoading(false);
     setSearchLoading(false);
-  }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds]);
+  }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds, citySlug]);
 
   useEffect(() => {
     fetchEstablishments(true);
-  }, [selectedCategory, selectedSubcategories, debouncedSearch]);
+  }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug]);
 
   const handleBoundsChange = useCallback((newBounds: Bounds) => {
     setBounds(newBounds);
@@ -303,6 +373,14 @@ export default function Explore() {
               style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
             />
           </div>
+          <CityFilter
+            cities={cities}
+            value={citySlug}
+            onSelectCity={selectCity}
+            onAroundMe={goAroundMe}
+            aroundMe={aroundMe}
+            locating={locating}
+          />
           <CategoryFilters
             selectedCategory={selectedCategory}
             selectedSubcategories={selectedSubcategories}
