@@ -24,6 +24,20 @@ const slugify = (s: string) =>
   (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+/** Au-delà, on considère qu'aucune ville couverte n'est « autour » du visiteur. */
+const AROUND_ME_KM = 60;
+
+/** Distance à vol d'oiseau, en km. */
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 export default function Explore() {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
@@ -44,6 +58,8 @@ export default function Explore() {
   const [citySlug, setCitySlug] = useState<string | null>(null);
   const [aroundMe, setAroundMe] = useState(false);
   const [locating, setLocating] = useState(false);
+  /** Renseigné quand aucune ville couverte n'est à portée du visiteur. */
+  const [aroundInfo, setAroundInfo] = useState<{ km: number; city: CityOption; pos: { lat: number; lng: number } } | null>(null);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -90,11 +106,20 @@ export default function Explore() {
 
   const selectCity = (c: CityOption) => {
     setAroundMe(false);
+    setAroundInfo(null);
     setCitySlug(c.slug);
     setMapFlyTo({ lat: c.lat, lng: c.lng });
   };
 
-  /** Rend la main à la position réelle du visiteur : la carte pilote l'affichage. */
+  /**
+   * « Autour de moi ».
+   *
+   * ⛔ Version précédente : on recentrait la carte sur le visiteur et on laissait
+   * le cadrage décider. Résultat pour quelqu'un près d'Angers : un écran sur une
+   * zone où l'annuaire n'a aucun lieu, sans un mot d'explication.
+   * Ici on regarde d'abord si une ville couverte est à portée. Sinon on le DIT,
+   * avec la distance, et on propose la ville la plus proche.
+   */
   const goAroundMe = () => {
     if (!navigator.geolocation) { toast.error("Votre navigateur ne partage pas votre position."); return; }
     setLocating(true);
@@ -102,16 +127,29 @@ export default function Explore() {
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserLocation(p);
-        setMapFlyTo(p);
-        setCitySlug(null);
         setAroundMe(true);
         setLocating(false);
+
+        const nearest = cities
+          .map((c) => ({ c, km: distanceKm(p, c) }))
+          .sort((a, b) => a.km - b.km)[0];
+
+        if (nearest && nearest.km <= AROUND_ME_KM) {
+          // Une ville couverte est à portée : on l'affiche entièrement.
+          setCitySlug(nearest.c.slug);
+          setMapFlyTo(p);
+          setAroundInfo(null);
+        } else {
+          // Rien à proximité : on l'annonce plutôt que de montrer un écran vide.
+          setCitySlug(null);
+          setAroundInfo(nearest ? { km: Math.round(nearest.km), city: nearest.c, pos: p } : null);
+        }
       },
       () => {
         setLocating(false);
         toast.error("Position indisponible. Autorisez la localisation pour utiliser « Autour de moi ».");
       },
-      { timeout: 8000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   };
 
@@ -148,6 +186,17 @@ export default function Explore() {
   useEffect(() => { trackSearch(debouncedSearch); }, [debouncedSearch]);
 
   const fetchEstablishments = useCallback(async (reset = false) => {
+    // Aucune ville couverte à portée du visiteur : on vide la liste au lieu de
+    // laisser les lieux du cadrage précédent, qui faisaient croire que
+    // « Autour de moi » affichait n'importe quoi (Avignon depuis Angers).
+    if (aroundInfo) {
+      setEstablishments([]);
+      setHasMore(false);
+      setLoading(false);
+      setSearchLoading(false);
+      return;
+    }
+
     setLoading(true);
     const currentPage = reset ? 0 : page;
 
@@ -231,11 +280,11 @@ export default function Explore() {
     }
     setLoading(false);
     setSearchLoading(false);
-  }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds, citySlug]);
+  }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds, citySlug, aroundInfo]);
 
   useEffect(() => {
     fetchEstablishments(true);
-  }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug]);
+  }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug, aroundInfo]);
 
   const handleBoundsChange = useCallback((newBounds: Bounds) => {
     setBounds(newBounds);
@@ -332,7 +381,25 @@ export default function Explore() {
         </div>
       )}
 
-      {!loading && establishments.length === 0 && (
+      {/* Rien près du visiteur : on l'explique et on l'emmène ailleurs, plutôt
+          que de le laisser devant une carte muette. */}
+      {!loading && aroundInfo && establishments.length === 0 && (
+        <div className="text-center py-10 px-4 space-y-3">
+          <p className="text-gray-900 dark:text-white font-medium">Aucun lieu près de vous pour l'instant.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            La ville couverte la plus proche est <strong>{aroundInfo.city.name}</strong>, à environ {aroundInfo.km} km.
+          </p>
+          <button onClick={() => { setAroundInfo(null); selectCity(aroundInfo.city); }} className="btn-primary text-sm">
+            Voir les {aroundInfo.city.n} lieux de {aroundInfo.city.name}
+          </button>
+          <p className="text-xs text-gray-400">
+            Position utilisée : {aroundInfo.pos.lat.toFixed(3)}, {aroundInfo.pos.lng.toFixed(3)}.
+            Sur ordinateur, elle vient du réseau et peut être imprécise.
+          </p>
+        </div>
+      )}
+
+      {!loading && !aroundInfo && establishments.length === 0 && (
         <div className="text-center py-12 px-4 text-gray-500 dark:text-gray-400 space-y-3">
           <p className="whitespace-pre-line">
             {emptyText || 'Aucun établissement ici pour le moment.\nEnregistre-toi pour être la première Safe place du coin.'}
