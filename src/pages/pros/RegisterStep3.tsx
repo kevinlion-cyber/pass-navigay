@@ -37,7 +37,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
     if (!file) return;
     const maxSize = type === 'logo' ? 5 : 10;
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`Taille max : ${maxSize}MB`);
+      toast.error(`Taille maximale : ${maxSize} Mo`);
       return;
     }
     setCropType(type);
@@ -56,7 +56,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
     }
     for (const f of files) {
       if (f.size > 5 * 1024 * 1024) {
-        toast.error('Chaque photo doit faire moins de 5MB.');
+        toast.error('Chaque photo doit faire moins de 5 Mo.');
         e.target.value = '';
         return;
       }
@@ -174,7 +174,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
           >
             <Store size={28} style={{ color: '#606070' }} />
             <span className="text-[13px] text-[#c0c0d0]">Cliquez pour ajouter votre logo</span>
-            <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 5MB</span>
+            <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 5 Mo</span>
           </button>
         )}
         <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleFileSelect('logo', e)} />
@@ -207,7 +207,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
           >
             <Camera size={28} style={{ color: '#606070' }} />
             <span className="text-[13px] text-[#c0c0d0]">Cliquez pour ajouter votre photo principale</span>
-            <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 10MB</span>
+            <span className="text-[11px]" style={{ color: '#606070' }}>JPG, PNG, WEBP · Max 10 Mo</span>
           </button>
         )}
         <input ref={bannerRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleFileSelect('banner', e)} />
@@ -218,7 +218,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
           GALERIE DE PHOTOS (optionnel)
         </p>
         <p className="text-[12px] mb-3" style={{ color: '#606070' }}>
-          Ajoutez jusqu'à 5 photos pour donner envie. Vous pourrez en ajouter d'autres depuis votre dashboard.
+          Ajoutez jusqu'à 5 photos pour donner envie. Vous pourrez en ajouter d'autres depuis votre espace partenaire.
         </p>
 
         {data.galleryPreviews.length > 0 && (
@@ -247,7 +247,7 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
             <ImageIcon size={28} style={{ color: '#606070' }} />
             <span className="text-[13px] text-[#c0c0d0]">Cliquez ou glissez vos photos ici</span>
             <span className="text-[11px]" style={{ color: '#606070' }}>
-              Jusqu'à {5 - data.galleryBlobs.length} photo{5 - data.galleryBlobs.length > 1 ? 's' : ''} · JPG, PNG, WEBP · Max 5MB chacune
+              Jusqu'à {5 - data.galleryBlobs.length} photo{5 - data.galleryBlobs.length > 1 ? 's' : ''} · JPG, PNG, WEBP · Max 5 Mo chacune
             </span>
           </button>
         )}

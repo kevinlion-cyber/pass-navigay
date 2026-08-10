@@ -63,7 +63,7 @@ export default function ProfileEvents({ userId }: ProfileEventsProps) {
             Aucun evenement a venir pour le moment. Decouvre ce qui se passe !
           </p>
           <button
-            onClick={() => navigate('/events')}
+            onClick={() => navigate('/agenda')}
             className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
           >
             Voir les evenements

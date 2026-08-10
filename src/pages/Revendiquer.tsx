@@ -90,8 +90,8 @@ export default function Revendiquer() {
                 C'est votre établissement ? Connectez-vous (ou créez un compte) pour le revendiquer et le gérer.
               </p>
               <div className="flex flex-col gap-2">
-                <Link to={`/auth/login?redirect=/revendiquer/${estab.id}`} className="btn-primary w-full text-center">Se connecter</Link>
-                <Link to={`/auth/register?redirect=/revendiquer/${estab.id}`} className="w-full text-center text-sm text-primary hover:underline py-2">Créer un compte</Link>
+                <Link to={`/connexion?redirect=/revendiquer/${estab.id}`} className="btn-primary w-full text-center">Se connecter</Link>
+                <Link to={`/inscription?redirect=/revendiquer/${estab.id}`} className="w-full text-center text-sm text-primary hover:underline py-2">Créer un compte</Link>
               </div>
             </div>
           ) : (

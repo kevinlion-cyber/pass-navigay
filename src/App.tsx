@@ -64,6 +64,7 @@ import PartnerReviews from './pages/partner/PartnerReviews';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
 import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
 import RouteTracker from './components/analytics/RouteTracker';
+import LegacyRedirect from './components/LegacyRedirect';
 
 export default function App() {
   return (
@@ -103,53 +104,93 @@ export default function App() {
                 donc le site pour un formulaire plein écran. Ici on reste dedans,
                 et fermer la modale rend simplement la main à l'annuaire.
               */}
-              <Route path="/auth/register" element={<><Explore /><Register /></>} />
-              <Route path="/auth/login" element={<><Explore /><Login /></>} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/events/:eventId" element={<EventDetail />} />
-              <Route path="/promos" element={<Promos />} />
-              <Route path="/promos/:promoId" element={<PromoDetail />} />
+              <Route path="/inscription" element={<><Explore /><Register /></>} />
+              <Route path="/connexion" element={<><Explore /><Login /></>} />
+              <Route path="/explorer" element={<Explore />} />
+              <Route path="/agenda" element={<Events />} />
+              <Route path="/agenda/:eventId" element={<EventDetail />} />
+              <Route path="/promotions" element={<Promos />} />
+              <Route path="/promotions/:promoId" element={<PromoDetail />} />
               <Route path="/lieu/:slug" element={<EstablishmentDetail />} />
-              <Route path="/establishment/:id" element={<EstablishmentDetail />} />
-              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/tarifs" element={<Pricing />} />
               <Route path="/revendiquer/:id" element={<Revendiquer />} />
+
+              {/*
+                Anciennes adresses anglaises : conservées en redirection pour ne
+                casser aucun lien déjà partagé (favoris, réseaux sociaux, Google).
+                `/establishment/:id` reste servie par la fiche elle-même, qui
+                redirige ensuite vers l'URL propre `/lieu/<nom-ville>`.
+              */}
+              <Route path="/establishment/:id" element={<EstablishmentDetail />} />
+              <Route path="/auth/register" element={<LegacyRedirect to="/inscription" />} />
+              <Route path="/auth/login" element={<LegacyRedirect to="/connexion" />} />
+              <Route path="/explore" element={<LegacyRedirect to="/explorer" />} />
+              <Route path="/events" element={<LegacyRedirect to="/agenda" />} />
+              <Route path="/events/:eventId" element={<LegacyRedirect to="/agenda/:eventId" />} />
+              <Route path="/promos" element={<LegacyRedirect to="/promotions" />} />
+              <Route path="/promos/:promoId" element={<LegacyRedirect to="/promotions/:promoId" />} />
+              <Route path="/pricing" element={<LegacyRedirect to="/tarifs" />} />
             </Route>
 
             {/* Espace membre : demande un compte, quel que soit le réglage. */}
             <Route element={<AppLayout requireAuth />}>
-              <Route path="/members" element={<Members />} />
-              <Route path="/establishment/new" element={<EstablishmentForm />} />
-              <Route path="/establishment/:id/edit" element={<EstablishmentForm />} />
-              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/membres" element={<Members />} />
+              <Route path="/ajouter-un-lieu" element={<EstablishmentForm />} />
+              <Route path="/lieu/:id/modifier" element={<EstablishmentForm />} />
+              <Route path="/favoris" element={<Favorites />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/messages/:userId" element={<Conversation />} />
-              <Route path="/profile/settings" element={<ProfileSettings />} />
-              <Route path="/profile/:userId" element={<ProfilePublic />} />
+              <Route path="/profil/parametres" element={<ProfileSettings />} />
+              <Route path="/profil/:userId" element={<ProfilePublic />} />
+
+              {/* Anciennes adresses anglaises de l'espace membre. */}
+              <Route path="/members" element={<LegacyRedirect to="/membres" />} />
+              <Route path="/establishment/new" element={<LegacyRedirect to="/ajouter-un-lieu" />} />
+              <Route path="/establishment/:id/edit" element={<LegacyRedirect to="/lieu/:id/modifier" />} />
+              <Route path="/favorites" element={<LegacyRedirect to="/favoris" />} />
+              <Route path="/profile/settings" element={<LegacyRedirect to="/profil/parametres" />} />
+              <Route path="/profile/:userId" element={<LegacyRedirect to="/profil/:userId" />} />
             </Route>
 
             <Route path="/admin" element={<AdminRoot />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
+              <Route path="statistiques" element={<AdminAnalytics />} />
               <Route path="utilisateurs" element={<AdminUsers />} />
-              <Route path="seo" element={<AdminSeo />} />
-              <Route path="establishments" element={<AdminEstablishments />} />
-              <Route path="drafts" element={<AdminDrafts />} />
+              <Route path="referencement" element={<AdminSeo />} />
+              <Route path="etablissements" element={<AdminEstablishments />} />
+              <Route path="fiches-auto" element={<AdminDrafts />} />
               <Route path="villes" element={<AdminCities />} />
-              <Route path="social" element={<AdminSocial />} />
-              <Route path="claims" element={<AdminClaims />} />
-              <Route path="events" element={<AdminEvents />} />
+              <Route path="reseaux-sociaux" element={<AdminSocial />} />
+              <Route path="revendications" element={<AdminClaims />} />
+              <Route path="evenements" element={<AdminEvents />} />
               <Route path="promotions" element={<AdminPromotions />} />
-              <Route path="members" element={<AdminMembers />} />
-              <Route path="partners" element={<AdminPartners />} />
-              <Route path="gifts" element={<AdminGifts />} />
+              <Route path="membres" element={<AdminMembers />} />
+              <Route path="partenaires" element={<AdminPartners />} />
+              <Route path="cadeaux" element={<AdminGifts />} />
               <Route path="categories" element={<AdminCategories />} />
-              <Route path="pros-landing" element={<AdminProsLanding />} />
-              <Route path="popups" element={<AdminPopups />} />
+              <Route path="page-pros" element={<AdminProsLanding />} />
+              <Route path="fenetres" element={<AdminPopups />} />
               <Route path="tarifs" element={<AdminTarifs />} />
-              <Route path="account" element={<AdminAccount />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="legal" element={<AdminLegal />} />
+              <Route path="mon-compte" element={<AdminAccount />} />
+              <Route path="parametres" element={<AdminSettings />} />
+              <Route path="contenu-legal" element={<AdminLegal />} />
+
+              {/* Anciennes adresses anglaises de l'administration (favoris de Kevin). */}
+              <Route path="analytics" element={<LegacyRedirect to="/admin/statistiques" />} />
+              <Route path="seo" element={<LegacyRedirect to="/admin/referencement" />} />
+              <Route path="establishments" element={<LegacyRedirect to="/admin/etablissements" />} />
+              <Route path="drafts" element={<LegacyRedirect to="/admin/fiches-auto" />} />
+              <Route path="social" element={<LegacyRedirect to="/admin/reseaux-sociaux" />} />
+              <Route path="claims" element={<LegacyRedirect to="/admin/revendications" />} />
+              <Route path="events" element={<LegacyRedirect to="/admin/evenements" />} />
+              <Route path="members" element={<LegacyRedirect to="/admin/membres" />} />
+              <Route path="partners" element={<LegacyRedirect to="/admin/partenaires" />} />
+              <Route path="gifts" element={<LegacyRedirect to="/admin/cadeaux" />} />
+              <Route path="pros-landing" element={<LegacyRedirect to="/admin/page-pros" />} />
+              <Route path="popups" element={<LegacyRedirect to="/admin/fenetres" />} />
+              <Route path="account" element={<LegacyRedirect to="/admin/mon-compte" />} />
+              <Route path="settings" element={<LegacyRedirect to="/admin/parametres" />} />
+              <Route path="legal" element={<LegacyRedirect to="/admin/contenu-legal" />} />
             </Route>
 
             <Route path="/legal" element={<LegalLayout />}>

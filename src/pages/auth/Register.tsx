@@ -184,10 +184,10 @@ export default function Register() {
         // Stripe not configured yet
       }
       toast.success('Bienvenue sur Pass Navigay ! Le paiement Premium sera disponible prochainement.');
-      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explore');
+      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explorer');
     } else {
       toast.success('Bienvenue sur Pass Navigay !');
-      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explore');
+      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explorer');
     }
   };
 
@@ -293,7 +293,7 @@ export default function Register() {
               selectedPlan={selectedPlan}
               onSelect={setSelectedPlan}
               onContinue={() => setTunnelStep('chat')}
-              onSwitchToLogin={() => navigate('/auth/login')}
+              onSwitchToLogin={() => navigate('/connexion')}
               billingInterval={billingInterval}
               onIntervalChange={setBillingInterval}
             />
@@ -413,7 +413,7 @@ export default function Register() {
 
                 <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">
                   Déjà un compte ?{' '}
-                  <Link to="/auth/login" className="text-primary hover:underline font-medium">
+                  <Link to="/connexion" className="text-primary hover:underline font-medium">
                     Connecte-toi
                   </Link>
                 </p>

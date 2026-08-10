@@ -134,9 +134,9 @@ h2 a{color:#1a1a2e}
 footer{border-top:1px solid #eee;padding:24px 20px;color:#999;font-size:13px}footer .wrap{max-width:980px;margin:0 auto}footer a{color:#777}
 .article{max-width:740px;font-size:16px}.article h2{font-size:20px}.article p{margin:0 0 14px}.article ul{padding-left:22px;margin:0 0 14px}.article li{margin:5px 0}.article strong{color:#1a1a2e}
 </style></head><body>
-<header><div class="wrap"><a class="logo" href="/">Pass <span>Navigay</span></a><nav class="top"><a href="/annuaire">Annuaire</a><a href="/guides">Guides</a><a href="/explore">Carte</a><a href="/events">Événements</a></nav></div></header>
+<header><div class="wrap"><a class="logo" href="/">Pass <span>Navigay</span></a><nav class="top"><a href="/annuaire">Annuaire</a><a href="/guides">Guides</a><a href="/explorer">Carte</a><a href="/agenda">Événements</a></nav></div></header>
 <main>${o.body}</main>
-<footer><div class="wrap">Pass Navigay — l'annuaire des lieux LGBT-friendly en France. <a href="/annuaire">Annuaire complet</a> · <a href="/">Accueil</a> · <a href="/explore">Explorer la carte</a></div></footer>
+<footer><div class="wrap">Pass Navigay — l'annuaire des lieux LGBT-friendly en France. <a href="/annuaire">Annuaire complet</a> · <a href="/">Accueil</a> · <a href="/explorer">Explorer la carte</a></div></footer>
 </body></html>`;
   return new Response(html, { status: 200, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
@@ -176,7 +176,7 @@ async function renderIndex(): Promise<Response> {
 <h2>Par ville</h2><div class="links">${cityChips || "<span style='color:#999'>Bientôt disponible</span>"}</div>
 <h2><a href="/guides">Guides & conseils</a></h2>
 <div class="links">${guideChips || `<a class="chip" href="/guides">Voir tous les guides</a>`}</div>
-<p style="margin-top:20px"><a class="cta" href="/explore">Explorer tous les lieux sur la carte</a></p>`;
+<p style="margin-top:20px"><a class="cta" href="/explorer">Explorer tous les lieux sur la carte</a></p>`;
   const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`]])];
   return page({ title: "Annuaire des lieux LGBT-friendly en France | Pass Navigay", description: "L'annuaire Pass Navigay : bars, restaurants, hébergements, saunas et sorties LGBT-friendly ville par ville, partout en France.", canonical: `${SITE}/annuaire`, noindex: all.length === 0, jsonLd, body });
 }
@@ -261,7 +261,7 @@ ${intro || `<p class="lead">Découvrez ${cityRows.length} adresse${cityRows.leng
 ${cityRows.length ? `<h2>Les adresses à ${esc(cityName)}</h2>` : ""}
 ${sections}
 <h2>Explorer d'autres villes</h2><div class="links">${otherCitiesChips}</div>
-<p style="margin-top:20px"><a class="cta" href="/explore">Voir tous les lieux sur la carte</a></p>`;
+<p style="margin-top:20px"><a class="cta" href="/explorer">Voir tous les lieux sur la carte</a></p>`;
   const jsonLd = [breadcrumbLd([["Accueil", SITE + "/"], ["Annuaire", `${SITE}/annuaire`], [cityName, canonical]]), itemListLd(cityRows)];
   const title = cityArt?.title || `Lieux LGBT-friendly à ${cityName} — bars, restaurants, sorties | Pass Navigay`;
   const description = cityArt?.meta_description || `${cityRows.length} lieux LGBT-friendly à ${cityName} : ${catsInCity.map(catLabel).slice(0, 4).join(", ")}. Adresses, avis et communauté sur Pass Navigay.`;

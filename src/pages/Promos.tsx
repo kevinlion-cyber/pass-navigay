@@ -273,7 +273,7 @@ export default function Promos() {
             return (
               <div
                 key={promo.id}
-                onClick={() => navigate(`/promos/${promo.id}`)}
+                onClick={() => navigate(`/promotions/${promo.id}`)}
                 className="card-hover p-4"
               >
                 <div className="flex items-start gap-4">

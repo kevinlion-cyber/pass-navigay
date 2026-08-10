@@ -89,7 +89,7 @@ export default function AdminSocial() {
     const p = new URLSearchParams(window.location.search);
     if (p.get('connected')) toast.success('Instagram + Facebook connectés !');
     if (p.get('meta_error')) toast.error('Connexion Meta : ' + p.get('meta_error'));
-    if (p.get('connected') || p.get('meta_error')) window.history.replaceState({}, '', '/admin/social');
+    if (p.get('connected') || p.get('meta_error')) window.history.replaceState({}, '', '/admin/reseaux-sociaux');
   }, []);
 
   const runNow = async () => {

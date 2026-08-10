@@ -37,14 +37,14 @@ export default function AuthGateModal({ open, onClose, message }: AuthGateModalP
 
         <div className="space-y-3">
           <button
-            onClick={() => { onClose(); navigate('/auth/register'); }}
+            onClick={() => { onClose(); navigate('/inscription'); }}
             className="btn-primary w-full flex items-center justify-center gap-2"
           >
             <UserPlus size={16} />
             Creer mon compte
           </button>
           <button
-            onClick={() => { onClose(); navigate('/auth/login'); }}
+            onClick={() => { onClose(); navigate('/connexion'); }}
             className="btn-secondary w-full flex items-center justify-center gap-2"
           >
             <LogIn size={16} />

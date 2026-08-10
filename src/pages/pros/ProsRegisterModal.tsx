@@ -16,9 +16,9 @@ interface ProsRegisterModalProps {
 const STEP_LABELS = ['Vos infos', 'Votre établissement', 'Vos photos'];
 
 const LOADER_MESSAGES = [
-  'Création de votre compte...',
-  'Enregistrement de votre établissement...',
-  'Upload de vos photos...',
+  'Création de votre compte…',
+  'Enregistrement de votre établissement…',
+  'Envoi de vos photos…',
   'Tout est prêt !',
 ];
 
@@ -30,6 +30,8 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
   const [phase, setPhase] = useState<'form' | 'verify'>('form');
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
   const [step1, setStep1] = useState<Step1Data>({
     prenom: '', nom: '', email: '', phone: '', password: '',
@@ -73,12 +75,36 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       });
       if (authError) throw new Error(translateAuthError(authError));
       if (!authData.user) throw new Error('Erreur lors de la création du compte.');
+
+      // Adresse déjà rattachée à un compte : pour ne pas révéler qui est inscrit,
+      // Supabase répond « créé » MAIS n'envoie aucun code, et renvoie un utilisateur
+      // sans aucune identité. Sans ce test, on affichait l'écran « saisissez le code »
+      // et le gérant attendait un e-mail qui ne partirait jamais (cas vécu en démo).
+      if (Array.isArray(authData.user.identities) && authData.user.identities.length === 0) {
+        setSubmitting(false);
+        setAlreadyRegistered(true);
+        return;
+      }
+
       setSubmitting(false);
       setPhase('verify');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur lors de la création du compte.');
       setSubmitting(false);
     }
+  };
+
+  // Renvoi du code : sans ce bouton, un gérant qui perd l'e-mail (ou ferme la
+  // fenêtre) se retrouvait dans une impasse, son compte existant mais inutilisable.
+  const handleResend = async () => {
+    setResending(true);
+    const { error } = await supabase.auth.resend({ type: 'signup', email: step1.email });
+    setResending(false);
+    if (error) {
+      toast.error(translateAuthError(error));
+      return;
+    }
+    toast.success('Un nouveau code vient de vous être envoyé.');
   };
 
   // Étape 2 : valider le code → une session s'ouvre → on crée profil + établissement + photos.
@@ -93,19 +119,39 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       });
       if (vErr) throw new Error(translateAuthError(vErr));
       const userId = vData.user?.id;
-      if (!userId) throw new Error('Session non établie. Réessaie.');
+      if (!userId) throw new Error('Votre session n\'a pas pu être ouverte. Réessayez.');
 
       setVerifying(false);
       setSubmitting(true);
       setLoaderStep(0);
 
-      await supabase.from('profiles').upsert({
-        id: userId,
-        username: `${step1.prenom} ${step1.nom}`,
-        prenom: step1.prenom,
-        nom: step1.nom,
-        account_type: 'pro',
-      });
+      // Le profil doit exister AVANT l'établissement (`owner_id` pointe dessus).
+      // `username` est unique : deux gérants homonymes faisaient échouer cet
+      // enregistrement en silence, puis l'établissement échouait sur la clé
+      // étrangère avec un message technique en anglais. On suffixe donc jusqu'à
+      // trouver un nom libre, et on remonte une vraie erreur si ça échoue.
+      const baseName = `${step1.prenom} ${step1.nom}`.trim() || step1.email.split('@')[0];
+      let savedProfile = false;
+      for (let attempt = 0; attempt < 5 && !savedProfile; attempt++) {
+        const username = attempt === 0 ? baseName : `${baseName} ${attempt + 1}`;
+        const { error: profileErr } = await supabase.from('profiles').upsert({
+          id: userId,
+          username,
+          prenom: step1.prenom,
+          nom: step1.nom,
+          email: step1.email,
+          phone: step1.phone,
+          account_type: 'pro',
+        });
+        if (!profileErr) { savedProfile = true; break; }
+        // 23505 = nom déjà pris : on retente avec un suffixe. Toute autre erreur est finale.
+        if (profileErr.code !== '23505') {
+          throw new Error("Impossible d'enregistrer votre profil. Réessayez ou contactez-nous.");
+        }
+      }
+      if (!savedProfile) {
+        throw new Error("Impossible d'enregistrer votre profil. Réessayez ou contactez-nous.");
+      }
 
       setLoaderStep(1);
       let logoUrl: string | null = null;
@@ -113,7 +159,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         const { data: logoData, error: logoErr } = await supabase.storage
           .from('establishment-logos')
           .upload(`${userId}/logo_${Date.now()}.jpg`, step3.logoBlob, { contentType: 'image/jpeg', upsert: true });
-        if (logoErr) throw new Error(logoErr.message);
+        if (logoErr) throw new Error("Impossible d'envoyer votre logo. Réessayez.");
         logoUrl = supabase.storage.from('establishment-logos').getPublicUrl(logoData.path).data.publicUrl;
       }
 
@@ -122,7 +168,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         const { data: bannerData, error: bannerErr } = await supabase.storage
           .from('establishment-banners')
           .upload(`${userId}/banner_${Date.now()}.jpg`, step3.bannerBlob, { contentType: 'image/jpeg', upsert: true });
-        if (bannerErr) throw new Error(bannerErr.message);
+        if (bannerErr) throw new Error("Impossible d'envoyer votre bannière. Réessayez.");
         bannerUrl = supabase.storage.from('establishment-banners').getPublicUrl(bannerData.path).data.publicUrl;
       }
 
@@ -151,7 +197,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         is_pro: false,
         is_verified: false,
       }).select('id').single();
-      if (estErr) throw new Error(estErr.message);
+      if (estErr) throw new Error("Impossible d'enregistrer votre établissement. Réessayez ou contactez-nous.");
 
       if (step3.galleryBlobs.length > 0) {
         setLoaderStep(2);
@@ -161,7 +207,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
           const { data: photoData, error: photoErr } = await supabase.storage
             .from('establishment-photos')
             .upload(`${establishment.id}/${filename}`, blob, { contentType: 'image/jpeg' });
-          if (photoErr) throw new Error(photoErr.message);
+          if (photoErr) throw new Error("Impossible d'envoyer vos photos. Réessayez.");
           const photoUrl = supabase.storage.from('establishment-photos').getPublicUrl(photoData.path).data.publicUrl;
           await supabase.from('establishment_photos').insert({
             establishment_id: establishment.id,
@@ -178,7 +224,7 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         body: JSON.stringify({ email: step1.email, username: `${step1.prenom} ${step1.nom}`, type: 'pro' }),
       }).catch(() => {});
       await new Promise((r) => setTimeout(r, 800));
-      toast.success('Bienvenue ! Votre établissement est en cours de validation.');
+      toast.success('Bienvenue ! Votre établissement est en ligne. Complétez votre fiche pour la mettre en valeur.');
       onClose();
       navigate('/pros/tableau-de-bord');
     } catch (err) {
@@ -211,6 +257,41 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
               />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Adresse déjà utilisée : on le dit, avec la sortie (se connecter). Avant, on
+  // affichait l'écran du code et le gérant restait planté devant un champ inutile.
+  if (alreadyRegistered) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4" style={{ zIndex: 1000, background: 'rgba(0,0,0,0.75)' }}>
+        <div
+          className="relative w-full h-full md:w-full md:max-w-[460px] md:h-auto md:rounded-2xl overflow-hidden flex flex-col justify-center p-8 md:p-10 text-center"
+          style={{ background: '#0f0f17', border: '1px solid #1e1e2e', boxShadow: '0 25px 60px rgba(0,0,0,0.7)' }}
+        >
+          <button onClick={onClose} className="absolute top-4 right-5 p-1" style={{ color: '#606070' }} aria-label="Fermer">
+            <X size={20} />
+          </button>
+          <h2 className="text-[20px] font-bold text-white">Cette adresse a déjà un compte</h2>
+          <p className="text-[13px] mt-3" style={{ color: '#a0a0b0' }}>
+            <strong className="text-white">{step1.email}</strong> est déjà inscrite sur Pass Navigay.
+            Connectez-vous avec cette adresse, ou recommencez avec une autre adresse e-mail.
+          </p>
+          <button
+            onClick={onSwitchToLogin}
+            className="w-full mt-6 py-3 rounded-lg bg-[#7B2D8B] text-white text-[15px] font-semibold hover:bg-[#9b3dab] transition-colors"
+          >
+            Me connecter
+          </button>
+          <button
+            onClick={() => { setAlreadyRegistered(false); setStep1({ ...step1, email: '' }); setStep(1); }}
+            className="w-full mt-3 py-2.5 text-[13px] font-medium transition-colors hover:underline"
+            style={{ color: '#a0a0b0' }}
+          >
+            Utiliser une autre adresse
+          </button>
         </div>
       </div>
     );
@@ -252,6 +333,18 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
             >
               {verifying ? 'Vérification…' : 'Valider et créer mon établissement'}
             </button>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="w-full py-2.5 text-[13px] font-medium transition-colors hover:underline disabled:opacity-50"
+              style={{ color: '#a0a0b0' }}
+            >
+              {resending ? 'Envoi en cours…' : "Je n'ai rien reçu, renvoyer le code"}
+            </button>
+            <p className="text-[12px] text-center" style={{ color: '#606070' }}>
+              Pensez à regarder dans vos courriers indésirables. Le code est valable 15 minutes.
+            </p>
           </form>
         </div>
       </div>

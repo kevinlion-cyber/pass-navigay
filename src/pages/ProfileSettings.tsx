@@ -39,7 +39,7 @@ export default function ProfileSettings() {
     return (
       <AuthGateModal
         open={authGateOpen}
-        onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
+        onClose={() => { setAuthGateOpen(false); navigate('/explorer'); }}
         message="Cree ton compte pour acceder a ton profil."
       />
     );

@@ -8,6 +8,10 @@ import type { EstablishmentPhoto } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 
 const MAX_PHOTOS = 20;
+// Limite de poids alignée sur le parcours d'inscription (RegisterStep3) : le texte
+// annonçait « Max 5 Mo chacune » sans qu'aucune vérification soit faite, donc une
+// photo trop lourde partait et échouait avec un message technique en anglais.
+const MAX_PHOTO_MB = 5;
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
@@ -45,15 +49,18 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
-    try {
-      const { data } = await supabase
-        .from('establishment_photos')
-        .select('*')
-        .eq('establishment_id', establishmentId)
-        .order('order_index', { ascending: true });
+    // Le client Supabase ne lève pas d'exception : il renvoie un objet contenant
+    // `error`. Sans le lire, le `catch` ne se déclenchait jamais et la galerie
+    // s'affichait vide comme si le gérant n'avait aucune photo.
+    const { data, error } = await supabase
+      .from('establishment_photos')
+      .select('*')
+      .eq('establishment_id', establishmentId)
+      .order('order_index', { ascending: true });
+    if (error) {
+      toast.error('Vos photos n\'ont pas pu être chargées. Réessayez dans un instant.');
+    } else {
       setPhotos((data as EstablishmentPhoto[]) || []);
-    } catch {
-      toast.error('Erreur lors du chargement de la galerie');
     }
     setLoading(false);
   }, [establishmentId]);
@@ -65,12 +72,12 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     setDeleting(true);
     try {
       const { error } = await supabase.from('establishment_photos').delete().eq('id', deleteTarget.id);
-      if (error) throw error;
+      if (error) throw new Error('Cette photo n\'a pas pu être supprimée. Réessayez dans un instant.');
       toast.success('Photo supprimée');
       setDeleteTarget(null);
       loadPhotos();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      toast.error(err instanceof Error ? err.message : 'Cette photo n\'a pas pu être supprimée. Réessayez dans un instant.');
     }
     setDeleting(false);
   };
@@ -79,11 +86,10 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, caption: value } : p));
     if (captionTimers[photoId]) clearTimeout(captionTimers[photoId]);
     const timer = setTimeout(async () => {
-      try {
-        await supabase.from('establishment_photos').update({ caption: value }).eq('id', photoId);
-      } catch {
-        toast.error('Erreur de sauvegarde de la légende');
-      }
+      // Idem : l'erreur arrive dans la réponse, pas via une exception. Le `catch`
+      // vide laissait le gérant croire que sa légende était enregistrée.
+      const { error } = await supabase.from('establishment_photos').update({ caption: value }).eq('id', photoId);
+      if (error) toast.error('Cette légende n\'a pas pu être enregistrée. Réessayez dans un instant.');
     }, 1000);
     setCaptionTimers(prev => ({ ...prev, [photoId]: timer }));
   };
@@ -103,6 +109,13 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     if (files.length > 10) {
       toast.error('Maximum 10 photos à la fois.');
       return;
+    }
+    for (const f of files) {
+      if (f.size > MAX_PHOTO_MB * 1024 * 1024) {
+        toast.error(`Chaque photo doit faire moins de ${MAX_PHOTO_MB} Mo.`);
+        if (fileRef.current) fileRef.current.value = '';
+        return;
+      }
     }
     const urls = files.map(f => URL.createObjectURL(f));
     setCropQueue(urls);
@@ -170,7 +183,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
                   <img src={photo.url} alt={photo.caption} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
                     <button onClick={() => setDeleteTarget(photo)}
-                      className="w-9 h-9 rounded-full bg-black/60 text-gray-900 dark:text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                      className="w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -189,13 +202,13 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
 
           {pendingPhotos.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-2">En attente d'upload (sera envoyé au clic sur Enregistrer) :</p>
+              <p className="text-xs text-gray-500 mb-2">En attente d'envoi (sera envoyé au clic sur Enregistrer) :</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {pendingPhotos.map((p, i) => (
                   <div key={i} className="relative rounded-[8px] overflow-hidden" style={{ aspectRatio: '4/3' }}>
                     <img src={p.preview} alt="" className="w-full h-full object-cover" />
                     <button onClick={() => removePending(i)}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-gray-900 dark:text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                       <span className="text-sm font-bold">&times;</span>
                     </button>
                   </div>
@@ -214,7 +227,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
               style={{ border: '2px dashed var(--pn-border2)' }}>
               <ImageIcon size={32} className="text-gray-600" />
               <span className="text-sm text-gray-400 font-medium">Ajoutez vos premières photos</span>
-              <span className="text-xs text-gray-600">JPG, PNG, WEBP - Jusqu'à 10 photos à la fois - Max 5MB chacune</span>
+              <span className="text-xs text-gray-600">JPG, PNG, WEBP - Jusqu'à 10 photos à la fois - Max {MAX_PHOTO_MB} Mo chacune</span>
               <span className="mt-2 text-sm font-semibold text-white px-6 py-2 rounded-[8px]" style={{ background: '#7B2D8B' }}>
                 Choisir des photos
               </span>
@@ -241,7 +254,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
               Recadrez la photo {cropIndex + 1}/{cropQueue.length}
             </span>
             <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
-              className="text-[#606070] hover:text-gray-900 dark:text-white transition-colors text-sm">
+              className="text-[#606070] hover:text-gray-900 dark:hover:text-white transition-colors text-sm">
               Annuler tout
             </button>
           </div>
@@ -263,7 +276,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
                 Annuler
               </button>
               <button onClick={handleCropValidate}
-                className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
+                className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90"
                 style={{ background: '#7B2D8B' }}>
                 Valider
               </button>

@@ -48,7 +48,7 @@ export default function Favorites() {
       <div className="max-w-2xl mx-auto p-4 space-y-4">
         <AuthGateModal
           open={authGateOpen}
-          onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
+          onClose={() => { setAuthGateOpen(false); navigate('/explorer'); }}
           message="Crée ton compte pour sauvegarder tes lieux favoris."
         />
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -77,7 +77,7 @@ export default function Favorites() {
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Heart size={48} className="mx-auto mb-4 opacity-30" />
           <p>Tu n'as pas encore de favoris.</p>
-          <button onClick={() => navigate('/explore')} className="btn-primary mt-4">
+          <button onClick={() => navigate('/explorer')} className="btn-primary mt-4">
             Explorer
           </button>
         </div>

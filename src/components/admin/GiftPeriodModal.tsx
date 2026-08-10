@@ -22,7 +22,7 @@ const PRESETS = [
   { label: '3 mois', days: 90 },
   { label: '6 mois', days: 180 },
   { label: '1 an', days: 365 },
-  { label: 'Personnalise', days: -1 },
+  { label: 'Personnalisé', days: -1 },
 ];
 
 function formatDateFr(date: Date): string {
@@ -49,7 +49,7 @@ export default function GiftPeriodModal({
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const isCustom = selectedPreset === 'Personnalise';
+  const isCustom = selectedPreset === 'Personnalisé';
   const daysToAdd = isCustom
     ? customDays
     : PRESETS.find((p) => p.label === selectedPreset)?.days ?? 30;
@@ -87,7 +87,7 @@ export default function GiftPeriodModal({
 
   const handleSubmit = async () => {
     if (daysToAdd < 1 || daysToAdd > 365) {
-      toast.error('La duree doit etre entre 1 et 365 jours.');
+      toast.error('La durée doit être entre 1 et 365 jours.');
       return;
     }
     setSubmitting(true);
@@ -136,7 +136,7 @@ export default function GiftPeriodModal({
 
       if (logError) throw logError;
 
-      toast.success(`${label} offert a ${recipientName} jusqu'au ${formatDateFr(newExpiry)} !`);
+      toast.success(`${label} offert à ${recipientName} jusqu'au ${formatDateFr(newExpiry)} !`);
       onSuccess();
       onClose();
     } catch (err) {
@@ -170,7 +170,7 @@ export default function GiftPeriodModal({
         <div className="flex items-center gap-2 mb-6">
           <Gift size={20} className="text-[#c084f5]" />
           <h2 className="text-[18px] font-bold text-white leading-tight">
-            Offrir une periode {label} a {recipientName}
+            Offrir une période {label} à {recipientName}
           </h2>
         </div>
 
@@ -196,7 +196,7 @@ export default function GiftPeriodModal({
 
         <div className="mb-4">
           <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-2">
-            Duree a offrir
+            Durée à offrir
           </label>
           <select
             value={selectedPreset}
@@ -231,7 +231,7 @@ export default function GiftPeriodModal({
         >
           {hasActiveExpiry ? (
             <p className="text-[13px] text-gray-400">
-              La periode sera prolongee jusqu'au{' '}
+              La période sera prolongée jusqu'au{' '}
               <span className="font-semibold text-[#c084f5]">{formatDateFr(endDate)}</span>
             </p>
           ) : (
@@ -246,13 +246,13 @@ export default function GiftPeriodModal({
 
         <div className="mb-6">
           <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-2">
-            Note interne (optionnel)
+            Note interne (facultatif)
           </label>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Ex: Partenaire test, influenceur, lot concours..."
+            placeholder="Ex. : partenaire test, influenceur, lot concours…"
             className="w-full rounded-lg px-3 py-2.5 text-[14px] text-white placeholder:text-[#404050] outline-none"
             style={{ background: '#1a1a24', border: '1px solid #2a2a3a' }}
           />

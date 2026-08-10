@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Search, X, Store } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCategories } from '../contexts/CategoriesContext';
-import { useCoveredCities } from '../lib/cities';
+import { useCoveredCities, slugifyCity } from '../lib/cities';
 import type { Event, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -78,7 +78,13 @@ export default function Events() {
     if (themeFilter !== 'Tous' && e.theme?.toLowerCase() !== themeFilter.toLowerCase()) return false;
     if (priceFilter === 'free' && !e.is_free) return false;
     if (priceFilter === 'paid' && e.is_free) return false;
-    if (cityFilter !== 'all' && e.establishment?.city_slug !== cityFilter) return false;
+    // Ville : celle de l'établissement, ou celle saisie pour un événement
+    // organisé ailleurs (sinon ces événements n'apparaissaient dans aucune ville).
+    if (cityFilter !== 'all') {
+      const evCity = e.establishment?.city_slug
+        || (e.custom_city ? slugifyCity(e.custom_city) : null);
+      if (evCity !== cityFilter) return false;
+    }
     if (catFilter !== 'all' && e.establishment?.category !== catFilter) return false;
     if (subcatFilter !== 'all' && e.establishment?.subcategory !== subcatFilter) return false;
     if (dateFrom && new Date(e.event_date) < new Date(dateFrom)) return false;
@@ -208,7 +214,7 @@ export default function Events() {
             return (
               <div
                 key={event.id}
-                onClick={() => navigate(`/events/${event.id}`)}
+                onClick={() => navigate(`/agenda/${event.id}`)}
                 className="card-hover flex gap-4 p-4"
               >
                 <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">

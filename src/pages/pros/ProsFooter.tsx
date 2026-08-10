@@ -16,7 +16,7 @@ export default function ProsFooter() {
           <Link to="/legal/cgu" className="transition-colors hover:text-[#c084f5]">CGU</Link>
           <Link to="/legal/confidentialite" className="transition-colors hover:text-[#c084f5]">Politique de confidentialité</Link>
           <Link to="/legal/contact" className="transition-colors hover:text-[#c084f5]">Contact</Link>
-          <Link to="/explore" className="transition-colors hover:text-[#c084f5]">Retour sur l&rsquo;app</Link>
+          <Link to="/explorer" className="transition-colors hover:text-[#c084f5]">Retour sur l&rsquo;app</Link>
         </div>
       </div>
     </footer>

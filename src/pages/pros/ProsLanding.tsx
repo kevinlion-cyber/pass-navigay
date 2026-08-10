@@ -28,7 +28,7 @@ export default function ProsLanding() {
     <div className="pros-page" style={{ fontFamily: "'Inter', sans-serif" }}>
       <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-6" style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
         <div className="max-w-[1200px] w-full mx-auto flex items-center justify-between">
-          <Link to="/explore" className="flex items-center gap-2">
+          <Link to="/explorer" className="flex items-center gap-2">
             <img src="/logo.png?v=2" alt="" className="h-9" />
             <span className="text-[20px] font-bold">
               <span className="text-white">Pass</span>{' '}

@@ -323,7 +323,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       let newLogoUrl = logoUrl;
 
       if (croppedBanner) {
-        setUploadProgress('Upload banniere...');
+        setUploadProgress('Envoi de la bannière…');
         const filename = `${Date.now()}.jpg`;
         const { error } = await supabase.storage.from('establishment-banners').upload(`${targetId}/${filename}`, croppedBanner, { contentType: 'image/jpeg', upsert: true });
         if (error) throw error;
@@ -332,7 +332,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       }
 
       if (croppedLogo) {
-        setUploadProgress('Upload logo...');
+        setUploadProgress('Envoi du logo…');
         const filename = `${Date.now()}.jpg`;
         const { error } = await supabase.storage.from('establishment-logos').upload(`${targetId}/${filename}`, croppedLogo, { contentType: 'image/jpeg', upsert: true });
         if (error) throw error;
@@ -342,7 +342,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
 
       if (pendingPhotos.length > 0) {
         for (let i = 0; i < pendingPhotos.length; i++) {
-          setUploadProgress(`Upload galerie... (${i + 1}/${pendingPhotos.length})`);
+          setUploadProgress(`Envoi de la galerie… (${i + 1}/${pendingPhotos.length})`);
           const filename = `${Date.now()}_${i}.jpg`;
           const { error: upErr } = await supabase.storage.from('establishment-photos').upload(`${targetId}/${filename}`, pendingPhotos[i].blob, { contentType: 'image/jpeg', upsert: false });
           if (upErr) throw upErr;
@@ -380,12 +380,12 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
         await supabase.from('establishments').update({ banner_url: newBannerUrl, logo_url: newLogoUrl }).eq('id', targetId);
       }
 
-      toast.success(isNew ? 'Etablissement cree !' : 'Etablissement mis a jour !');
+      toast.success(isNew ? 'Établissement créé !' : 'Établissement mis à jour !');
       onClose();
       onRefresh();
     } catch (err) {
       setUploadProgress(null);
-      toast.error((err instanceof Error ? err.message : 'Erreur') || "Erreur lors de l'upload de l'image.");
+      toast.error((err instanceof Error ? err.message : 'Erreur') || "Erreur lors de l'envoi de l'image.");
     }
     setSaving(false);
   };
@@ -394,7 +394,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
     <>
       <AdminEditSidebar
         open={!!establishmentId}
-        title={isNew ? "Creer un etablissement" : "Modifier l'etablissement"}
+        title={isNew ? "Créer un établissement" : "Modifier l'établissement"}
         loading={loading}
         saving={saving}
         onClose={onClose}
@@ -411,20 +411,20 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           currentImageUrl={bannerUrl}
           onImageCropped={(blob) => setCroppedBanner(blob)}
           aspectRatio={16 / 9}
-          label="BANNIERE (format 16:9)"
-          hint="Cette image apparait en haut de la fiche etablissement."
+          label="BANNIÈRE (format 16:9)"
+          hint="Cette image apparaît en haut de la fiche établissement."
         />
 
         <ImageUploadWithCrop
           currentImageUrl={logoUrl}
           onImageCropped={(blob) => setCroppedLogo(blob)}
           aspectRatio={1}
-          label="LOGO (format carre 1:1)"
-          hint="Affiche en vignette dans les listes et sur la carte."
+          label="LOGO (format carré 1:1)"
+          hint="Affiché en vignette dans les listes et sur la carte."
         />
 
         <div className="mb-2 mt-6">
-          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Informations generales</p>
+          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Informations générales</p>
         </div>
 
         <SidebarField label="Nom" error={errors.name}>
@@ -438,12 +438,12 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           </div>
         </SidebarField>
 
-        <SidebarField label="Telephone">
+        <SidebarField label="Téléphone">
           <SidebarInput value={form.phone} onChange={(v) => set('phone', v)} type="tel" />
         </SidebarField>
 
         <SidebarField label="Site web">
-          <SidebarInput value={form.website} onChange={(v) => set('website', v)} type="url" placeholder="https://..." />
+          <SidebarInput value={form.website} onChange={(v) => set('website', v)} type="url" placeholder="https://…" />
         </SidebarField>
 
         <div className="mb-2 mt-6">
@@ -480,26 +480,26 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
         <p className="text-[11px] text-[#606070] italic mb-5">
           Page où la fiche apparaîtra. Laissez vide pour reprendre la ville de l'adresse
           {slugifyCity(form.city) ? ` (« ${slugifyCity(form.city)} »)` : ''}. Choisissez une ville existante dans la
-          liste, ou tapez-en une nouvelle pour ouvrir une page.
+          liste, ou saisissez-en une nouvelle pour ouvrir une page.
         </p>
 
-        <p className="text-[11px] text-[#606070] italic mb-5">Les coordonnees GPS seront recalculees automatiquement.</p>
+        <p className="text-[11px] text-[#606070] italic mb-5">Les coordonnées GPS seront recalculées automatiquement.</p>
 
         <div className="mb-2 mt-6">
-          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Categorisation</p>
+          <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Catégorisation</p>
         </div>
 
-        <SidebarField label="Categorie">
+        <SidebarField label="Catégorie">
           <SidebarSelect value={form.category} onChange={(v) => set('category', v)} options={categoryOptions} />
         </SidebarField>
 
-        <SidebarField label="Sous-categorie">
+        <SidebarField label="Sous-catégorie">
           <SidebarInput value={form.subcategory} onChange={(v) => set('subcategory', v)} />
         </SidebarField>
 
         <div className="mb-2 mt-6">
           <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Galerie photos</p>
-          <p className="text-[11px] text-[#606070] mt-1">Photos supplementaires affichees sur la fiche. Maximum 20 photos.</p>
+          <p className="text-[11px] text-[#606070] mt-1">Photos supplémentaires affichées sur la fiche. Maximum 20 photos.</p>
         </div>
 
         {galleryPhotos.length > 0 && (
@@ -520,7 +520,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
 
         {pendingPhotos.length > 0 && (
           <div className="mb-3">
-            <p className="text-[11px] text-[#a0a0b0] mb-2">En attente d'upload :</p>
+            <p className="text-[11px] text-[#a0a0b0] mb-2">En attente d'envoi :</p>
             <div className="grid grid-cols-3 gap-2">
               {pendingPhotos.map((p, i) => (
                 <div key={i} className="relative">
@@ -546,7 +546,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             style={{ border: '2px dashed #2a2a3a', padding: 20 }}
           >
             <Camera size={22} className="text-[#606070]" />
-            <span className="text-[13px] text-[#606070]">Ajouter des photos (max 10 a la fois)</span>
+            <span className="text-[13px] text-[#606070]">Ajouter des photos (max. 10 à la fois)</span>
           </button>
         ) : (
           <p className="text-[12px] text-[#c0392b] mb-5">Limite de 20 photos atteinte.</p>
@@ -627,7 +627,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           style={{ background: '#7B2D8B', color: '#fff' }}
         >
           <Gift size={16} />
-          Offrir une periode Pro
+          Offrir une période Pro
         </button>
       </AdminEditSidebar>
 
@@ -664,7 +664,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
                 Annuler
               </button>
               <button onClick={handleGalleryCropValidate} className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90" style={{ background: '#7B2D8B' }}>
-                Valider le crop {galleryCropQueue.length > 0 && `(${galleryCropQueue.length} restant${galleryCropQueue.length > 1 ? 's' : ''})`}
+                Valider le recadrage {galleryCropQueue.length > 0 && `(${galleryCropQueue.length} restant${galleryCropQueue.length > 1 ? 's' : ''})`}
               </button>
             </div>
           </div>
@@ -674,7 +674,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       <ConfirmModal
         open={!!deletePhotoId}
         title="Supprimer cette photo ?"
-        message="Cette photo sera definitivement supprimee de la galerie."
+        message="Cette photo sera définitivement supprimée de la galerie."
         confirmLabel="Supprimer"
         onCancel={() => { setDeletePhotoId(null); setDeletePhotoUrl(null); }}
         onConfirm={confirmDeletePhoto}
@@ -687,7 +687,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           onClose={() => setGiftOpen(false)}
           onSuccess={() => { loadData(); onRefresh(); }}
           recipientId={establishmentId}
-          recipientName={form.name || 'cet etablissement'}
+          recipientName={form.name || 'cet établissement'}
           recipientType="establishment"
           giftType="pro"
           currentlyActive={isPro}

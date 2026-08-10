@@ -6,14 +6,14 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 
 const NAV_TABS = [
-  { path: '/explore', label: 'Lieux' },
-  { path: '/events', label: 'Événements' },
-  { path: '/promos', label: 'Promos' },
-  { path: '/members', label: 'Membres' },
+  { path: '/explorer', label: 'Lieux' },
+  { path: '/agenda', label: 'Événements' },
+  { path: '/promotions', label: 'Promos' },
+  { path: '/membres', label: 'Membres' },
   { path: '/messages', label: 'Messages', authOnly: true },
 ];
 
-const MAIN_PATHS = ['/explore', '/events', '/promos', '/members', '/messages'];
+const MAIN_PATHS = ['/explorer', '/agenda', '/promotions', '/membres', '/messages'];
 
 export default function Header() {
   const { user, profile } = useAuth();
@@ -70,7 +70,7 @@ export default function Header() {
               <ChevronLeft size={24} />
             </button>
           )}
-          <Link to="/explore" className="flex items-center gap-2">
+          <Link to="/explorer" className="flex items-center gap-2">
             <img src="/logo.png?v=2" alt="" className="h-10" />
             <span className="text-lg font-extrabold leading-none">
               <span className="text-gray-900 dark:text-white">Pass</span>
@@ -143,7 +143,7 @@ export default function Header() {
                 )}
               </button>
               <button
-                onClick={() => navigate('/profile/settings')}
+                onClick={() => navigate('/profil/parametres')}
                 className="w-8 h-8 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center transition-transform hover:scale-105"
               >
                 {profile?.avatar_url ? (
@@ -157,7 +157,7 @@ export default function Header() {
             </div>
           ) : (
             <button
-              onClick={() => navigate('/auth/login')}
+              onClick={() => navigate('/connexion')}
               className="btn-primary text-sm py-2 px-4"
             >
               Connexion

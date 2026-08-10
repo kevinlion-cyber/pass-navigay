@@ -67,6 +67,11 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
   const handleNext = async () => {
     if (!validate()) return;
     setChecking(true);
+    // Contr\u00f4le indicatif. Il ne peut pas \u00eatre exhaustif : la table des profils
+    // n'est pas lisible pour un visiteur non connect\u00e9, et les anciens comptes
+    // n'ont pas d'adresse enregistr\u00e9e dedans. La d\u00e9tection qui fait foi est
+    // faite \u00e0 la cr\u00e9ation du compte, dans ProsRegisterModal, qui affiche alors
+    // un \u00e9cran \u00ab cette adresse a d\u00e9j\u00e0 un compte \u00bb au lieu de demander un code.
     try {
       const { data: existing } = await supabase
         .from('profiles')
@@ -74,12 +79,12 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
         .eq('email', data.email)
         .maybeSingle();
       if (existing) {
-        toast.error('Cet email est d\u00e9j\u00e0 utilis\u00e9. Connectez-vous plut\u00f4t.');
+        toast.error('Cette adresse a d\u00e9j\u00e0 un compte. Connectez-vous plut\u00f4t.');
         setChecking(false);
         return;
       }
     } catch {
-      // profiles may not have email column, proceed
+      // Lecture impossible : on laisse passer, le contr\u00f4le d\u00e9finitif a lieu ensuite.
     }
     setChecking(false);
     onNext();

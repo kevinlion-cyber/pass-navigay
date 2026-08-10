@@ -48,7 +48,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/explore');
+    navigate('/explorer');
   };
 
   const handleDeleteAccount = async () => {
@@ -100,7 +100,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         <div className="border-t border-light-border dark:border-dark-border" />
 
         <button
-          onClick={() => navigate('/pricing')}
+          onClick={() => navigate('/tarifs')}
           className="flex items-center gap-3 w-full text-left py-1"
         >
           <Crown size={16} className={profile.is_premium ? 'text-amber-500' : 'text-gray-400'} />

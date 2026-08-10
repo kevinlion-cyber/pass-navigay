@@ -53,7 +53,7 @@ export default function AdminMembers() {
     try {
       const { error } = await supabase.from('profiles').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      toast.error(`Compte de ${deleteTarget.username} supprime.`);
+      toast.error(`Compte de ${deleteTarget.username} supprimé.`);
       setDeleteTarget(null);
       load();
     } catch (err) {
@@ -69,7 +69,7 @@ export default function AdminMembers() {
       toast.error('Erreur');
       return;
     }
-    toast.success(newVal ? 'Compte verifie' : 'Verification retiree');
+    toast.success(newVal ? 'Compte vérifié' : 'Vérification retirée');
     load();
   };
 
@@ -80,7 +80,7 @@ export default function AdminMembers() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Membres</h1>
         <button onClick={() => setShowCreate(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
-          <Plus size={16} /> Creer un membre
+          <Plus size={16} /> Créer un membre
         </button>
       </div>
 
@@ -105,7 +105,7 @@ export default function AdminMembers() {
         )}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, prenom ou email..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, prénom ou e-mail…" className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>}
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function AdminMembers() {
       {loading ? (
         <div className="space-y-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
       ) : members.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun membre trouve.</p>
+        <p className="text-center text-gray-500 py-12">Aucun membre trouvé.</p>
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
@@ -121,11 +121,11 @@ export default function AdminMembers() {
               <thead>
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Avatar</th>
-                  <th className="py-3 px-3">Prenom</th>
+                  <th className="py-3 px-3">Prénom</th>
                   <th className="py-3 px-3">Nom</th>
-                  <th className="py-3 px-3">Email</th>
+                  <th className="py-3 px-3">E-mail</th>
                   <th className="py-3 px-3">Premium</th>
-                  <th className="py-3 px-3">Verifie</th>
+                  <th className="py-3 px-3">Vérifié</th>
                   <th className="py-3 px-3">Inscrit le</th>
                   <th className="py-3 px-3">Actions</th>
                 </tr>
@@ -204,8 +204,8 @@ export default function AdminMembers() {
       <ConfirmModal
         open={!!deleteTarget}
         title={`Supprimer le compte de ${deleteTarget?.username} ?`}
-        message="Cette action est irreversible. Toutes les donnees de ce membre seront definitivement supprimees."
-        confirmLabel="Supprimer definitivement"
+        message="Cette action est irréversible. Toutes les données de ce membre seront définitivement supprimées."
+        confirmLabel="Supprimer définitivement"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         loading={deleting}
@@ -242,7 +242,7 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
           email,
         });
       }
-      toast.success('Membre cree !');
+      toast.success('Membre créé !');
       onCreated();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');
@@ -254,13 +254,13 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6 w-full max-w-md space-y-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Creer un membre</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Créer un membre</h2>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Email</label>
+          <label className="block text-sm text-gray-400 mb-1">E-mail</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Username</label>
+          <label className="block text-sm text-gray-400 mb-1">Nom d'utilisateur</label>
           <input value={username} onChange={(e) => setUsername(e.target.value)} className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
         </div>
         <div>
@@ -269,7 +269,7 @@ function CreateMemberModal({ onClose, onCreated }: { onClose: () => void; onCrea
         </div>
         <div className="flex items-center gap-3 pt-2">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-input border border-light-border dark:border-dark-border text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors">Annuler</button>
-          <button onClick={handleCreate} disabled={loading} className="flex-1 btn-primary text-sm py-2.5">{loading ? 'Creation...' : 'Creer'}</button>
+          <button onClick={handleCreate} disabled={loading} className="flex-1 btn-primary text-sm py-2.5">{loading ? 'Création…' : 'Créer'}</button>
         </div>
       </div>
     </div>

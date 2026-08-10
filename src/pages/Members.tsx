@@ -149,7 +149,7 @@ export default function Members() {
           {(isPremium ? filtered : filtered.slice(0, 6)).map((member) => (
             <button
               key={member.id}
-              onClick={() => navigate(`/profile/${member.id}`)}
+              onClick={() => navigate(`/profil/${member.id}`)}
               className="group relative rounded-2xl border border-light-border dark:border-dark-border
                          bg-light-surface dark:bg-dark-surface p-4 text-center
                          hover:border-primary/40 hover:shadow-lg transition-all duration-200

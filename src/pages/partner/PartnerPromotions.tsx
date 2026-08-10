@@ -36,6 +36,11 @@ interface PromoForm {
   image_url: string;
 }
 
+// Date « sans fin » des promotions permanentes, au même format ISO (avec fuseau)
+// que les autres dates envoyées à Postgres : une chaîne sans fuseau serait
+// interprétée dans le fuseau du serveur, pas dans celui du gérant.
+const PERMANENT_UNTIL_ISO = new Date('2099-12-31T23:59:59').toISOString();
+
 const EMPTY_FORM: PromoForm = {
   title: '',
   description: '',
@@ -64,12 +69,15 @@ export default function PartnerPromotions() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from('promotions').select('*')
+      // Supabase ne lève pas d'exception : l'erreur arrive dans `error`. Sans ce test,
+      // le gérant verrait « aucune promotion » alors que le chargement a échoué.
+      const { data, error } = await supabase.from('promotions').select('*')
         .eq('establishment_id', establishment.id)
         .order('created_at', { ascending: false });
+      if (error) throw error;
       setPromos((data as Promotion[]) || []);
     } catch {
-      toast.error('Erreur lors du chargement des promotions');
+      toast.error('Impossible de charger vos promotions. Vérifiez votre connexion.');
     }
     setLoading(false);
   }, [establishment.id]);
@@ -135,6 +143,11 @@ export default function PartnerPromotions() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+    // Sans valeur, la promotion s'afficherait « Offre » au lieu de « -20 % ».
+    if (form.promo_type !== 'offer' && !(form.value > 0)) {
+      toast.error('Indiquez la valeur de votre réduction.');
+      return;
+    }
     if (!form.is_permanent) {
       if (!form.valid_from || !form.valid_until) {
         toast.error('Renseignez les dates de validité ou cochez "Promotion permanente"');
@@ -157,15 +170,23 @@ export default function PartnerPromotions() {
         image_url = urlData.publicUrl;
       }
 
+      // Le texte de l'offre spéciale est stocké dans `description` : c'est déjà là que
+      // openEdit va le relire. On ne remplace la description classique que si le gérant
+      // a effectivement rempli « Décrivez l'offre », sinon on la conserve telle quelle.
+      const offerText = form.offer_text.trim();
+      const description = form.promo_type === 'offer' && offerText
+        ? offerText
+        : form.description.trim();
+
       const payload = {
         establishment_id: establishment.id,
         title: form.title.trim(),
-        description: form.description.trim(),
+        description,
         promo_type: form.promo_type,
         value: form.promo_type === 'offer' ? null : form.value,
         is_permanent: form.is_permanent,
         valid_from: form.is_permanent ? new Date().toISOString() : new Date(form.valid_from).toISOString(),
-        valid_until: form.is_permanent ? '2099-12-31T23:59:59' : new Date(form.valid_until).toISOString(),
+        valid_until: form.is_permanent ? PERMANENT_UNTIL_ISO : new Date(form.valid_until).toISOString(),
         is_recurring: form.recurrence !== 'none',
         recurrence_rule: form.recurrence === 'none' ? '' : form.recurrence,
         max_uses: null,
@@ -180,7 +201,7 @@ export default function PartnerPromotions() {
       } else {
         const { error } = await supabase.from('promotions').insert({ ...payload, current_uses: 0 });
         if (error) throw error;
-        toast.success("Promotion lancée ! Elle est maintenant visible dans l'onglet Promos.");
+        toast.success("Promotion lancée ! Elle est maintenant visible dans l'onglet Promotions.");
       }
       setFormOpen(false);
       load();
@@ -239,7 +260,7 @@ export default function PartnerPromotions() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editing ? 'Modifier la promotion' : 'Nouvelle promotion'}
               </h2>
-              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
+              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -316,7 +337,7 @@ export default function PartnerPromotions() {
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <ToggleSwitch checked={form.is_permanent} onChange={v => setForm({ ...form, is_permanent: v })} />
-                  <span className="text-sm text-gray-300">Promotion permanente (sans date de fin)</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Promotion permanente (sans date de fin)</span>
                 </label>
               </div>
 
@@ -364,7 +385,7 @@ export default function PartnerPromotions() {
                   Annuler
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: '#7B2D8B' }}>
                   {saving && <LoadingSpinner size={16} />}
                   {editing ? 'Enregistrer' : 'Lancer la promotion'}
@@ -395,7 +416,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
       </p>
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 text-sm text-gray-400">
         <span className="flex items-center gap-1.5">
-          <Check size={14} style={{ color: '#1a7a3a' }} /> Visible immédiatement dans l'onglet Promos
+          <Check size={14} style={{ color: '#1a7a3a' }} /> Visible immédiatement dans l'onglet Promotions
         </span>
         <span className="flex items-center gap-1.5">
           <Check size={14} style={{ color: '#1a7a3a' }} /> Permanente ou ponctuelle
@@ -405,7 +426,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
         </span>
       </div>
       <button onClick={onAction}
-        className="py-3 px-8 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
+        className="py-3 px-8 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90"
         style={{ background: '#7B2D8B' }}>
         + Créer ma première promotion
       </button>
@@ -508,11 +529,11 @@ function PromoCard({
             <Power size={13} /> {isActive ? 'Désactiver' : 'Activer'}
           </button>
           <button onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:hover:bg-dark-border">
             <Pencil size={13} /> Modifier
           </button>
           <button onClick={onDuplicate}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:hover:bg-dark-border">
             <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}

@@ -6,6 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import toast from 'react-hot-toast';
+// Prix : même source que la landing Pros (app_settings.pros_landing, éditable dans
+// /admin/tarifs). Ils étaient écrits en dur ici, donc les deux écrans pouvaient
+// annoncer des tarifs différents — et la remise « -20 % » affichée était fausse.
+import { useProsContent } from '../pros/useProsContent';
+import { yearlySavings } from '../pros/prosContent';
+
+// Formatage euro identique à la grille tarifaire publique (ProsPricing).
+const fmtEur = (n: number) =>
+  Number.isInteger(n) ? `${n}€` : `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`;
 
 interface PartnerContext {
   establishment: Establishment;
@@ -39,6 +48,42 @@ export default function PartnerSubscription() {
   const formatDate = (d: Date) =>
     d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
+  // Ouvre l'espace de facturation Stripe (portail client). C'est le seul endroit où
+  // l'abonnement se gère et se résilie : on n'annule jamais un abonnement nous-mêmes.
+  const openBillingPortal = async () => {
+    if (!establishment.stripe_customer_id) {
+      toast.error('Aucun abonnement Stripe trouvé pour cet établissement.');
+      return;
+    }
+    setManageLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({
+          establishmentId: establishment.id,
+          returnUrl: window.location.href,
+        }),
+      });
+      const data = await res.json();
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        return;
+      }
+      toast.error(data?.error || "L'espace de facturation n'a pas pu être ouvert. Réessayez dans un instant.");
+    } catch {
+      toast.error('Erreur de connexion. Vérifiez votre connexion et réessayez.');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
   if (!establishment.is_pro) {
     return <FreeView establishment={establishment} />;
   }
@@ -71,45 +116,13 @@ export default function PartnerSubscription() {
       </div>
 
       <button
-        onClick={async () => {
-          if (!establishment.stripe_customer_id) {
-            toast.error('Aucun abonnement Stripe trouve');
-            return;
-          }
-          setManageLoading(true);
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`;
-            const res = await fetch(apiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${session?.access_token ?? ''}`,
-              },
-              body: JSON.stringify({
-                establishmentId: establishment.id,
-                returnUrl: window.location.href,
-              }),
-            });
-            const data = await res.json();
-            if (data?.url) {
-              window.open(data.url, '_blank');
-              return;
-            }
-            toast.error(data?.error || 'Erreur');
-          } catch {
-            toast.error('Erreur de connexion');
-          } finally {
-            setManageLoading(false);
-          }
-        }}
+        onClick={openBillingPortal}
         disabled={manageLoading}
         className="w-full py-3.5 rounded-input text-sm font-semibold transition-colors hover:opacity-90 flex items-center justify-center gap-2"
         style={{ background: 'transparent', border: '1px solid #7B2D8B', color: '#7B2D8B' }}
       >
         {manageLoading && <Loader2 size={16} className="animate-spin" />}
-        Gerer mon abonnement
+        Gérer mon abonnement
       </button>
 
       <div className="rounded-card p-6" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
@@ -131,8 +144,9 @@ export default function PartnerSubscription() {
       <div className="rounded-input p-5" style={{ background: 'rgba(192,57,43,0.05)', border: '1px solid rgba(192,57,43,0.2)' }}>
         <h3 className="text-sm font-medium mb-2" style={{ color: '#c0392b' }}>Résilier mon abonnement</h3>
         <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-          Si vous résiliez, votre profil repassera en Gratuit à la fin de votre période en cours.
-          Vous perdrez l'accès à la galerie, aux événements et aux promotions.
+          La résiliation se fait dans votre espace de facturation sécurisé Stripe.
+          Votre profil repassera en Gratuit à la fin de votre période en cours :
+          vous perdrez alors l'accès à la galerie, aux événements et aux promotions.
         </p>
         <button onClick={() => setCancelOpen(true)}
           className="py-2.5 px-5 rounded-input text-sm font-medium transition-colors hover:opacity-90"
@@ -141,13 +155,19 @@ export default function PartnerSubscription() {
         </button>
       </div>
 
+      {/* La résiliation elle-même se fait dans le portail Stripe : ce bouton n'annulait
+          rien, le gérant croyait avoir résilié. Il ouvre désormais l'espace de facturation. */}
       <ConfirmModal
         open={cancelOpen}
-        title="Confirmer la résiliation"
-        message={`Êtes-vous sûr de vouloir résilier ? Vous perdrez vos avantages Pro le ${expiresAt ? formatDate(expiresAt) : ''}.`}
-        confirmLabel="Confirmer la résiliation"
+        title="Résilier mon abonnement"
+        message={`La résiliation se fait dans votre espace de facturation sécurisé Stripe, qui va s'ouvrir dans un nouvel onglet. Vous y trouverez le bouton pour arrêter votre abonnement. Vos avantages Pro restent actifs${expiresAt ? ` jusqu'au ${formatDate(expiresAt)}` : ''}.`}
+        confirmLabel="Ouvrir mon espace de facturation"
+        loading={manageLoading}
         onCancel={() => setCancelOpen(false)}
-        onConfirm={() => setCancelOpen(false)}
+        onConfirm={async () => {
+          await openBillingPortal();
+          setCancelOpen(false);
+        }}
       />
     </div>
   );
@@ -157,6 +177,14 @@ function FreeView({ establishment }: { establishment: Establishment }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
+  const { content } = useProsContent();
+
+  // Tarifs réels (configurables) : l'économie et la remise sont calculées, jamais
+  // écrites en dur, pour qu'elles ne puissent plus contredire le prix affiché.
+  const { proMonthly, proYearly } = content.pricing;
+  const savings = yearlySavings(proMonthly, proYearly);
+  const perMonthYearly = proYearly / 12;
+  const discountPercent = proMonthly > 0 ? Math.round((1 - proYearly / (proMonthly * 12)) * 100) : 0;
 
   const handleSubscribe = async () => {
     if (!user) return;
@@ -181,9 +209,9 @@ function FreeView({ establishment }: { establishment: Establishment }) {
         window.open(data.url, '_blank');
         return;
       }
-      toast.error(data?.error || 'Erreur lors de la creation du paiement');
+      toast.error(data?.error || 'Le paiement n\'a pas pu être créé. Réessayez dans un instant.');
     } catch {
-      toast.error('Erreur de connexion');
+      toast.error('Erreur de connexion. Vérifiez votre connexion et réessayez.');
     } finally {
       setLoading(false);
     }
@@ -194,7 +222,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
       <div className="rounded-card text-center py-12 px-8 mb-6"
         style={{ background: 'linear-gradient(135deg, #1a0028, var(--pn-bg))', border: '1px solid rgba(123,45,139,0.2)' }}>
         <h1 className="text-[28px] font-bold text-gray-900 dark:text-white mb-2">Passez au profil Pro</h1>
-        <p className="text-sm text-gray-400 mb-6">Debloquez toutes les fonctionnalites pour developper votre visibilite.</p>
+        <p className="text-sm text-gray-400 mb-6">Débloquez toutes les fonctionnalités pour développer votre visibilité.</p>
 
         {/* Billing toggle */}
         <div className="inline-flex items-center gap-1 p-1 rounded-full mb-8" style={{ background: 'var(--pn-border)' }}>
@@ -203,7 +231,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
             className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
               billingInterval === 'monthly'
                 ? 'bg-[#7B2D8B] text-white'
-                : 'text-gray-400 hover:text-gray-900 dark:text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Mensuel
@@ -213,30 +241,30 @@ function FreeView({ establishment }: { establishment: Establishment }) {
             className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all ${
               billingInterval === 'yearly'
                 ? 'bg-[#7B2D8B] text-white'
-                : 'text-gray-400 hover:text-gray-900 dark:text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            Annuel (-20%)
+            {discountPercent > 0 ? `Annuel (-${discountPercent} %)` : 'Annuel'}
           </button>
         </div>
 
         <div className="mb-4">
           {billingInterval === 'yearly' ? (
             <>
-              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>690&euro;</span>
+              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>{fmtEur(proYearly)}</span>
               <span className="text-xl text-gray-500">/an</span>
             </>
           ) : (
             <>
-              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>69&euro;</span>
+              <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>{fmtEur(proMonthly)}</span>
               <span className="text-xl text-gray-500">/mois</span>
             </>
           )}
         </div>
         <p className="text-sm text-gray-400 mb-8">
           {billingInterval === 'yearly'
-            ? 'Soit 57,50\u20AC/mois \u00B7 Vous economisez 138\u20AC/an'
-            : 'Sans engagement \u00B7 Resiliable a tout moment'}
+            ? `Soit ${fmtEur(perMonthYearly)}/mois${savings > 0 ? ` \u00B7 vous \u00E9conomisez ${fmtEur(savings)}/an` : ''}`
+            : 'Sans engagement \u00B7 r\u00E9siliable \u00E0 tout moment'}
         </p>
 
         <button
@@ -250,7 +278,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
         </button>
 
         <p className="text-xs text-gray-600 flex items-center justify-center gap-1.5">
-          <Lock size={12} /> Paiement securise par Stripe &middot; Facture disponible
+          <Lock size={12} /> Paiement sécurisé par Stripe &middot; facture disponible
         </p>
       </div>
 

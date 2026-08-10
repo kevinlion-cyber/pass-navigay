@@ -61,7 +61,7 @@ export default function AdminPromotions() {
     try {
       const { error } = await supabase.from('promotions').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      toast.success('Promotion supprimee');
+      toast.success('Promotion supprimée');
       setDeleteTarget(null);
       load();
     } catch (err) {
@@ -83,7 +83,7 @@ export default function AdminPromotions() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">Promotions</h1>
         <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
-          <Plus size={16} /> Creer une promo
+          <Plus size={16} /> Créer une promo
         </button>
       </div>
 
@@ -92,10 +92,10 @@ export default function AdminPromotions() {
           <option value="all">Tous types</option>
           <option value="percentage">Pourcentage</option>
           <option value="fixed">Montant fixe</option>
-          <option value="offer">Offre speciale</option>
+          <option value="offer">Offre spéciale</option>
         </select>
         <select value={estFilter} onChange={(e) => setEstFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
-          <option value="all">Tous les etablissements</option>
+          <option value="all">Tous les établissements</option>
           {establishments.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
         {(() => { const cs = [...new Set(establishments.map((e) => e.city).filter(Boolean))].sort(); return cs.length > 0 && (
@@ -118,7 +118,7 @@ export default function AdminPromotions() {
         ); })()}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher…" className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>}
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function AdminPromotions() {
       {loading ? (
         <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
       ) : promos.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucune promotion trouvee.</p>
+        <p className="text-center text-gray-500 py-12">Aucune promotion trouvée.</p>
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
@@ -135,9 +135,9 @@ export default function AdminPromotions() {
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Image</th>
                   <th className="py-3 px-3">Titre</th>
-                  <th className="py-3 px-3">Etablissement</th>
-                  <th className="py-3 px-3">Reduction</th>
-                  <th className="py-3 px-3">Validite</th>
+                  <th className="py-3 px-3">Établissement</th>
+                  <th className="py-3 px-3">Réduction</th>
+                  <th className="py-3 px-3">Validité</th>
                   <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Actions</th>
                 </tr>
@@ -197,7 +197,7 @@ export default function AdminPromotions() {
       <ConfirmModal
         open={!!deleteTarget}
         title="Supprimer la promotion"
-        message={`Supprimer "${deleteTarget?.title}" ?`}
+        message={`Supprimer « ${deleteTarget?.title} » ?`}
         confirmLabel="Supprimer"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}

@@ -168,7 +168,7 @@ export default function AdminGifts() {
         >
           <option value="all">Tous</option>
           <option value="premium">Premium utilisateur</option>
-          <option value="pro">Pro etablissement</option>
+          <option value="pro">Pro établissement</option>
         </select>
       </div>
 
@@ -186,7 +186,7 @@ export default function AdminGifts() {
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Type</th>
                   <th className="py-3 px-3">Destinataire</th>
-                  <th className="py-3 px-3">Duree offerte</th>
+                  <th className="py-3 px-3">Durée offerte</th>
                   <th className="py-3 px-3">Valable jusqu'au</th>
                   <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Note interne</th>
@@ -242,7 +242,7 @@ export default function AdminGifts() {
                             className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium text-gray-500"
                             style={{ background: '#1a1a24' }}
                           >
-                            Expire
+                            Expiré
                           </span>
                         )}
                       </td>
@@ -293,7 +293,7 @@ export default function AdminGifts() {
                         </span>
                       ) : (
                         <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium text-gray-500" style={{ background: '#1a1a24' }}>
-                          Expire
+                          Expiré
                         </span>
                       )}
                     </div>

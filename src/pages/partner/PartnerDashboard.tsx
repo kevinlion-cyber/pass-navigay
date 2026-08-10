@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import {
   CalendarDays, Tag, Eye, CreditCard, TrendingUp,
-  ArrowRight, ChevronRight, Users, BarChart3, Phone, Globe, Map, type LucideIcon,
+  ArrowRight, ChevronRight, Users, BarChart3, Phone, Globe, Map, Lock, type LucideIcon,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Establishment, Event, Promotion } from '../../lib/types';
 
 interface ViewStats { total: number; last30: number; last7: number; uniqueVisitors30: number; series: { date: string; value: number }[]; promoActivations?: { total: number; last30: number; last7: number }; contactClicks?: { total: number; last30: number; last7: number; kinds: Record<string, number> } }
@@ -29,6 +31,7 @@ interface DashboardData {
 
 export default function PartnerDashboard() {
   const { establishment } = useOutletContext<PartnerContext>();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData>({
@@ -66,15 +69,23 @@ export default function PartnerDashboard() {
             .order('valid_until', { ascending: true }).limit(3),
         ]);
 
+        // Supabase ne lève pas d'exception : l'erreur arrive dans `error`. Sans ce test,
+        // un chargement raté afficherait des zéros comme si tout allait bien.
+        const failed = [evActiveRes, evPastRes, prActiveRes, prExpiredRes, evRecentRes, prRecentRes]
+          .find((r) => r.error);
+        if (failed?.error) throw failed.error;
+
         // Nombre total d'utilisations des promotions de l'établissement
-        const { data: promoIdRows } = await supabase
+        const { data: promoIdRows, error: promoIdErr } = await supabase
           .from('promotions').select('id').eq('establishment_id', establishment.id);
+        if (promoIdErr) throw promoIdErr;
         const promoIdList = (promoIdRows || []).map((r: { id: string }) => r.id);
         let promoUses = 0;
         if (promoIdList.length) {
-          const { count } = await supabase
+          const { count, error: usesErr } = await supabase
             .from('promotion_uses').select('*', { count: 'exact', head: true })
             .in('promotion_id', promoIdList);
+          if (usesErr) throw usesErr;
           promoUses = count ?? 0;
         }
 
@@ -100,7 +111,7 @@ export default function PartnerDashboard() {
           recentPromos: (prRecentRes.data as Promotion[]) || [],
         });
       } catch {
-        // handled
+        toast.error('Impossible de charger votre tableau de bord. Vérifiez votre connexion.');
       }
       setLoading(false);
     };
@@ -123,11 +134,15 @@ export default function PartnerDashboard() {
     return 'Offre';
   };
 
+  // On salue le gérant par son prénom, pas l'établissement : son nom est déjà affiché
+  // juste en dessous. Sans prénom connu, salutation neutre.
+  const firstName = profile?.prenom?.trim();
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Bonjour {establishment.name} <span role="img" aria-label="wave">👋</span>
+          Bonjour{firstName ? ` ${firstName}` : ''} <span role="img" aria-label="main qui salue">👋</span>
         </h1>
         <p className="text-sm text-gray-400 mt-1">Bienvenue dans votre espace partenaire Pass Navigay.</p>
         <div className="flex items-center gap-3 mt-2">
@@ -168,7 +183,10 @@ export default function PartnerDashboard() {
               {establishment.is_pro ? (
                 <>
                   <p className="text-lg font-bold" style={{ color: '#7B2D8B' }}>Pro ✓</p>
-                  <p className="text-xs text-gray-500 mt-1">Expire le {formatExpiry(establishment.pro_expires_at)}</p>
+                  {/* Sans date connue, on n'affiche rien plutôt qu'un « Expire le » orphelin */}
+                  {establishment.pro_expires_at && (
+                    <p className="text-xs text-gray-500 mt-1">Expire le {formatExpiry(establishment.pro_expires_at)}</p>
+                  )}
                   <button onClick={() => navigate('/pros/abonnement')}
                     className="text-xs mt-2 font-medium hover:underline"
                     style={{ color: '#7B2D8B' }}>
@@ -198,11 +216,8 @@ export default function PartnerDashboard() {
               </div>
               <p className="text-lg font-bold text-gray-900 dark:text-white">{data.views}</p>
               <p className="text-xs text-gray-500 mt-1">ce mois-ci</p>
-              {data.views > 0 ? (
-                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#1a7a3a' }}>
-                  <TrendingUp size={12} /> en hausse
-                </p>
-              ) : (
+              {/* Aucune comparaison de période n'est calculée : on n'annonce donc pas de tendance */}
+              {data.views === 0 && (
                 <p className="text-xs text-gray-500 mt-1">Pas encore de vues</p>
               )}
             </div>
@@ -220,9 +235,11 @@ export default function PartnerDashboard() {
               <p className="text-xs text-gray-500 mt-1">{data.pastEventsThisMonth} passé{data.pastEventsThisMonth > 1 ? 's' : ''} ce mois</p>
               {data.activeEvents === 0 && (
                 <button onClick={() => navigate('/pros/evenements')}
-                  className="text-xs mt-2 font-medium hover:underline"
+                  className="text-xs mt-2 font-medium hover:underline inline-flex items-center gap-1.5"
                   style={{ color: '#7B2D8B' }}>
-                  + Créer un événement <ArrowRight size={12} className="inline ml-0.5" />
+                  <span>+ Créer un événement</span>
+                  {!establishment.is_pro && <ProBadge />}
+                  <ArrowRight size={12} />
                 </button>
               )}
             </div>
@@ -234,15 +251,17 @@ export default function PartnerDashboard() {
                   style={{ background: 'rgba(123,45,139,0.15)' }}>
                   <Tag size={18} style={{ color: '#7B2D8B' }} />
                 </div>
-                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos actives</span>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promotions actives</span>
               </div>
               <p className="text-lg font-bold text-gray-900 dark:text-white">{data.activePromos}</p>
               <p className="text-xs text-gray-500 mt-1">{data.expiredPromos} expirée{data.expiredPromos > 1 ? 's' : ''}</p>
               {data.activePromos === 0 && (
                 <button onClick={() => navigate('/pros/promotions')}
-                  className="text-xs mt-2 font-medium hover:underline"
+                  className="text-xs mt-2 font-medium hover:underline inline-flex items-center gap-1.5"
                   style={{ color: '#7B2D8B' }}>
-                  + Créer une promo <ArrowRight size={12} className="inline ml-0.5" />
+                  <span>+ Créer une promotion</span>
+                  {!establishment.is_pro && <ProBadge />}
+                  <ArrowRight size={12} />
                 </button>
               )}
             </div>
@@ -254,7 +273,7 @@ export default function PartnerDashboard() {
                   style={{ background: 'rgba(26,122,58,0.12)' }}>
                   <TrendingUp size={18} style={{ color: '#1a7a3a' }} />
                 </div>
-                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promos utilisées</span>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Promotions utilisées</span>
               </div>
               <p className="text-lg font-bold text-gray-900 dark:text-white">{data.promoUses}</p>
               <p className="text-xs text-gray-500 mt-1">total des validations</p>
@@ -291,7 +310,7 @@ export default function PartnerDashboard() {
             )}
             {data.viewStats?.promoActivations && data.viewStats.promoActivations.total > 0 && (
               <div className="mt-5 pt-5 border-t border-light-border dark:border-dark-border">
-                <div className="flex items-center gap-2 mb-3"><Tag size={15} style={{ color: '#7B2D8B' }} /><h3 className="text-sm font-semibold text-gray-900 dark:text-white">Activations de vos promos</h3></div>
+                <div className="flex items-center gap-2 mb-3"><Tag size={15} style={{ color: '#7B2D8B' }} /><h3 className="text-sm font-semibold text-gray-900 dark:text-white">Activations de vos promotions</h3></div>
                 <div className="grid grid-cols-3 gap-3">
                   <MiniStat icon={Tag} label="Total" value={data.viewStats.promoActivations.total} />
                   <MiniStat icon={TrendingUp} label="30 derniers jours" value={data.viewStats.promoActivations.last30} />
@@ -340,13 +359,15 @@ export default function PartnerDashboard() {
                 text="Touchez des milliers de membres en publiant vos prochaines soirées, brunchs ou concerts."
                 buttonLabel="Créer un événement"
                 onClick={() => navigate('/pros/evenements')}
+                proOnly={!establishment.is_pro}
               />
               <QuickActionCard
                 emoji="🏷"
                 title="Lancer une promotion"
                 text="Attirez de nouveaux clients avec une offre exclusive réservée aux membres Pass Navigay."
-                buttonLabel="Créer une promo"
+                buttonLabel="Créer une promotion"
                 onClick={() => navigate('/pros/promotions')}
+                proOnly={!establishment.is_pro}
               />
             </div>
           </div>
@@ -393,11 +414,11 @@ export default function PartnerDashboard() {
           {data.recentPromos.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Mes dernières promos</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Mes dernières promotions</h2>
                 <button onClick={() => navigate('/pros/promotions')}
                   className="text-xs font-medium hover:underline flex items-center gap-1"
                   style={{ color: '#7B2D8B' }}>
-                  Voir toutes mes promos <ChevronRight size={14} />
+                  Voir toutes mes promotions <ChevronRight size={14} />
                 </button>
               </div>
               <div className="space-y-2">
@@ -441,8 +462,19 @@ function MiniStat({ icon: Icon, label, value }: { icon: LucideIcon; label: strin
   );
 }
 
+// Publier événements et promotions est réservé aux abonnés Pro. On annonce le verrou
+// avant le clic pour que le gérant gratuit ne découvre pas le mur de paiement après coup.
+function ProBadge() {
+  return (
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-pill text-[10px] font-bold uppercase tracking-wide"
+      style={{ background: 'rgba(123,45,139,0.15)', color: '#7B2D8B' }}>
+      <Lock size={9} /> Pro
+    </span>
+  );
+}
+
 function QuickActionCard({
-  emoji, title, text, buttonLabel, onClick, showBadge,
+  emoji, title, text, buttonLabel, onClick, showBadge, proOnly,
 }: {
   emoji: string;
   title: string;
@@ -450,6 +482,7 @@ function QuickActionCard({
   buttonLabel: string;
   onClick: () => void;
   showBadge?: boolean;
+  proOnly?: boolean;
 }) {
   return (
     <button onClick={onClick} className="relative text-left p-6 rounded-card transition-all duration-200 group"
@@ -474,8 +507,8 @@ function QuickActionCard({
       </div>
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
       <p className="text-xs text-gray-500 leading-relaxed mb-4">{text}</p>
-      <span className="text-xs font-medium flex items-center gap-1" style={{ color: '#7B2D8B' }}>
-        {buttonLabel} <ArrowRight size={12} />
+      <span className="text-xs font-medium flex items-center gap-1.5" style={{ color: '#7B2D8B' }}>
+        {buttonLabel} {proOnly && <ProBadge />} <ArrowRight size={12} />
       </span>
     </button>
   );

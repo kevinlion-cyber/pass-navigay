@@ -12,6 +12,13 @@ import cropImage from '../../lib/cropImage';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import EstablishmentGallerySection from './EstablishmentGallerySection';
 
+// Limites de poids alignées sur le parcours d'inscription (RegisterStep3).
+// Pourquoi ici : l'interface annonçait une taille maximale qui n'était jamais
+// vérifiée, donc un fichier trop lourd partait quand même et échouait plus tard
+// avec un message technique en anglais, sans que le gérant comprenne pourquoi.
+const MAX_LOGO_MB = 5;
+const MAX_BANNER_MB = 10;
+
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const DAYS_LABELS: Record<string, string> = {
   lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
@@ -89,11 +96,16 @@ export default function PartnerEstablishment() {
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setLogoCropSrc(URL.createObjectURL(file));
-      setLogoCrop({ x: 0, y: 0 });
-      setLogoZoom(1);
+    if (!file) return;
+    if (file.size > MAX_LOGO_MB * 1024 * 1024) {
+      toast.error(`Ce logo est trop lourd. Taille maximale : ${MAX_LOGO_MB} Mo.`);
+      e.target.value = '';
+      return;
     }
+    setLogoCropSrc(URL.createObjectURL(file));
+    setLogoCrop({ x: 0, y: 0 });
+    setLogoZoom(1);
+    e.target.value = '';
   };
 
   const onLogoCropComplete = useCallback((_: Area, croppedPixels: Area) => {
@@ -114,11 +126,16 @@ export default function PartnerEstablishment() {
 
   const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setBannerCropSrc(URL.createObjectURL(file));
-      setBannerCrop({ x: 0, y: 0 });
-      setBannerZoom(1);
+    if (!file) return;
+    if (file.size > MAX_BANNER_MB * 1024 * 1024) {
+      toast.error(`Cette image est trop lourde. Taille maximale : ${MAX_BANNER_MB} Mo.`);
+      e.target.value = '';
+      return;
     }
+    setBannerCropSrc(URL.createObjectURL(file));
+    setBannerCrop({ x: 0, y: 0 });
+    setBannerZoom(1);
+    e.target.value = '';
   };
 
   const onBannerCropComplete = useCallback((_: Area, croppedPixels: Area) => {
@@ -145,47 +162,58 @@ export default function PartnerEstablishment() {
       let bannerUrl = establishment.banner_url;
 
       if (croppedLogoBlob) {
-        setUploadProgress('Upload du logo...');
+        setUploadProgress('Envoi du logo...');
         const path = `${establishment.id}/logo_${Date.now()}.jpg`;
         const { data, error } = await supabase.storage.from('establishment-logos').upload(path, croppedLogoBlob, { contentType: 'image/jpeg', upsert: true });
-        if (error) throw error;
+        if (error) throw new Error("L'envoi du logo a échoué. Vérifiez votre connexion et réessayez.");
         logoUrl = supabase.storage.from('establishment-logos').getPublicUrl(data.path).data.publicUrl;
       }
 
       if (croppedBannerBlob) {
-        setUploadProgress('Upload de la bannière...');
+        setUploadProgress('Envoi de la bannière...');
         const path = `${establishment.id}/banner_${Date.now()}.jpg`;
         const { data, error } = await supabase.storage.from('establishment-banners').upload(path, croppedBannerBlob, { contentType: 'image/jpeg', upsert: true });
-        if (error) throw error;
+        if (error) throw new Error("L'envoi de la bannière a échoué. Vérifiez votre connexion et réessayez.");
         bannerUrl = supabase.storage.from('establishment-banners').getPublicUrl(data.path).data.publicUrl;
       }
 
       if (pendingPhotos.length > 0) {
-        const { data: existingPhotos } = await supabase.from('establishment_photos').select('id').eq('establishment_id', establishment.id);
+        // Le client Supabase ne lève pas d'exception : sans lire `error`, un échec
+        // passait inaperçu et les photos se retrouvaient numérotées en doublon.
+        const { data: existingPhotos, error: countError } = await supabase.from('establishment_photos').select('id').eq('establishment_id', establishment.id);
+        if (countError) throw new Error("Impossible de lire votre galerie actuelle. Réessayez dans un instant.");
         const existingCount = existingPhotos?.length || 0;
         for (let i = 0; i < pendingPhotos.length; i++) {
-          setUploadProgress(`Upload photo ${i + 1}/${pendingPhotos.length}...`);
+          setUploadProgress(`Envoi de la photo ${i + 1}/${pendingPhotos.length}...`);
           const filename = `${Date.now()}_${i}.jpg`;
           const { data, error } = await supabase.storage.from('establishment-photos').upload(`${establishment.id}/${filename}`, pendingPhotos[i].blob, { contentType: 'image/jpeg' });
-          if (error) throw error;
+          if (error) throw new Error(`L'envoi de la photo ${i + 1} a échoué. Vérifiez votre connexion et réessayez.`);
           const photoUrl = supabase.storage.from('establishment-photos').getPublicUrl(data.path).data.publicUrl;
-          await supabase.from('establishment_photos').insert({
+          const { error: insertError } = await supabase.from('establishment_photos').insert({
             establishment_id: establishment.id,
             url: photoUrl,
             order_index: existingCount + i,
           });
+          if (insertError) throw new Error(`La photo ${i + 1} n'a pas pu être ajoutée à votre galerie. Réessayez dans un instant.`);
         }
       }
 
       setUploadProgress('Sauvegarde des informations...');
+      // Ville de rattachement : si le gérant corrige la ville, la fiche doit changer
+      // de page de ville. Le trigger en base (migrations/59_establishments_slug_guard.sql)
+      // ne recalcule `city_slug` que s'il est VIDE : on le remet donc à NULL pour
+      // qu'il refasse le rattachement (y compris les communes rattachées à une ville
+      // couverte). Le calcul du slug reste en base, jamais dupliqué côté application.
+      const cityChanged = city.trim() !== (establishment.city || '').trim();
       const { error } = await supabase.from('establishments').update({
         name, address, city, postal_code: postalCode,
         latitude: parseFloat(latitude), longitude: parseFloat(longitude),
         category, subcategory, phone, website, description,
         logo_url: logoUrl, banner_url: bannerUrl,
         opening_hours: openingHours,
+        ...(cityChanged ? { city_slug: null } : {}),
       }).eq('id', establishment.id);
-      if (error) throw error;
+      if (error) throw new Error('Vos modifications n\'ont pas pu être enregistrées. Réessayez dans un instant.');
 
       toast.success('Modifications enregistrées !');
       setCroppedLogoBlob(null);
@@ -201,6 +229,11 @@ export default function PartnerEstablishment() {
     setSaving(false);
     setUploadProgress('');
   };
+
+  // La configuration des catégories est éditable en administration : une catégorie
+  // enregistrée sur la fiche peut avoir été renommée ou supprimée depuis. Sans accès
+  // optionnel ni repli, la page devenait blanche (même garde que RegisterStep2).
+  const subcategories = category ? (categories[category]?.subcategories || []) : [];
 
   const logoDisplay = logoPreview || establishment.logo_url;
   const bannerDisplay = bannerPreview || establishment.banner_url;
@@ -239,7 +272,7 @@ export default function PartnerEstablishment() {
                 disabled={!category}
                 className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white disabled:opacity-50">
                 <option value="">Choisir</option>
-                {categories[category].subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
@@ -266,7 +299,7 @@ export default function PartnerEstablishment() {
                 <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
                   {addressSuggestions.map((s: GeoFeature) => (
                     <button key={s.place_name} type="button" onClick={() => selectAddress(s)}
-                      className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
+                      className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-border/50">
                       {s.place_name}
                     </button>
                   ))}
@@ -327,7 +360,7 @@ export default function PartnerEstablishment() {
                   style={{ border: '2px dashed var(--pn-border2)', height: 120 }}>
                   <StoreIcon size={24} className="text-gray-600" />
                   <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre logo</span>
-                  <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 5MB</span>
+                  <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max {MAX_LOGO_MB} Mo</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoSelect} className="hidden" />
                 </label>
               )}
@@ -351,7 +384,7 @@ export default function PartnerEstablishment() {
                   style={{ border: '2px dashed var(--pn-border2)', height: 160 }}>
                   <Camera size={24} className="text-gray-600" />
                   <span className="text-[13px] text-gray-500">Cliquez pour ajouter votre photo principale</span>
-                  <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max 10MB</span>
+                  <span className="text-[11px] text-gray-600">JPG, PNG, WEBP - Max {MAX_BANNER_MB} Mo</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerSelect} className="hidden" />
                 </label>
               )}
@@ -412,7 +445,7 @@ export default function PartnerEstablishment() {
                     </div>
                   )}
                   {!isOpen && (
-                    <span className="text-sm text-gray-600">Ferme</span>
+                    <span className="text-sm text-gray-600">Fermé</span>
                   )}
                 </div>
               );
@@ -446,7 +479,7 @@ export default function PartnerEstablishment() {
         {/* Desktop submit button */}
         <div className="hidden lg:block mt-8">
           <button type="submit" disabled={saving}
-            className="w-60 py-3 rounded-[8px] text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-60 py-3 rounded-[8px] text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ background: '#7B2D8B' }}>
             {saving ? <><LoadingSpinner size={16} /> {uploadProgress || 'Sauvegarde...'}</> : 'Enregistrer les modifications'}
           </button>
@@ -459,7 +492,7 @@ export default function PartnerEstablishment() {
           const form = document.querySelector('form');
           if (form) form.requestSubmit();
         }} disabled={saving}
-          className="w-full py-3 rounded-[8px] text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-[8px] text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           style={{ background: '#7B2D8B' }}>
           {saving ? <><LoadingSpinner size={16} /> {uploadProgress || 'Sauvegarde...'}</> : 'Enregistrer les modifications'}
         </button>

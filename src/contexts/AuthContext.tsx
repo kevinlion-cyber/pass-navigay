@@ -88,10 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     if (existing) {
-      return { error: 'Ce pseudo est deja pris.' };
+      return { error: 'Ce pseudo est déjà pris.' };
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -100,6 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (error) return { error: translateAuthError(error) };
+
+    // Adresse déjà rattachée à un compte : pour ne pas révéler qui est inscrit,
+    // Supabase répond « créé » sans envoyer de code, et renvoie un utilisateur
+    // sans aucune identité. Sans ce test, on demandait un code qui ne partait
+    // jamais et la personne restait bloquée devant un champ inutile.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return { error: 'Cette adresse e-mail a déjà un compte. Connectez-vous plutôt.' };
+    }
+
     return { error: null };
   };
 

@@ -26,7 +26,7 @@ export default function AppLayout({ requireAuth = false }: { requireAuth?: boole
 
   if (requireAuth && !user) {
     const back = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/auth/register?redirect=${back}`} replace />;
+    return <Navigate to={`/inscription?redirect=${back}`} replace />;
   }
 
   return (

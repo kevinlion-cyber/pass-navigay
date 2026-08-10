@@ -77,15 +77,15 @@ export default function AdminEvents() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Evenements</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Événements</h1>
         <button onClick={() => setEditId('new')} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4">
-          <Plus size={16} /> Creer un evenement
+          <Plus size={16} /> Créer un événement
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <select value={estFilter} onChange={(e) => setEstFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
-          <option value="all">Tous les etablissements</option>
+          <option value="all">Tous les établissements</option>
           {establishments.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
         <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
@@ -113,7 +113,7 @@ export default function AdminEvents() {
         ); })()}
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher…" className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2" />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 dark:hover:text-white"><X size={14} /></button>}
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function AdminEvents() {
       {loading ? (
         <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-card" />)}</div>
       ) : events.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun evenement trouve.</p>
+        <p className="text-center text-gray-500 py-12">Aucun événement trouvé.</p>
       ) : (
         <>
           <div className="hidden md:block overflow-x-auto">
@@ -130,7 +130,7 @@ export default function AdminEvents() {
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
                   <th className="py-3 px-3">Image</th>
                   <th className="py-3 px-3">Titre</th>
-                  <th className="py-3 px-3">Etablissement</th>
+                  <th className="py-3 px-3">Établissement</th>
                   <th className="py-3 px-3">Date</th>
                   <th className="py-3 px-3">Prix</th>
                   <th className="py-3 px-3">Actions</th>
@@ -157,7 +157,7 @@ export default function AdminEvents() {
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setEditId(ev.id)} title="Modifier" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"><Pencil size={15} /></button>
-                          <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
+                          <a href={`/agenda/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                           <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                         </div>
                       </td>
@@ -188,7 +188,7 @@ export default function AdminEvents() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => setEditId(ev.id)} className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><Pencil size={15} /></button>
-                      <a href={`/events/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
+                      <a href={`/agenda/${ev.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
                       <button onClick={() => setDeleteTarget(ev)} className="p-1.5 text-gray-500 hover:text-alert"><Trash2 size={15} /></button>
                     </div>
                   </div>
@@ -201,8 +201,8 @@ export default function AdminEvents() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Supprimer l'evenement"
-        message={`Supprimer "${deleteTarget?.title}" ?`}
+        title="Supprimer l'événement"
+        message={`Supprimer « ${deleteTarget?.title} » ?`}
         confirmLabel="Supprimer"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}

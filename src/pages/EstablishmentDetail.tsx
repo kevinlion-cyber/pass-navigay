@@ -254,7 +254,7 @@ export default function EstablishmentDetail() {
     return (
       <div className="text-center py-20 text-gray-500">
         <p>Établissement non trouvé.</p>
-        <button onClick={() => navigate('/explore')} className="btn-primary mt-4">
+        <button onClick={() => navigate('/explorer')} className="btn-primary mt-4">
           Retour
         </button>
       </div>
@@ -438,7 +438,7 @@ export default function EstablishmentDetail() {
               {events.map((event) => (
                 <div
                   key={event.id}
-                  onClick={() => navigate(`/events/${event.id}`)}
+                  onClick={() => navigate(`/agenda/${event.id}`)}
                   className="card p-4 flex gap-3 cursor-pointer hover:ring-1 hover:ring-primary/30 transition-shadow"
                 >
                   <div className="w-10 h-10 rounded-input bg-primary/10 flex items-center justify-center shrink-0">
@@ -471,7 +471,7 @@ export default function EstablishmentDetail() {
               {promotions.map((promo) => (
                 <div
                   key={promo.id}
-                  onClick={() => navigate(`/promos/${promo.id}`)}
+                  onClick={() => navigate(`/promotions/${promo.id}`)}
                   className="card p-4 flex gap-3 cursor-pointer hover:ring-1 hover:ring-success/30 transition-shadow"
                 >
                   <div className="w-10 h-10 rounded-input bg-success/10 flex items-center justify-center shrink-0">

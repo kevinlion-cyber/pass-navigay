@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { Camera, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface ImageUploadWithCropProps {
   currentImageUrl: string | null;
@@ -73,7 +74,9 @@ export default function ImageUploadWithCrop({
       setPreview(url);
       onImageCropped(blob);
     } catch {
-      // ignore
+      // Le recadrage échouait sans un mot : l'image disparaissait et la personne
+      // recommençait sans comprendre. On le dit.
+      toast.error("Le recadrage de l'image a échoué. Réessayez avec une autre image.");
     }
     setCropSrc(null);
   };
@@ -109,7 +112,7 @@ export default function ImageUploadWithCrop({
             style={{ border: '2px dashed #2a2a3a', height: 120 }}
           >
             <Camera size={24} className="text-[#606070]" />
-            <span className="text-[13px] text-[#606070]">Clique ou depose une image ici</span>
+            <span className="text-[13px] text-[#606070]">Cliquez ou déposez une image ici</span>
           </button>
         )}
 
@@ -180,7 +183,7 @@ export default function ImageUploadWithCrop({
                 className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90"
                 style={{ background: '#7B2D8B' }}
               >
-                Valider le crop
+                Valider le recadrage
               </button>
             </div>
           </div>

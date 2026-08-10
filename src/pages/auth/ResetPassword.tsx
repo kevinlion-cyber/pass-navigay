@@ -41,7 +41,7 @@ export default function ResetPassword() {
     setLoading(false);
     if (error) { toast.error(translateAuthError(error)); return; }
     toast.success('Mot de passe mis à jour !');
-    navigate('/explore');
+    navigate('/explorer');
   };
 
   return (
@@ -59,7 +59,7 @@ export default function ResetPassword() {
           <div className="text-center space-y-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">{urlError}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Demandez un nouveau lien depuis la page de connexion.</p>
-            <button onClick={() => navigate('/auth/login')} className="btn-primary w-full">Retour à la connexion</button>
+            <button onClick={() => navigate('/connexion')} className="btn-primary w-full">Retour à la connexion</button>
           </div>
         ) : !ready ? (
           <div className="flex flex-col items-center gap-3 py-6 text-gray-500 dark:text-gray-400">
@@ -91,7 +91,7 @@ export default function ResetPassword() {
         )}
 
         {!urlError && (
-          <button onClick={() => navigate('/auth/login')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mt-5 mx-auto transition-colors">
+          <button onClick={() => navigate('/connexion')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mt-5 mx-auto transition-colors">
             <ArrowLeft size={14} /> Retour à la connexion
           </button>
         )}

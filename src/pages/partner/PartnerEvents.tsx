@@ -61,12 +61,15 @@ export default function PartnerEvents() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from('events').select('*')
+      // Supabase ne lève pas d'exception : l'erreur arrive dans `error`. Sans ce test,
+      // le gérant verrait « aucun événement » alors que le chargement a échoué.
+      const { data, error } = await supabase.from('events').select('*')
         .eq('establishment_id', establishment.id)
         .order('event_date', { ascending: false });
+      if (error) throw error;
       setEvents((data as Event[]) || []);
     } catch {
-      toast.error('Erreur lors du chargement des événements');
+      toast.error('Impossible de charger vos événements. Vérifiez votre connexion.');
     }
     setLoading(false);
   }, [establishment.id]);
@@ -147,6 +150,9 @@ export default function PartnerEvents() {
         event_date: new Date(form.start_datetime).toISOString(),
         end_date: form.end_datetime ? new Date(form.end_datetime).toISOString() : null,
         address: form.same_address ? establishment.address : form.custom_address,
+        // Ville d'un événement organisé ailleurs que dans l'établissement (migration 60) :
+        // sans elle, l'événement n'apparaissait dans aucun filtre Ville de l'agenda.
+        custom_city: form.same_address ? null : (form.custom_city.trim() || null),
         latitude: form.same_address ? establishment.latitude : null,
         longitude: form.same_address ? establishment.longitude : null,
         theme: form.theme.trim(),
@@ -252,7 +258,7 @@ export default function PartnerEvents() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editing ? "Modifier l'événement" : 'Nouvel événement'}
               </h2>
-              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
+              <button onClick={() => setFormOpen(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
@@ -296,7 +302,7 @@ export default function PartnerEvents() {
                     required className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Date et heure de fin (optionnel)</label>
+                  <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Date et heure de fin (facultatif)</label>
                   <input type="datetime-local" value={form.end_datetime}
                     onChange={e => setForm({ ...form, end_datetime: e.target.value })}
                     className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
@@ -306,7 +312,7 @@ export default function PartnerEvents() {
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <ToggleSwitch checked={form.same_address} onChange={v => setForm({ ...form, same_address: v })} />
-                  <span className="text-sm text-gray-300">Même adresse que mon établissement</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Même adresse que mon établissement</span>
                 </label>
                 {!form.same_address && (
                   <div className="mt-3 space-y-3 relative">
@@ -319,7 +325,7 @@ export default function PartnerEvents() {
                         <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-input max-h-48 overflow-y-auto">
                           {addressSuggestions.map((s: GeoFeature) => (
                             <button key={s.place_name} type="button" onClick={() => selectEventAddress(s)}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border/50">
+                              className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-border/50">
                               {s.place_name}
                             </button>
                           ))}
@@ -337,7 +343,7 @@ export default function PartnerEvents() {
               <div>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <ToggleSwitch checked={form.is_free} onChange={v => setForm({ ...form, is_free: v })} />
-                  <span className="text-sm text-gray-300">Événement gratuit</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Événement gratuit</span>
                 </label>
                 {!form.is_free && (
                   <div className="mt-3">
@@ -351,7 +357,7 @@ export default function PartnerEvents() {
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Nombre de places maximum (optionnel)</label>
+                <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Nombre de places maximum (facultatif)</label>
                 <input type="number" min={1} value={form.max_capacity}
                   onChange={e => setForm({ ...form, max_capacity: e.target.value })}
                   placeholder="50"
@@ -365,7 +371,7 @@ export default function PartnerEvents() {
                   Annuler
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-[2] py-2.5 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: '#7B2D8B' }}>
                   {saving && <LoadingSpinner size={16} />}
                   {editing ? 'Enregistrer' : "Publier l'événement"}
@@ -405,7 +411,7 @@ function EmptyState({ onAction }: { onAction: () => void }) {
         </span>
       </div>
       <button onClick={onAction}
-        className="py-3 px-8 rounded-input text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:opacity-90"
+        className="py-3 px-8 rounded-input text-sm font-semibold text-white transition-colors hover:opacity-90"
         style={{ background: '#7B2D8B' }}>
         + Créer mon premier événement
       </button>
@@ -460,11 +466,11 @@ function EventCard({
         )}
         <div className="flex items-center gap-2 border-t border-light-border dark:border-dark-border pt-3">
           <button onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:hover:bg-dark-border">
             <Pencil size={13} /> Modifier
           </button>
           <button onClick={onDuplicate}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:bg-dark-border">
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 py-1 rounded-input hover:bg-gray-200 dark:hover:bg-dark-border">
             <Copy size={13} /> Dupliquer
           </button>
           <button onClick={onDelete}

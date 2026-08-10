@@ -59,7 +59,7 @@ export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
             Tu n'as pas encore de favoris — explore les lieux pour en ajouter !
           </p>
           <button
-            onClick={() => navigate('/explore')}
+            onClick={() => navigate('/explorer')}
             className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
           >
             Explorer les lieux

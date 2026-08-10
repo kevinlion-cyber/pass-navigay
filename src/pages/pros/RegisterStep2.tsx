@@ -65,6 +65,12 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     if (!data.category) errs.category = 'Ce champ est requis.';
     if (!data.subcategory) errs.subcategory = 'Ce champ est requis.';
     if (!data.address.trim()) errs.address = 'Ce champ est requis.';
+    // Les coordonnées ne sont renseignées que si l'adresse a été CHOISIE dans la
+    // liste de suggestions. Tapée à la main, la fiche partait à 0,0 : le lieu
+    // s'affichait au milieu de l'Atlantique sur la carte, sans aucune erreur.
+    else if (data.latitude === null || data.longitude === null) {
+      errs.address = "Choisissez votre adresse dans la liste pour situer votre établissement sur la carte.";
+    }
     if (!data.city.trim()) errs.city = 'Ce champ est requis.';
     if (!data.postal_code.trim()) errs.postal_code = 'Ce champ est requis.';
     else if (!/^[0-9]{5}$/.test(data.postal_code.trim())) errs.postal_code = 'Code postal invalide (5 chiffres).';

@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
       .limit(1);
     if (ev?.[0]) {
       const v = ev[0];
-      const link = `${SITE}/events/${v.id}?src=social`;
+      const link = `${SITE}/agenda/${v.id}?src=social`;
       results.push(await buildAndPost(svc, anthropicKey, creds, "event", v, v.image_url,
         { titre: v.title, description: (v.description || "").slice(0, 400), date: v.event_date, lieu: v.address }, link));
     }

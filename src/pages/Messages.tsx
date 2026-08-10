@@ -97,7 +97,7 @@ export default function Messages() {
       <div className="max-w-2xl mx-auto p-4 space-y-4">
         <AuthGateModal
           open={authGateOpen}
-          onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
+          onClose={() => { setAuthGateOpen(false); navigate('/explorer'); }}
           message="Crée ton compte pour envoyer et recevoir des messages."
         />
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function Messages() {
               {premiumText.cta}
             </button>
             <button
-              onClick={() => navigate('/explore')}
+              onClick={() => navigate('/explorer')}
               className="px-5 py-2.5 rounded-[10px] text-[14px] font-medium text-gray-400 hover:text-gray-300 transition-colors"
             >
               Peut-etre plus tard

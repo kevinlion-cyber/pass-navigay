@@ -153,7 +153,7 @@ export default function PartnerLayout() {
           {avatarOpen && (
             <div className="absolute top-12 right-4 rounded-input overflow-hidden shadow-xl z-[110]"
               style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)', minWidth: 200 }}>
-              <button onClick={() => { setAvatarOpen(false); navigate('/profile/settings'); }}
+              <button onClick={() => { setAvatarOpen(false); navigate('/profil/parametres'); }}
                 className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-gray-300 hover:bg-gray-200 dark:bg-dark-border transition-colors text-left">
                 <User size={15} /> Mon profil Pass Navigay
               </button>

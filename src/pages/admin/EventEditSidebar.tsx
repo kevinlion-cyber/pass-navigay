@@ -115,7 +115,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
   const validate = (): boolean => {
     const e: Partial<Record<string, string>> = {};
     if (!form.title.trim()) e.title = 'Le titre est requis';
-    if (!form.event_date) e.event_date = 'La date de debut est requise';
+    if (!form.event_date) e.event_date = 'La date de début est requise';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -145,7 +145,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         if (error) throw error;
 
         if (croppedImage && created) {
-          setUploadProgress('Upload image...');
+          setUploadProgress("Envoi de l'image…");
           const filename = `${Date.now()}.jpg`;
           const { error: upErr } = await supabase.storage.from('event-images').upload(`${created.id}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
           if (upErr) throw upErr;
@@ -153,10 +153,10 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
           await supabase.from('events').update({ image_url: urlData.publicUrl }).eq('id', created.id);
         }
 
-        toast.success('Evenement cree !');
+        toast.success('Événement créé !');
       } else {
         if (croppedImage) {
-          setUploadProgress('Upload image...');
+          setUploadProgress("Envoi de l'image…");
           const filename = `${Date.now()}.jpg`;
           const { error: upErr } = await supabase.storage.from('event-images').upload(`${eventId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
           if (upErr) throw upErr;
@@ -166,7 +166,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
 
         const { error } = await supabase.from('events').update({ ...payload, image_url: newImageUrl }).eq('id', eventId);
         if (error) throw error;
-        toast.success('Evenement mis a jour !');
+        toast.success('Événement mis à jour !');
       }
 
       setUploadProgress(null);
@@ -182,7 +182,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
   return (
     <AdminEditSidebar
       open={!!eventId}
-      title={isNew ? "Creer un evenement" : "Modifier l'evenement"}
+      title={isNew ? "Créer un événement" : "Modifier l'événement"}
       loading={loading}
       saving={saving}
       onClose={onClose}
@@ -199,8 +199,8 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         currentImageUrl={imageUrl}
         onImageCropped={(blob) => setCroppedImage(blob)}
         aspectRatio={3 / 2}
-        label="PHOTO DE L'EVENEMENT (format 3:2)"
-        hint="Image principale affichee dans les listes et sur la fiche evenement."
+        label="PHOTO DE L'ÉVÉNEMENT (format 3:2)"
+        hint="Image principale affichée dans les listes et sur la fiche événement."
       />
 
       <SidebarField label="Titre" error={errors.title}>
@@ -211,15 +211,15 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         <SidebarTextarea value={form.description} onChange={(v) => set('description', v)} />
       </SidebarField>
 
-      <SidebarField label="Theme">
-        <SidebarInput value={form.theme} onChange={(v) => set('theme', v)} placeholder="Pride, Drag, Concert..." />
+      <SidebarField label="Thème">
+        <SidebarInput value={form.theme} onChange={(v) => set('theme', v)} placeholder="Pride, Drag, Concert…" />
       </SidebarField>
 
-      <SidebarField label="Etablissement">
+      <SidebarField label="Établissement">
         <SidebarSelect
           value={form.establishment_id}
           onChange={(v) => set('establishment_id', v)}
-          options={[{ value: '', label: 'Selectionner...' }, ...establishments]}
+          options={[{ value: '', label: 'Sélectionner…' }, ...establishments]}
         />
       </SidebarField>
 
@@ -227,7 +227,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
         <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Dates</p>
       </div>
 
-      <SidebarField label="Date de debut" error={errors.event_date}>
+      <SidebarField label="Date de début" error={errors.event_date}>
         <SidebarInput
           value={form.event_date}
           onChange={(v) => set('event_date', v)}
@@ -250,7 +250,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       </div>
 
       <SidebarField label="Adresse">
-        <SidebarInput value={form.address} onChange={(v) => set('address', v)} placeholder="Adresse de l'evenement" />
+        <SidebarInput value={form.address} onChange={(v) => set('address', v)} placeholder="Adresse de l'événement" />
       </SidebarField>
 
       <div className="mb-2 mt-6">
@@ -277,7 +277,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
           onChange={(v) => set('max_capacity', v)}
           type="number"
           min={1}
-          placeholder="Illimite si vide"
+          placeholder="Illimité si vide"
         />
       </SidebarField>
     </AdminEditSidebar>

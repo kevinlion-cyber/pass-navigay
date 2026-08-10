@@ -85,7 +85,7 @@ export default function AdminPartners() {
         pro_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       }).eq('id', id);
       if (error) throw error;
-      toast.success('Pro active !');
+      toast.success('Pro activé !');
       load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');
@@ -121,7 +121,7 @@ export default function AdminPartners() {
     try {
       const { error } = await supabase.from('establishments').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-      toast.success('Etablissement supprime');
+      toast.success('Établissement supprimé');
       setDeleteTarget(null);
       load();
     } catch (err) {
@@ -165,9 +165,9 @@ export default function AdminPartners() {
       </div>
 
       <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-5">
-        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu annuel estime</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Revenu annuel estimé</p>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{estimatedRevenue} EUR</p>
-        <p className="text-xs text-gray-500 mt-1">{proCount} etablissement{proCount > 1 ? 's' : ''} Pro x 690 EUR/an</p>
+        <p className="text-xs text-gray-500 mt-1">{proCount} établissement{proCount > 1 ? 's' : ''} Pro × 690 EUR/an</p>
       </div>
 
       {/* Message aux établissements inscrits */}
@@ -211,8 +211,8 @@ export default function AdminPartners() {
             <table className="w-full text-sm text-left">
               <thead>
                 <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-light-border dark:border-dark-border">
-                  <th className="py-3 px-3">Etablissement</th>
-                  <th className="py-3 px-3">Proprietaire</th>
+                  <th className="py-3 px-3">Établissement</th>
+                  <th className="py-3 px-3">Propriétaire</th>
                   <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Expiration</th>
                   <th className="py-3 px-3">Valeur</th>
@@ -248,7 +248,7 @@ export default function AdminPartners() {
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</p>
                   {p.is_pro ? <span className="badge-pro text-xs">Pro</span> : <span className="badge text-xs bg-gray-700 text-gray-400">Gratuit</span>}
                 </div>
-                <p className="text-xs text-gray-500">Proprietaire : {p.owner_username}</p>
+                <p className="text-xs text-gray-500">Propriétaire : {p.owner_username}</p>
                 {p.is_pro && <p className="text-xs text-gray-500">Expiration : {formatDate(p.pro_expires_at)}</p>}
                 <div className="flex items-center justify-end gap-1">
                   <a href={`/establishment/${p.id}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white"><ExternalLink size={15} /></a>
@@ -274,8 +274,8 @@ export default function AdminPartners() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Supprimer l'etablissement"
-        message={`Supprimer definitivement "${deleteTarget?.name}" ?`}
+        title="Supprimer l'établissement"
+        message={`Supprimer définitivement « ${deleteTarget?.name} » ?`}
         confirmLabel="Supprimer"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
@@ -287,7 +287,7 @@ export default function AdminPartners() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setGiftTarget(null)} />
           <div className="relative bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-6 w-full max-w-sm space-y-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Offrir des mois Pro</h2>
-            <p className="text-sm text-gray-400">Etablissement : <span className="text-gray-900 dark:text-white">{giftTarget.name}</span></p>
+            <p className="text-sm text-gray-400">Établissement : <span className="text-gray-900 dark:text-white">{giftTarget.name}</span></p>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Nombre de mois</label>
               <input
@@ -301,7 +301,7 @@ export default function AdminPartners() {
             </div>
             <div className="flex items-center gap-3 pt-2">
               <button onClick={() => setGiftTarget(null)} className="flex-1 py-2.5 rounded-input border border-light-border dark:border-dark-border text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors">Annuler</button>
-              <button onClick={handleGiftMonths} disabled={gifting} className="flex-1 btn-primary text-sm py-2.5">{gifting ? 'En cours...' : 'Offrir'}</button>
+              <button onClick={handleGiftMonths} disabled={gifting} className="flex-1 btn-primary text-sm py-2.5">{gifting ? 'En cours…' : 'Offrir'}</button>
             </div>
           </div>
         </div>

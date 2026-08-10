@@ -120,7 +120,7 @@ export default function Conversation() {
     return (
       <AuthGateModal
         open={authGateOpen}
-        onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
+        onClose={() => { setAuthGateOpen(false); navigate('/explorer'); }}
         message="Crée ton compte pour envoyer des messages."
       />
     );

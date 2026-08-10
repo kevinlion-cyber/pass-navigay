@@ -27,12 +27,12 @@ export default function Verify() {
       toast.error(error);
     } else {
       toast.success('Bienvenue ! Tu peux des maintenant explorer des lieux, rejoindre des evenements et echanger avec la communaute.');
-      navigate('/explore');
+      navigate('/explorer');
     }
   };
 
   if (!email) {
-    navigate('/auth/register', { replace: true });
+    navigate('/inscription', { replace: true });
     return null;
   }
 

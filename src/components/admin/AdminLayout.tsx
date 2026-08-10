@@ -7,26 +7,26 @@ import { useTheme } from '../../contexts/ThemeContext';
 
 const NAV_ITEMS = [
   { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
-  { to: '/admin/analytics', icon: LineChart, label: 'Analytics' },
+  { to: '/admin/statistiques', icon: LineChart, label: 'Analytics' },
   { to: '/admin/utilisateurs', icon: UserSearch, label: 'Utilisateurs' },
-  { to: '/admin/seo', icon: Network, label: 'SEO' },
-  { to: '/admin/establishments', icon: Building2, label: 'Établissements' },
-  { to: '/admin/drafts', icon: Sparkles, label: 'Fiches auto' },
+  { to: '/admin/referencement', icon: Network, label: 'SEO' },
+  { to: '/admin/etablissements', icon: Building2, label: 'Établissements' },
+  { to: '/admin/fiches-auto', icon: Sparkles, label: 'Fiches auto' },
   { to: '/admin/villes', icon: MapPin, label: 'Villes' },
-  { to: '/admin/social', icon: Megaphone, label: 'Social' },
-  { to: '/admin/claims', icon: BadgeCheck, label: 'Revendications' },
-  { to: '/admin/events', icon: CalendarDays, label: 'Événements' },
+  { to: '/admin/reseaux-sociaux', icon: Megaphone, label: 'Social' },
+  { to: '/admin/revendications', icon: BadgeCheck, label: 'Revendications' },
+  { to: '/admin/evenements', icon: CalendarDays, label: 'Événements' },
   { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
-  { to: '/admin/members', icon: Users, label: 'Membres' },
-  { to: '/admin/partners', icon: Handshake, label: 'Partenaires' },
-  { to: '/admin/gifts', icon: Gift, label: 'Cadeaux offerts' },
+  { to: '/admin/membres', icon: Users, label: 'Membres' },
+  { to: '/admin/partenaires', icon: Handshake, label: 'Partenaires' },
+  { to: '/admin/cadeaux', icon: Gift, label: 'Cadeaux offerts' },
   { to: '/admin/categories', icon: Layers, label: 'Catégories' },
-  { to: '/admin/pros-landing', icon: Megaphone, label: 'Landing Pros' },
-  { to: '/admin/popups', icon: MessageSquare, label: 'Pop-ups' },
+  { to: '/admin/page-pros', icon: Megaphone, label: 'Landing Pros' },
+  { to: '/admin/fenetres', icon: MessageSquare, label: 'Pop-ups' },
   { to: '/admin/tarifs', icon: CreditCard, label: 'Tarifs' },
-  { to: '/admin/settings', icon: Settings, label: 'Paramètres' },
-  { to: '/admin/legal', icon: FileText, label: 'Contenu légal' },
-  { to: '/admin/account', icon: UserCog, label: 'Mon compte' },
+  { to: '/admin/parametres', icon: Settings, label: 'Paramètres' },
+  { to: '/admin/contenu-legal', icon: FileText, label: 'Contenu légal' },
+  { to: '/admin/mon-compte', icon: UserCog, label: 'Mon compte' },
 ];
 
 export default function AdminLayout() {
@@ -35,7 +35,7 @@ export default function AdminLayout() {
   const { theme, toggleTheme } = useTheme();
 
   const handleQuit = () => {
-    navigate('/explore');
+    navigate('/explorer');
   };
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>

@@ -44,9 +44,9 @@ const initialForm: FormData = {
 };
 
 const promoTypeOptions = [
-  { value: 'percentage', label: 'Reduction en %' },
+  { value: 'percentage', label: 'Réduction en %' },
   { value: 'fixed', label: 'Montant fixe en EUR' },
-  { value: 'offer', label: 'Offre speciale (texte libre)' },
+  { value: 'offer', label: 'Offre spéciale (texte libre)' },
 ];
 
 function toLocalDatetime(iso: string | null): string {
@@ -122,10 +122,10 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
     const e: Partial<Record<string, string>> = {};
     if (!form.title.trim()) e.title = 'Le titre est requis';
     if (!form.is_permanent) {
-      if (!form.valid_from) e.valid_from = 'La date de debut est requise';
+      if (!form.valid_from) e.valid_from = 'La date de début est requise';
       if (!form.valid_until) e.valid_until = 'La date de fin est requise';
       if (form.valid_from && form.valid_until && new Date(form.valid_until) <= new Date(form.valid_from)) {
-        e.valid_until = 'La date de fin doit etre posterieure a la date de debut';
+        e.valid_until = 'La date de fin doit être postérieure à la date de début';
       }
     }
     setErrors(e);
@@ -159,7 +159,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         if (error) throw error;
 
         if (croppedImage && created) {
-          setUploadProgress('Upload image...');
+          setUploadProgress("Envoi de l'image…");
           const filename = `${Date.now()}.jpg`;
           const { error: upErr } = await supabase.storage.from('promo-images').upload(`${created.id}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
           if (upErr) throw upErr;
@@ -167,10 +167,10 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
           await supabase.from('promotions').update({ image_url: urlData.publicUrl }).eq('id', created.id);
         }
 
-        toast.success('Promotion creee !');
+        toast.success('Promotion créée !');
       } else {
         if (croppedImage) {
-          setUploadProgress('Upload image...');
+          setUploadProgress("Envoi de l'image…");
           const filename = `${Date.now()}.jpg`;
           const { error: upErr } = await supabase.storage.from('promo-images').upload(`${promoId}/${filename}`, croppedImage, { contentType: 'image/jpeg', upsert: true });
           if (upErr) throw upErr;
@@ -180,7 +180,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
 
         const { error } = await supabase.from('promotions').update({ ...payload, image_url: newImageUrl }).eq('id', promoId);
         if (error) throw error;
-        toast.success('Promotion mise a jour !');
+        toast.success('Promotion mise à jour !');
       }
 
       setUploadProgress(null);
@@ -196,7 +196,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
   return (
     <AdminEditSidebar
       open={!!promoId}
-      title={isNew ? "Creer une promotion" : "Modifier la promotion"}
+      title={isNew ? "Créer une promotion" : "Modifier la promotion"}
       loading={loading}
       saving={saving}
       onClose={onClose}
@@ -214,7 +214,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         onImageCropped={(blob) => setCroppedImage(blob)}
         aspectRatio={4 / 3}
         label="VISUEL DE LA PROMOTION (format 4:3)"
-        hint="Image affichee sur la carte de la promotion dans l'app."
+        hint="Image affichée sur la carte de la promotion dans l'application."
       />
 
       <SidebarField label="Titre" error={errors.title}>
@@ -225,16 +225,16 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         <SidebarTextarea value={form.description} onChange={(v) => set('description', v)} />
       </SidebarField>
 
-      <SidebarField label="Etablissement">
+      <SidebarField label="Établissement">
         <SidebarSelect
           value={form.establishment_id}
           onChange={(v) => set('establishment_id', v)}
-          options={[{ value: '', label: 'Selectionner...' }, ...establishments]}
+          options={[{ value: '', label: 'Sélectionner…' }, ...establishments]}
         />
       </SidebarField>
 
       <div className="mb-2 mt-6">
-        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Type de reduction</p>
+        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Type de réduction</p>
       </div>
 
       <SidebarField label="Type">
@@ -255,19 +255,19 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
 
       {form.promo_type === 'offer' && (
         <SidebarField label="Texte de l'offre">
-          <SidebarInput value={form.offer_text} onChange={(v) => set('offer_text', v)} placeholder="Ex: 1 cocktail offert" />
+          <SidebarInput value={form.offer_text} onChange={(v) => set('offer_text', v)} placeholder="Ex. : 1 cocktail offert" />
         </SidebarField>
       )}
 
       <div className="mb-2 mt-6">
-        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Validite</p>
+        <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Validité</p>
       </div>
 
       <SidebarToggle checked={form.is_permanent} onChange={(v) => set('is_permanent', v)} label="Promotion permanente" />
 
       {!form.is_permanent && (
         <>
-          <SidebarField label="Date de debut" error={errors.valid_from}>
+          <SidebarField label="Date de début" error={errors.valid_from}>
             <SidebarInput value={form.valid_from} onChange={(v) => set('valid_from', v)} type="datetime-local" required error={!!errors.valid_from} />
           </SidebarField>
 
@@ -285,7 +285,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
         checked={form.is_active}
         onChange={(v) => set('is_active', v)}
         label="Promotion active"
-        description="Desactivez pour masquer temporairement la promotion sans la supprimer."
+        description="Désactivez pour masquer temporairement la promotion sans la supprimer."
       />
     </AdminEditSidebar>
   );

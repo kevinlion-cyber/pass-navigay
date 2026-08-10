@@ -144,7 +144,7 @@ export default function AdminEstablishments() {
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            placeholder="Rechercher..."
+            placeholder="Rechercher…"
             className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm pl-9 py-2"
           />
           {search && (
@@ -242,8 +242,8 @@ export default function AdminEstablishments() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Supprimer definitivement"
-        message={`Supprimer definitivement "${deleteTarget?.name}" ?`}
+        title="Supprimer définitivement"
+        message={`Supprimer définitivement « ${deleteTarget?.name} » ?`}
         confirmLabel="Supprimer"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDelete}

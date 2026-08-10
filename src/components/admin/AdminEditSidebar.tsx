@@ -95,7 +95,7 @@ export default function AdminEditSidebar({
                 style={{ background: '#7B2D8B' }}
               >
                 {saving && <Loader2 size={16} className="animate-spin" />}
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
+                {saving ? 'Enregistrement…' : 'Enregistrer'}
               </button>
             </div>
           </>

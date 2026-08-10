@@ -54,7 +54,7 @@ export default function EstablishmentForm() {
       const est = data as Establishment;
       if (est.owner_id !== user?.id) {
         toast.error('Acces refuse.');
-        navigate('/explore');
+        navigate('/explorer');
         return;
       }
       setName(est.name);
@@ -123,7 +123,7 @@ export default function EstablishmentForm() {
       toast.error(error.message);
     } else {
       toast.success(isEdit ? 'Établissement modifié !' : 'Établissement créé !');
-      navigate('/explore');
+      navigate('/explorer');
     }
     setSaving(false);
   };
@@ -140,7 +140,7 @@ export default function EstablishmentForm() {
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <AuthGateModal
         open={authGateOpen}
-        onClose={() => { setAuthGateOpen(false); navigate('/explore'); }}
+        onClose={() => { setAuthGateOpen(false); navigate('/explorer'); }}
         message="Crée ton compte pour ajouter ton établissement."
       />
 

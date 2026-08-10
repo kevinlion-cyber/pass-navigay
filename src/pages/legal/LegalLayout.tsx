@@ -26,7 +26,7 @@ export default function LegalLayout() {
     <div style={{ fontFamily: "'Inter', sans-serif", background: '#0a0a0f' }} className="min-h-screen">
       <header className="sticky top-0 z-50 h-14 flex items-center px-6" style={{ background: '#0a0a0f', borderBottom: '1px solid #1e1e2e' }}>
         <div className="max-w-[800px] w-full mx-auto flex items-center justify-between">
-          <Link to="/explore" className="text-[18px] font-bold">
+          <Link to="/explorer" className="text-[18px] font-bold">
             <span className="text-white">Pass</span>{' '}
             <span className="text-[#7B2D8B]">Navigay</span>
           </Link>

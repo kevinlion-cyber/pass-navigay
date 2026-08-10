@@ -15,7 +15,7 @@ export interface CoveredCity {
   n: number;
 }
 
-function slugifyCity(s: string): string {
+export function slugifyCity(s: string): string {
   return (s || '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')

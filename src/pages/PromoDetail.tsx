@@ -67,7 +67,7 @@ export default function PromoDetail() {
     return (
       <div className="text-center py-20 text-gray-500">
         <p>Promotion non trouvee.</p>
-        <button onClick={() => navigate('/promos')} className="btn-primary mt-4">
+        <button onClick={() => navigate('/promotions')} className="btn-primary mt-4">
           Retour aux promotions
         </button>
       </div>

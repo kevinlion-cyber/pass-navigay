@@ -22,21 +22,23 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Con
 
   return (
     <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-dark-surface border border-dark-border rounded-card w-full max-w-sm p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <p className="text-sm text-gray-400">{message}</p>
+      {/* La fenêtre suit le thème : en dur en sombre, elle apparaissait comme une
+          boîte noire au milieu d'une page blanche pour qui utilise le thème clair. */}
+      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-sm p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
 
         {requireText && (
           <div className="space-y-1.5">
             <p className="text-xs text-gray-500">
-              Tape <span className="font-bold text-white tracking-wide">{requireText}</span> pour confirmer.
+              Saisissez <span className="font-bold text-gray-900 dark:text-white tracking-wide">{requireText}</span> pour confirmer.
             </p>
             <input
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               placeholder={requireText}
               autoFocus
-              className="w-full px-3 py-2 rounded-input text-sm bg-dark-bg border border-dark-border text-white placeholder-gray-600 outline-none focus:border-alert transition-colors"
+              className="w-full px-3 py-2 rounded-input text-sm bg-light-bg dark:bg-dark-bg border border-light-border dark:border-dark-border text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-alert transition-colors"
             />
           </div>
         )}
@@ -50,7 +52,7 @@ export default function ConfirmModal({ open, title, message, confirmLabel = 'Con
             disabled={loading || !canConfirm}
             className="flex-1 bg-alert text-white px-4 py-2.5 rounded-input text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {loading ? 'Chargement...' : confirmLabel}
+            {loading ? 'En cours…' : confirmLabel}
           </button>
         </div>
       </div>

@@ -44,7 +44,7 @@ export default function ProfileEstablishments({ userId }: ProfileEstablishmentsP
             Tu n'as pas encore reference ton etablissement
           </p>
           <button
-            onClick={() => navigate('/establishment/new')}
+            onClick={() => navigate('/ajouter-un-lieu')}
             className="btn-secondary text-sm py-2.5 px-5 inline-flex items-center gap-2"
           >
             <Plus size={16} />

@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
   const now = Date.now();
   const diff = now - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "a l'instant";
+  if (minutes < 1) return "à l'instant";
   if (minutes < 60) return `il y a ${minutes} min`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `il y a ${hours}h`;
@@ -31,7 +31,7 @@ function timeAgo(dateStr: string): string {
 
 function formatDateTimeFr(dateStr: string): string {
   const d = new Date(dateStr);
-  return `${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} a ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+  return `${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} à ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
 export default function PromoUsesSection({ promoId, maxUses, currentUses }: Props) {
@@ -45,10 +45,13 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
   const enrichUses = async (rawUses: { id: string; user_id: string; used_at: string }[]): Promise<PromoUse[]> => {
     if (rawUses.length === 0) return [];
     const userIds = rawUses.map((u) => u.user_id);
-    const { data: profiles } = await supabase
+    // Le client Supabase renvoie l'erreur dans la réponse (pas d'exception) : sans
+    // la lire, les noms disparaissaient silencieusement au profit de « Utilisateur ».
+    const { data: profiles, error } = await supabase
       .from('public_profiles')
       .select('id, username, avatar_url')
       .in('id', userIds);
+    if (error) toast.error('Les noms des membres n\'ont pas pu être chargés.');
     const profileMap = new Map<string, { username: string; avatar_url: string | null }>();
     (profiles || []).forEach((p) => {
       profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url });
@@ -62,12 +65,16 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
 
   useEffect(() => {
     const loadRecent = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('promotion_uses')
         .select('id, user_id, used_at')
         .eq('promotion_id', promoId)
         .order('used_at', { ascending: false })
         .limit(5);
+      if (error) {
+        toast.error('Les utilisations de cette promotion n\'ont pas pu être chargées.');
+        return;
+      }
       if (data) {
         const enriched = await enrichUses(data);
         setUses(enriched);
@@ -105,11 +112,16 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
 
   const loadAllUses = async () => {
     setLoadingAll(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('promotion_uses')
       .select('id, user_id, used_at')
       .eq('promotion_id', promoId)
       .order('used_at', { ascending: false });
+    if (error) {
+      toast.error('La liste complète des utilisations n\'a pas pu être chargée. Réessayez dans un instant.');
+      setLoadingAll(false);
+      return;
+    }
     if (data) {
       const enriched = await enrichUses(data);
       setAllUses(enriched);
@@ -127,7 +139,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
       <div className="border-t border-light-border dark:border-dark-border pt-3 mt-1">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-900 dark:text-white transition-colors w-full"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors w-full"
         >
           <Users size={13} />
           <span>Voir les utilisations ({totalCount})</span>
@@ -178,7 +190,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-light-border dark:border-dark-border shrink-0">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Toutes les utilisations</h3>
-              <button onClick={() => setAllUsesOpen(false)} className="text-gray-500 hover:text-gray-900 dark:text-white transition-colors">
+              <button onClick={() => setAllUsesOpen(false)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>

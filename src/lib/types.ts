@@ -115,6 +115,8 @@ export interface Event {
   event_date: string;
   end_date: string | null;
   address: string;
+  /** Ville d'un événement organisé hors établissement (migration 60). */
+  custom_city: string | null;
   latitude: number | null;
   longitude: number | null;
   theme: string;

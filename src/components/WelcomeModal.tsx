@@ -114,7 +114,7 @@ export default function WelcomeModal() {
         <div className="space-y-3">
           {signupFirst ? (
             <>
-              <button onClick={() => navigate('/auth/register')} className="btn-primary w-full py-3">
+              <button onClick={() => navigate('/inscription')} className="btn-primary w-full py-3">
                 {t.cta}
               </button>
               <button

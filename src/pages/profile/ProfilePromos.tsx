@@ -71,7 +71,7 @@ export default function ProfilePromos({ userId }: ProfilePromosProps) {
             Aucune promo active pour le moment. Jette un oeil aux offres en cours !
           </p>
           <button
-            onClick={() => navigate('/promos')}
+            onClick={() => navigate('/promotions')}
             className="text-sm text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
           >
             Voir les promos

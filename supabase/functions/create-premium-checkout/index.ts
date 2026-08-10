@@ -73,8 +73,8 @@ Deno.serve(async (req: Request) => {
       payment_method_types: ["card"],
       customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/explore?premium=success`,
-      cancel_url: `${appUrl}/explore?premium=cancelled`,
+      success_url: `${appUrl}/explorer?premium=success`,
+      cancel_url: `${appUrl}/explorer?premium=cancelled`,
       metadata: { userId: user.id, billingInterval: billingInterval || "yearly" },
     });
 

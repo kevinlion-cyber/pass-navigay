@@ -28,7 +28,7 @@ export default function Pricing() {
 
   const handleSubscribe = async (type: 'pro' | 'premium') => {
     if (!user) {
-      navigate('/auth/login');
+      navigate('/connexion');
       return;
     }
 

@@ -30,7 +30,7 @@ export default function Login() {
     } else {
       toast.success('Connexion reussie !');
       const redirect = searchParams.get('redirect');
-      navigate(redirect && redirect.startsWith('/') ? redirect : '/explore');
+      navigate(redirect && redirect.startsWith('/') ? redirect : '/explorer');
     }
   };
 
@@ -152,7 +152,7 @@ export default function Login() {
 
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-5">
               Pas encore de compte ?{' '}
-              <Link to="/auth/register" className="text-primary hover:underline font-medium">
+              <Link to="/inscription" className="text-primary hover:underline font-medium">
                 Inscris-toi
               </Link>
             </p>

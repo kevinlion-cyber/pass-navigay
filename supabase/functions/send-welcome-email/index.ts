@@ -119,7 +119,7 @@ function buildUserEmailHtml(name: string): string {
         <li>Echanger avec les autres membres</li>
       </ul>
       <div style="text-align:center;margin-top:24px;">
-        <a href="https://passnavigay.com/explore" style="display:inline-block;background:#7B2D8B;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;">
+        <a href="https://passnavigay.com/explorer" style="display:inline-block;background:#7B2D8B;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;">
           Explorer les lieux
         </a>
       </div>

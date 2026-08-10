@@ -18,7 +18,7 @@ export default function AdminRoot() {
 
   // Pas connecté → page de connexion classique.
   if (!user) {
-    return <Navigate to="/auth/login?redirect=/admin" replace />;
+    return <Navigate to="/connexion?redirect=/admin" replace />;
   }
 
   // Connecté mais pas administrateur → accès refusé (vérifié en base, pas côté client).
@@ -38,11 +38,11 @@ export default function AdminRoot() {
             </p>
           </div>
           <div className="flex flex-col gap-2">
-            <button onClick={() => navigate('/explore')} className="btn-primary w-full">
+            <button onClick={() => navigate('/explorer')} className="btn-primary w-full">
               Retour à l'accueil
             </button>
             <button
-              onClick={async () => { await signOut(); navigate('/auth/login?redirect=/admin'); }}
+              onClick={async () => { await signOut(); navigate('/connexion?redirect=/admin'); }}
               className="w-full py-2.5 rounded-input text-sm font-medium transition-colors"
               style={{ color: '#808090' }}
             >
