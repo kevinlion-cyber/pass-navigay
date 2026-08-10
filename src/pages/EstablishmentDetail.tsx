@@ -116,7 +116,18 @@ export default function EstablishmentDetail() {
     // 1) Résoudre la fiche par slug (URL propre) ou par id (ancienne URL).
     const estRes = await supabase.from('establishments').select('*')
       .eq(slug ? 'slug' : 'id', (slug || id)!).maybeSingle();
-    const est = estRes.data as Establishment | null;
+    let est = estRes.data as Establishment | null;
+
+    // Repli : une fiche sans adresse de page est atteinte par /lieu/<identifiant>.
+    // Sans ce repli, elle affichait « Établissement non trouvé » alors qu'elle
+    // existe. La base garantit désormais l'adresse (migration 59), ce repli reste
+    // le filet pour les liens déjà partagés et pour tout import futur.
+    if (!est && slug && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)) {
+      const byId = await supabase.from('establishments').select('*').eq('id', slug).maybeSingle();
+      est = byId.data as Establishment | null;
+      if (est?.slug) navigate(`/lieu/${est.slug}`, { replace: true });
+    }
+
     if (!est) { setEstablishment(null); setLoading(false); return; }
     const eid = est.id;
     // Ancienne URL /establishment/:id → on redirige vers l'URL propre /lieu/:slug.

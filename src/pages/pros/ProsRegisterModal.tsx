@@ -126,6 +126,13 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
         bannerUrl = supabase.storage.from('establishment-banners').getPublicUrl(bannerData.path).data.publicUrl;
       }
 
+      // Adresse de page (`slug`) et ville de rattachement (`city_slug`) ne sont pas
+      // posées ici volontairement : la base les remplit (migration 59, trigger
+      // trg_establishments_fill_slugs), pour tous les chemins de création à la fois.
+      // Une commune déjà rattachée à une ville couverte reprend ce rattachement
+      // (un lieu à Lattes devient un lieu de Montpellier). Ne pas refaire ce calcul
+      // ici : c'est sa duplication écran par écran qui avait laissé le parcours des
+      // pros créer des fiches introuvables et absentes des pages de ville.
       const { data: establishment, error: estErr } = await supabase.from('establishments').insert({
         owner_id: userId,
         name: step2.name,

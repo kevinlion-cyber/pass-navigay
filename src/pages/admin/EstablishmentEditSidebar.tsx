@@ -294,17 +294,11 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       if (geoQuery) coords = await geocodeFirst(geoQuery);
 
       if (isNew) {
-        // URL propre /lieu/<slug> : indispensable, sinon la fiche renvoie
-        // « établissement non trouvé » (les fiches auto en ont un, pas les créations manuelles).
-        const base = (slugifyCity(`${form.name} ${form.city}`) || slugifyCity(form.name) || `lieu-${Date.now()}`).slice(0, 80);
-        let slug = base;
-        for (let i = 2; i <= 8; i++) {
-          const { data: clash } = await supabase.from('establishments').select('id').eq('slug', slug).maybeSingle();
-          if (!clash) break;
-          slug = `${base.slice(0, 76)}-${i}`;
-        }
+        // L'adresse de page (`slug`) est fabriquée par la base pour tous les chemins
+        // de création (migration 59, trigger trg_establishments_fill_slugs). Ne pas
+        // la recalculer ici : deux logiques concurrentes, c'est la garantie d'en
+        // oublier une. Sans elle, la fiche renvoyait « établissement non trouvé ».
         const { data: created, error } = await supabase.from('establishments').insert({
-          slug,
           name: form.name,
           description: form.description,
           phone: form.phone,
