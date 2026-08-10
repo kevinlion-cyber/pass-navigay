@@ -4,6 +4,7 @@ import { Tag, Clock, Search, X, Lock, Crown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCategories } from '../contexts/CategoriesContext';
+import { useCoveredCities } from '../lib/cities';
 import type { Promotion, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -32,7 +33,8 @@ export default function Promos() {
   const [usedPromoIds, setUsedPromoIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { categories } = useCategories();
+  const { categories, categoryKeys } = useCategories();
+  const coveredCities = useCoveredCities();
   const premiumText = usePopupText('promos_premium');
 
   const isPremium = profile?.is_premium === true;
@@ -42,7 +44,7 @@ export default function Promos() {
       setLoading(true);
       const { data } = await supabase
         .from(isPremium ? 'promotions' : 'public_promotions')
-        .select('*, establishment:establishments(name, logo_url, city, category, subcategory)')
+        .select('*, establishment:establishments(name, logo_url, city, city_slug, category, subcategory)')
         .gte('valid_until', new Date().toISOString())
         .order('valid_until');
       if (data) setPromos(data as unknown as Promotion[]);
@@ -67,21 +69,14 @@ export default function Promos() {
     loadUses();
   }, [user, isPremium, promos]);
 
-  const cities = Array.from(
-    new Set(promos.map((p) => p.establishment?.city).filter(Boolean))
-  ).sort() as string[];
-
-  // Filtres catégorie / sous-catégorie (demande Kevin) — calculés sur les promos en cours.
-  const cats = Array.from(new Set(promos.map((p) => p.establishment?.category).filter(Boolean))).sort() as string[];
-  const subcats = Array.from(new Set(
-    promos
-      .filter((p) => catFilter === 'all' || p.establishment?.category === catFilter)
-      .map((p) => p.establishment?.subcategory).filter(Boolean)
-  )).sort() as string[];
+  // Filtres Ville (par rattachement) et Catégorie alignés sur l'annuaire : les
+  // villes viennent de public_city_list, les catégories du catalogue. Ils
+  // s'affichent donc toujours, même sans promo, comme sur la page Explorer.
+  const subcats = catFilter === 'all' ? [] : (categories[catFilter as CategoryKey]?.subcategories || []);
 
   const filtered = promos.filter((p) => {
     if (typeFilter !== 'all' && p.promo_type !== typeFilter) return false;
-    if (cityFilter !== 'all' && p.establishment?.city !== cityFilter) return false;
+    if (cityFilter !== 'all' && p.establishment?.city_slug !== cityFilter) return false;
     if (catFilter !== 'all' && p.establishment?.category !== catFilter) return false;
     if (subcatFilter !== 'all' && p.establishment?.subcategory !== subcatFilter) return false;
     if (search) {
@@ -158,19 +153,19 @@ export default function Promos() {
           options={PROMO_FILTERS}
           onChange={setTypeFilter}
         />
-        {cities.length > 0 && (
+        {coveredCities.length > 0 && (
           <FilterDropdown
             label="Ville"
             value={cityFilter}
-            options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
+            options={[{ value: 'all', label: 'Toutes les villes' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
             onChange={setCityFilter}
           />
         )}
-        {cats.length > 0 && (
+        {categoryKeys.length > 0 && (
           <FilterDropdown
             label="Catégorie"
             value={catFilter}
-            options={[{ value: 'all', label: 'Toutes les catégories' }, ...cats.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
+            options={[{ value: 'all', label: 'Toutes les catégories' }, ...categoryKeys.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
             onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
           />
         )}

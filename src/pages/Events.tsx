@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Search, X, Store } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useCategories } from '../contexts/CategoriesContext';
+import { useCoveredCities } from '../lib/cities';
 import type { Event, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -35,7 +36,8 @@ export default function Events() {
   const [dateTo, setDateTo] = useState('');
   const [showProPopup, setShowProPopup] = useState(false);
   const navigate = useNavigate();
-  const { categories } = useCategories();
+  const { categories, categoryKeys } = useCategories();
+  const coveredCities = useCoveredCities();
   const eventsPopup = usePopupText('events');
 
   // Invitation à créer un profil d'établissement : une fois par visite, non bloquante.
@@ -58,7 +60,7 @@ export default function Events() {
       const now = new Date().toISOString();
       const { data } = await supabase
         .from('events')
-        .select('*, establishment:establishments(name, logo_url, city, category, subcategory)')
+        .select('*, establishment:establishments(name, logo_url, city, city_slug, category, subcategory)')
         .or(`event_date.gte.${now},end_date.gte.${now}`)
         .order('event_date');
       if (data) setEvents(data as unknown as Event[]);
@@ -67,23 +69,16 @@ export default function Events() {
     load();
   }, []);
 
-  const cities = Array.from(
-    new Set(events.map((e) => e.establishment?.city).filter(Boolean))
-  ).sort() as string[];
-
-  // Filtres catégorie / sous-catégorie (demande Kevin) — dérivés des événements affichés.
-  const cats = Array.from(new Set(events.map((e) => e.establishment?.category).filter(Boolean))).sort() as string[];
-  const subcats = Array.from(new Set(
-    events
-      .filter((e) => catFilter === 'all' || e.establishment?.category === catFilter)
-      .map((e) => e.establishment?.subcategory).filter(Boolean)
-  )).sort() as string[];
+  // Filtres Ville (par rattachement) et Catégorie alignés sur l'annuaire : villes
+  // depuis public_city_list, catégories depuis le catalogue. Ils s'affichent donc
+  // toujours, même sans événement, comme sur la page Explorer.
+  const subcats = catFilter === 'all' ? [] : (categories[catFilter as CategoryKey]?.subcategories || []);
 
   const filtered = events.filter((e) => {
     if (themeFilter !== 'Tous' && e.theme?.toLowerCase() !== themeFilter.toLowerCase()) return false;
     if (priceFilter === 'free' && !e.is_free) return false;
     if (priceFilter === 'paid' && e.is_free) return false;
-    if (cityFilter !== 'all' && e.establishment?.city !== cityFilter) return false;
+    if (cityFilter !== 'all' && e.establishment?.city_slug !== cityFilter) return false;
     if (catFilter !== 'all' && e.establishment?.category !== catFilter) return false;
     if (subcatFilter !== 'all' && e.establishment?.subcategory !== subcatFilter) return false;
     if (dateFrom && new Date(e.event_date) < new Date(dateFrom)) return false;
@@ -158,19 +153,19 @@ export default function Events() {
           ]}
           onChange={setPriceFilter}
         />
-        {cities.length > 0 && (
+        {coveredCities.length > 0 && (
           <FilterDropdown
             label="Ville"
             value={cityFilter}
-            options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
+            options={[{ value: 'all', label: 'Toutes les villes' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
             onChange={setCityFilter}
           />
         )}
-        {cats.length > 0 && (
+        {categoryKeys.length > 0 && (
           <FilterDropdown
             label="Catégorie"
             value={catFilter}
-            options={[{ value: 'all', label: 'Toutes les catégories' }, ...cats.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
+            options={[{ value: 'all', label: 'Toutes les catégories' }, ...categoryKeys.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
             onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
           />
         )}
