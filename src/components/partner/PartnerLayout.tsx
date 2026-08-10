@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, LogOut, BarChart3, Store, CalendarDays, Tag,
-  CreditCard, User, MessageSquare, Sun, Moon,
+  CreditCard, User, MessageSquare, Sun, Moon, ExternalLink,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../contexts/ThemeContext';
 import type { Establishment } from '../../lib/types';
@@ -29,7 +30,13 @@ export default function PartnerLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(true);
-  const [establishment, setEstablishment] = useState<Establishment | null>(null);
+  // Un gérant peut posséder PLUSIEURS établissements (deux bars, par exemple).
+  // Avant, on lisait avec `maybeSingle()` : au-delà d'un établissement, la requête
+  // renvoyait une erreur, donc « aucun établissement », donc renvoi à l'accueil en
+  // boucle et sans un mot. On charge la liste et on propose de choisir.
+  const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const establishment = establishments.find((e) => e.id === activeId) || establishments[0] || null;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [badges, setBadges] = useState<NavBadges>({ events: 0, promos: 0, photos: 0 });
@@ -43,17 +50,27 @@ export default function PartnerLayout() {
         return;
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('establishments')
         .select('*')
         .eq('owner_id', session.user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
 
-      if (!data) {
+      // Une panne de réseau ne doit pas être confondue avec « pas d'établissement » :
+      // avant, toute erreur renvoyait le gérant sur la page d'accueil commerciale.
+      if (error) {
+        toast.error('Impossible de charger votre établissement. Vérifiez votre connexion.');
+        setLoading(false);
+        return;
+      }
+
+      const list = (data as Establishment[]) || [];
+      if (list.length === 0) {
         navigate('/pros/inscription', { replace: true });
         return;
       }
-      setEstablishment(data as Establishment);
+      setEstablishments(list);
+      setActiveId(list[0].id);
       setLoading(false);
     };
     check();
@@ -107,8 +124,24 @@ export default function PartnerLayout() {
     );
   }
 
-  const est = establishment!;
-  const initials = est.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  // Un établissement peut ne plus exister (supprimé côté administration pendant
+  // la session) : on renvoie sur l'accueil plutôt que de planter la page.
+  if (!establishment) {
+    return (
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Nous n'avons pas retrouvé votre établissement.
+        </p>
+        <button onClick={() => navigate('/pros')} className="btn-primary py-2.5 px-5 text-sm">
+          Retour à l'accueil
+        </button>
+      </div>
+    );
+  }
+
+  const est = establishment;
+  // Un double espace dans le nom produisait « undefined » dans les initiales.
+  const initials = est.name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const getBadge = (to: string): { value: string; color: string } | null => {
     if (to === '/pros/evenements' && badges.events > 0) {
@@ -140,7 +173,29 @@ export default function PartnerLayout() {
           </span>
         </div>
         <div className="flex items-center gap-3" ref={avatarRef}>
-          <span className="text-[13px] text-gray-500 hidden sm:block">{est.name}</span>
+          {/* Le gérant doit pouvoir aller voir le résultat de ce qu'il publie :
+              sans ce lien, il n'avait aucun moyen d'atteindre sa fiche publique. */}
+          <a
+            href={`/lieu/${est.slug || est.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors hover:underline"
+            style={{ color: '#7B2D8B' }}
+          >
+            <ExternalLink size={14} /> Voir ma fiche publique
+          </a>
+          {establishments.length > 1 ? (
+            <select
+              value={est.id}
+              onChange={(e) => setActiveId(e.target.value)}
+              aria-label="Choisir l'établissement à gérer"
+              className="hidden sm:block text-[13px] rounded-input px-2 py-1 bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border text-gray-900 dark:text-white"
+            >
+              {establishments.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          ) : (
+            <span className="text-[13px] text-gray-500 hidden sm:block">{est.name}</span>
+          )}
           <button onClick={toggleTheme} aria-label="Basculer le thème"
             className="text-gray-500 hover:text-primary transition-colors">
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -250,6 +305,17 @@ export default function PartnerLayout() {
 
         {/* Sidebar bottom */}
         <div className="p-2" style={{ borderTop: '1px solid var(--pn-border)' }}>
+          {/* Repris ici pour le mobile, où le lien de l'en-tête est masqué. */}
+          <a
+            href={`/lieu/${est.slug || est.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-sm font-medium transition-colors hover:bg-[var(--pn-surface2)]"
+            style={{ color: '#7B2D8B' }}
+          >
+            <ExternalLink size={18} />
+            <span>Voir ma fiche publique</span>
+          </a>
           <button onClick={handleLogout}
             className="w-full flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-sm font-medium transition-colors"
             style={{ color: '#c0392b' }}
@@ -263,7 +329,11 @@ export default function PartnerLayout() {
 
       {/* Main content */}
       <main className="mt-14 lg:ml-[240px] min-h-[calc(100vh-56px)] p-4 lg:p-8">
-        <Outlet context={{ establishment: est, reload: () => window.location.reload() }} />
+        {/* `key` sur l'établissement actif : les écrans enfants initialisent leurs
+            champs à partir de lui une seule fois. Sans ce remontage, changer
+            d'établissement gardait les valeurs du précédent dans le formulaire,
+            et un enregistrement aurait écrasé la seconde fiche avec la première. */}
+        <Outlet key={est.id} context={{ establishment: est, reload: () => window.location.reload() }} />
       </main>
     </div>
   );

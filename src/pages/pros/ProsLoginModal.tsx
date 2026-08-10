@@ -17,6 +17,28 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
+  // La page de réinitialisation existait déjà, mais ce bouton affichait
+  // « disponible prochainement » : un gérant qui perdait son mot de passe
+  // était bloqué dehors, sans aucune issue.
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast.error('Saisissez votre adresse e-mail, nous vous enverrons un lien.');
+      return;
+    }
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    setSendingReset(false);
+    if (error) {
+      toast.error(translateAuthError(error));
+      return;
+    }
+    // On ne révèle pas si l'adresse a un compte (vie privée des membres).
+    toast.success('Si un compte existe pour cette adresse, vous allez recevoir un lien pour changer votre mot de passe.');
+  };
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -112,11 +134,12 @@ export default function ProsLoginModal({ onClose, onSwitchToRegister }: ProsLogi
               <div className="flex justify-end mt-1.5">
                 <button
                   type="button"
-                  onClick={() => toast('Fonctionnalité disponible prochainement.')}
-                  className="text-[12px] font-medium transition-colors hover:underline"
+                  onClick={handleForgotPassword}
+                  disabled={sendingReset}
+                  className="text-[12px] font-medium transition-colors hover:underline disabled:opacity-50"
                   style={{ color: '#7B2D8B' }}
                 >
-                  Mot de passe oublié ?
+                  {sendingReset ? 'Envoi en cours…' : 'Mot de passe oublié ?'}
                 </button>
               </div>
             </div>
