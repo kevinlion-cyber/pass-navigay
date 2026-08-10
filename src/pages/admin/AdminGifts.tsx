@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Gift } from 'lucide-react';
+import { Gift, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 import MemberSidebar from './MemberSidebar';
 import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 
@@ -36,6 +38,8 @@ export default function AdminGifts() {
   const [filter, setFilter] = useState<'all' | 'premium' | 'pro'>('all');
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [selectedEstablishmentId, setSelectedEstablishmentId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GiftRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -96,6 +100,56 @@ export default function AdminGifts() {
     load();
   }, [filter]);
 
+  // Supprimer un cadeau = retirer la ligne ET l'accès offert. On retranche les
+  // jours offerts de la date d'expiration en cours (on ne touche donc pas à une
+  // période payée ou à un autre cadeau). Si ça retombe dans le passé, on coupe l'accès.
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const g = deleteTarget;
+      const table = g.recipient_type === 'user' ? 'profiles' : 'establishments';
+      const activeField = g.gift_type === 'premium' ? 'is_premium' : 'is_pro';
+      const expiryField = g.gift_type === 'premium' ? 'premium_expires_at' : 'pro_expires_at';
+
+      const { data: current } = await supabase
+        .from(table)
+        .select(`${activeField}, ${expiryField}`)
+        .eq('id', g.recipient_id)
+        .single();
+
+      const row = current as Record<string, unknown> | null;
+      const expiry = row?.[expiryField] as string | undefined;
+      const nowMs = Date.now();
+
+      if (expiry) {
+        const reduced = new Date(expiry);
+        reduced.setDate(reduced.getDate() - (g.days_added || 0));
+        if (reduced.getTime() <= nowMs) {
+          const { error } = await supabase.from(table).update({ [activeField]: false, [expiryField]: null }).eq('id', g.recipient_id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from(table).update({ [expiryField]: reduced.toISOString() }).eq('id', g.recipient_id);
+          if (error) throw error;
+        }
+      } else {
+        // Pas d'expiry en base : l'accès actif venait du cadeau, on le coupe.
+        const { error } = await supabase.from(table).update({ [activeField]: false, [expiryField]: null }).eq('id', g.recipient_id);
+        if (error) throw error;
+      }
+
+      const { error: delErr } = await supabase.from('admin_gifts').delete().eq('id', g.id);
+      if (delErr) throw delErr;
+
+      toast.success("Cadeau supprimé et accès retiré");
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setDeleting(false);
+  };
+
   const now = new Date();
 
   return (
@@ -137,6 +191,7 @@ export default function AdminGifts() {
                   <th className="py-3 px-3">Statut</th>
                   <th className="py-3 px-3">Note interne</th>
                   <th className="py-3 px-3">Offert le</th>
+                  <th className="py-3 px-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,6 +250,11 @@ export default function AdminGifts() {
                         {g.note || '-'}
                       </td>
                       <td className="py-2.5 px-3 text-[12px] text-gray-500">{formatDateTimeFr(g.created_at)}</td>
+                      <td className="py-2.5 px-3">
+                        <button onClick={() => setDeleteTarget(g)} title="Supprimer et retirer l'accès" className="p-1.5 text-gray-500 hover:text-alert transition-colors">
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -253,12 +313,27 @@ export default function AdminGifts() {
                   </div>
                   <p className="text-[12px] text-gray-400">Valable jusqu'au {formatDateFr(g.new_expiry)}</p>
                   {g.note && <p className="text-[11px] text-gray-500 italic">{g.note}</p>}
+                  <div className="flex justify-end pt-1">
+                    <button onClick={() => setDeleteTarget(g)} className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-alert transition-colors">
+                      <Trash2 size={14} /> Supprimer et retirer l'accès
+                    </button>
+                  </div>
                 </div>
               );
             })}
           </div>
         </>
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Supprimer ce cadeau ?"
+        message={deleteTarget ? `Le cadeau ${deleteTarget.gift_type === 'premium' ? 'Premium' : 'Pro'} de ${deleteTarget.recipient_name} sera supprimé et l'accès offert (${deleteTarget.days_added} jours) retiré.` : ''}
+        confirmLabel="Supprimer et retirer l'accès"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
 
       <MemberSidebar
         memberId={selectedMemberId}

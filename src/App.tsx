@@ -43,6 +43,7 @@ import AdminGifts from './pages/admin/AdminGifts';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminProsLanding from './pages/admin/AdminProsLanding';
+import AdminPopups from './pages/admin/AdminPopups';
 import AdminTarifs from './pages/admin/AdminTarifs';
 import AdminAccount from './pages/admin/AdminAccount';
 
@@ -144,6 +145,7 @@ export default function App() {
               <Route path="gifts" element={<AdminGifts />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="pros-landing" element={<AdminProsLanding />} />
+              <Route path="popups" element={<AdminPopups />} />
               <Route path="tarifs" element={<AdminTarifs />} />
               <Route path="account" element={<AdminAccount />} />
               <Route path="settings" element={<AdminSettings />} />

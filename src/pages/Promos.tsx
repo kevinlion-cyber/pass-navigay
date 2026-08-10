@@ -8,6 +8,7 @@ import type { Promotion, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import { usePopupText } from '../lib/popups';
 
 type PromoTypeFilter = 'all' | 'percentage' | 'fixed' | 'offer' | 'recurring';
 
@@ -32,6 +33,7 @@ export default function Promos() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { categories } = useCategories();
+  const premiumText = usePopupText('promos_premium');
 
   const isPremium = profile?.is_premium === true;
 
@@ -216,7 +218,7 @@ export default function Promos() {
                 <Lock size={24} style={{ color: '#7B2D8B' }} />
               </div>
               <p className="text-base font-semibold text-gray-900 dark:text-white">
-                Réservé aux membres Premium
+                {premiumText.title}
               </p>
               <button
                 onClick={() => setUpgradeOpen(true)}
@@ -224,7 +226,7 @@ export default function Promos() {
                 style={{ background: '#7B2D8B' }}
               >
                 <Crown size={16} />
-                Passer Premium
+                {premiumText.cta}
               </button>
             </div>
           </div>
@@ -232,9 +234,29 @@ export default function Promos() {
       )}
 
       {!isPremium && filtered.length === 0 && (
-        <div className="text-center py-16 space-y-3">
-          <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvée</p>
+        <div className="text-center py-16 space-y-4">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
+            style={{ background: 'rgba(123,45,139,0.15)' }}
+          >
+            <Lock size={24} style={{ color: '#7B2D8B' }} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-gray-900 dark:text-white">
+              {premiumText.title}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {premiumText.body}
+            </p>
+          </div>
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
+          >
+            <Crown size={16} />
+            {premiumText.cta}
+          </button>
         </div>
       )}
 

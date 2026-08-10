@@ -4,6 +4,7 @@ import { MapPin, Calendar, Users, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { markWelcomeNever, markWelcomeSeen, welcomeSeen } from '../lib/welcome';
+import { usePopupText } from '../lib/popups';
 
 /**
  * Mot de bienvenue affiché PAR-DESSUS le site, sur la page d'accueil.
@@ -30,6 +31,7 @@ export default function WelcomeModal() {
   const [open, setOpen] = useState(false);
   const [requireSignup, setRequireSignup] = useState(true);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const t = usePopupText('welcome');
 
   // Un membre qui a demandé à ne plus voir ce message ne le revoit jamais ;
   // un visiteur qui l'a déjà écarté ne le revoit pas de la visite.
@@ -91,8 +93,8 @@ export default function WelcomeModal() {
           <div className="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center">
             <span className="text-white text-2xl font-semibold">P</span>
           </div>
-          <h1 id="welcome-title" className="text-2xl font-semibold text-gray-900 dark:text-white">Pass Navigay</h1>
-          <p className="text-gray-600 dark:text-gray-400">Découvrez les lieux LGBT-friendly près de chez vous.</p>
+          <h1 id="welcome-title" className="text-2xl font-semibold text-gray-900 dark:text-white">{t.title}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{t.body}</p>
         </div>
 
         <div className="space-y-4">
@@ -113,7 +115,7 @@ export default function WelcomeModal() {
           {signupFirst ? (
             <>
               <button onClick={() => navigate('/auth/register')} className="btn-primary w-full py-3">
-                Créer mon compte
+                {t.cta}
               </button>
               <button
                 onClick={close}

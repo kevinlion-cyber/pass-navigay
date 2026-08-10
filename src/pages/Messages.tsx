@@ -7,10 +7,12 @@ import type { ConversationPreview } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import { usePopupText } from '../lib/popups';
 
 export default function Messages() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const premiumText = usePopupText('messages_premium');
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
@@ -129,10 +131,10 @@ export default function Messages() {
             <Lock size={28} style={{ color: '#7B2D8B' }} />
           </div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            La messagerie est reservee aux membres Premium
+            {premiumText.title}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-            Passe Premium pour envoyer des messages a la communaute.
+            {premiumText.body}
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
@@ -141,7 +143,7 @@ export default function Messages() {
               style={{ background: '#7B2D8B' }}
             >
               <Crown size={16} />
-              Passer Premium
+              {premiumText.cta}
             </button>
             <button
               onClick={() => navigate('/explore')}

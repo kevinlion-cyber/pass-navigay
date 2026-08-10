@@ -2,29 +2,40 @@ import { useEffect, useState } from 'react';
 import { Search, X, ExternalLink, Trash2, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
-import type { Event } from '../../lib/types';
+import { useCategories } from '../../contexts/CategoriesContext';
+import type { Event, CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import EventEditSidebar from './EventEditSidebar';
 
+type EstLite = { id: string; name: string; city: string; category: string; subcategory: string };
+
 export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [establishments, setEstablishments] = useState<{ id: string; name: string; city: string }[]>([]);
+  const [establishments, setEstablishments] = useState<EstLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [estFilter, setEstFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
+  const [catFilter, setCatFilter] = useState('all');
+  const [subcatFilter, setSubcatFilter] = useState('all');
   const [priceFilter, setPriceFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<Event | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const { categories } = useCategories();
 
   const load = async () => {
     setLoading(true);
     try {
       let query = supabase.from('events').select('*, establishment:establishments(id, name)').order('event_date', { ascending: false });
       if (estFilter !== 'all') query = query.eq('establishment_id', estFilter);
-      if (cityFilter !== 'all') {
-        const ids = establishments.filter((e) => e.city === cityFilter).map((e) => e.id);
+      // Ville / catégorie / sous-catégorie se filtrent sur les établissements (intersection).
+      if (cityFilter !== 'all' || catFilter !== 'all' || subcatFilter !== 'all') {
+        const ids = establishments
+          .filter((e) => (cityFilter === 'all' || e.city === cityFilter)
+            && (catFilter === 'all' || e.category === catFilter)
+            && (subcatFilter === 'all' || e.subcategory === subcatFilter))
+          .map((e) => e.id);
         query = query.in('establishment_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
       }
       if (priceFilter === 'free') query = query.eq('is_free', true);
@@ -38,12 +49,12 @@ export default function AdminEvents() {
   };
 
   useEffect(() => {
-    supabase.from('establishments').select('id, name, city').order('name').then(({ data }) => {
-      setEstablishments(data || []);
+    supabase.from('establishments').select('id, name, city, category, subcategory').order('name').then(({ data }) => {
+      setEstablishments((data as EstLite[]) || []);
     });
   }, []);
 
-  useEffect(() => { load(); }, [estFilter, cityFilter, priceFilter, search, establishments]);
+  useEffect(() => { load(); }, [estFilter, cityFilter, catFilter, subcatFilter, priceFilter, search, establishments]);
 
 
   const handleDelete = async () => {
@@ -86,6 +97,18 @@ export default function AdminEvents() {
           <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
             <option value="all">Toutes les villes</option>
             {cs.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ); })()}
+        {(() => { const ks = [...new Set(establishments.map((e) => e.category).filter(Boolean))].sort(); return ks.length > 0 && (
+          <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setSubcatFilter('all'); }} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les catégories</option>
+            {ks.map((k) => <option key={k} value={k}>{categories[k as CategoryKey]?.label || k}</option>)}
+          </select>
+        ); })()}
+        {(() => { const ss = [...new Set(establishments.filter((e) => catFilter === 'all' || e.category === catFilter).map((e) => e.subcategory).filter(Boolean))].sort(); return ss.length > 0 && (
+          <select value={subcatFilter} onChange={(e) => setSubcatFilter(e.target.value)} className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-auto py-2">
+            <option value="all">Toutes les sous-catégories</option>
+            {ss.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         ); })()}
         <div className="relative flex-1 min-w-[200px]">

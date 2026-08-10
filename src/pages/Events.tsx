@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Search, X } from 'lucide-react';
+import { Calendar, MapPin, Search, X, Store } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Event } from '../lib/types';
+import { useCategories } from '../contexts/CategoriesContext';
+import type { Event, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { usePopupText } from '../lib/popups';
 
 const THEME_FILTERS = [
   'Tous',
@@ -27,9 +29,28 @@ export default function Events() {
   const [themeFilter, setThemeFilter] = useState('Tous');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const [cityFilter, setCityFilter] = useState('all');
+  const [catFilter, setCatFilter] = useState('all');
+  const [subcatFilter, setSubcatFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [showProPopup, setShowProPopup] = useState(false);
   const navigate = useNavigate();
+  const { categories } = useCategories();
+  const eventsPopup = usePopupText('events');
+
+  // Invitation à créer un profil d'établissement : une fois par visite, non bloquante.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('pn_events_popup_seen') !== '1') setShowProPopup(true);
+    } catch {
+      setShowProPopup(true);
+    }
+  }, []);
+
+  const closeProPopup = () => {
+    setShowProPopup(false);
+    try { sessionStorage.setItem('pn_events_popup_seen', '1'); } catch { /* stockage indisponible */ }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -37,7 +58,7 @@ export default function Events() {
       const now = new Date().toISOString();
       const { data } = await supabase
         .from('events')
-        .select('*, establishment:establishments(name, logo_url, city)')
+        .select('*, establishment:establishments(name, logo_url, city, category, subcategory)')
         .or(`event_date.gte.${now},end_date.gte.${now}`)
         .order('event_date');
       if (data) setEvents(data as unknown as Event[]);
@@ -50,11 +71,21 @@ export default function Events() {
     new Set(events.map((e) => e.establishment?.city).filter(Boolean))
   ).sort() as string[];
 
+  // Filtres catégorie / sous-catégorie (demande Kevin) — dérivés des événements affichés.
+  const cats = Array.from(new Set(events.map((e) => e.establishment?.category).filter(Boolean))).sort() as string[];
+  const subcats = Array.from(new Set(
+    events
+      .filter((e) => catFilter === 'all' || e.establishment?.category === catFilter)
+      .map((e) => e.establishment?.subcategory).filter(Boolean)
+  )).sort() as string[];
+
   const filtered = events.filter((e) => {
     if (themeFilter !== 'Tous' && e.theme?.toLowerCase() !== themeFilter.toLowerCase()) return false;
     if (priceFilter === 'free' && !e.is_free) return false;
     if (priceFilter === 'paid' && e.is_free) return false;
     if (cityFilter !== 'all' && e.establishment?.city !== cityFilter) return false;
+    if (catFilter !== 'all' && e.establishment?.category !== catFilter) return false;
+    if (subcatFilter !== 'all' && e.establishment?.subcategory !== subcatFilter) return false;
     if (dateFrom && new Date(e.event_date) < new Date(dateFrom)) return false;
     if (dateTo && new Date(e.event_date) > new Date(`${dateTo}T23:59:59`)) return false;
     if (search) {
@@ -133,6 +164,22 @@ export default function Events() {
             value={cityFilter}
             options={[{ value: 'all', label: 'Toutes les villes' }, ...cities.map((c) => ({ value: c, label: c }))]}
             onChange={setCityFilter}
+          />
+        )}
+        {cats.length > 0 && (
+          <FilterDropdown
+            label="Catégorie"
+            value={catFilter}
+            options={[{ value: 'all', label: 'Toutes les catégories' }, ...cats.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
+            onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
+          />
+        )}
+        {subcats.length > 0 && (
+          <FilterDropdown
+            label="Sous-catégorie"
+            value={subcatFilter}
+            options={[{ value: 'all', label: 'Toutes les sous-catégories' }, ...subcats.map((s) => ({ value: s, label: s }))]}
+            onChange={setSubcatFilter}
           />
         )}
       </div>
@@ -216,6 +263,49 @@ export default function Events() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {showProPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeProPopup}
+        >
+          <div
+            className="relative w-full max-w-md rounded-card bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border p-6 sm:p-7 space-y-5 shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeProPopup}
+              aria-label="Fermer"
+              className="absolute right-3 top-3 w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-light-bg dark:hover:bg-dark-bg transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
+              <Store size={26} style={{ color: '#7B2D8B' }} />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{eventsPopup.title}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{eventsPopup.body}</p>
+
+            <div className="space-y-3 pt-1">
+              <button
+                onClick={() => { closeProPopup(); navigate('/pros'); }}
+                className="btn-primary w-full py-3"
+              >
+                {eventsPopup.cta}
+              </button>
+              <button
+                onClick={closeProPopup}
+                className="w-full py-2.5 rounded-input text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                Plus tard
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
