@@ -14,6 +14,7 @@ interface MapViewProps {
   flyTo?: { lng: number; lat: number } | null;
   selectedId?: string | null;
   highlightId?: string | null;
+  fitToCity?: string | null;
 }
 
 interface PopupData {
@@ -56,12 +57,13 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
   return result;
 }
 
-function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId }: MapViewProps) {
+function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId, fitToCity }: MapViewProps) {
   const map = useMap();
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<PopupData>({});
   const [popupLoading, setPopupLoading] = useState(false);
   const boundsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastFitRef = useRef<string | null>(null);
 
   const emitBounds = useCallback(() => {
     if (!map) return;
@@ -96,6 +98,26 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     map.panTo({ lat: flyTo.lat, lng: flyTo.lng });
     map.setZoom(14);
   }, [flyTo, map]);
+
+  // Quand une ville est choisie, cadrer la carte sur les lieux affichés (une seule
+  // fois par ville, après le chargement des données) : sinon la carte reste centrée
+  // sur le centre-ville et les lieux des communes rattachées tombent hors champ.
+  useEffect(() => {
+    if (!map || !fitToCity || fitToCity === lastFitRef.current) return;
+    const valid = establishments.filter(
+      (e) => Math.abs(e.latitude) > 0.0001 && Math.abs(e.longitude) > 0.0001
+    );
+    if (valid.length === 0) return;
+    lastFitRef.current = fitToCity;
+    if (valid.length === 1) {
+      map.panTo({ lat: valid[0].latitude, lng: valid[0].longitude });
+      map.setZoom(14);
+      return;
+    }
+    const bounds = new google.maps.LatLngBounds();
+    valid.forEach((e) => bounds.extend({ lat: e.latitude, lng: e.longitude }));
+    map.fitBounds(bounds, 60);
+  }, [fitToCity, establishments, map]);
 
   useEffect(() => {
     if (!selectedId || !map) return;

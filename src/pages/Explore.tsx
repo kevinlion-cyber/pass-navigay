@@ -206,10 +206,12 @@ export default function Explore() {
       .from('establishments')
       .select('*')
       .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1)
-      // Priorité d'affichage (demande Kevin) : Sponsors → Pros → les autres, puis les plus récents.
+      // Priorité d'affichage : Sponsors → Pros → ordre alphabétique.
+      // (Avant : « plus récents d'abord » → un lot fraîchement ajouté d'une seule
+      //  catégorie monopolisait les 1res pages, ex. les maisons d'hôtes du 07/08.)
       .order('is_sponsor', { ascending: false })
       .order('is_pro', { ascending: false })
-      .order('created_at', { ascending: false });
+      .order('name', { ascending: true });
 
     if (selectedCategory) {
       query = query.eq('category', selectedCategory);
@@ -469,6 +471,7 @@ export default function Explore() {
               onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
+              fitToCity={citySlug}
               selectedId={selectedPinId} highlightId={hoveredId}
             />
           </div>
@@ -492,6 +495,7 @@ export default function Explore() {
             onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
+            fitToCity={citySlug}
             selectedId={selectedPinId} highlightId={hoveredId}
           />
         </div>
