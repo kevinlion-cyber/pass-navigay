@@ -321,8 +321,10 @@ ${others ? `<h2>Autres guides</h2><div class="links">${others}</div>` : ""}`;
 async function sitemap(): Promise<Response> {
   const all = await allEstablishments();
   const urls: { loc: string; pr: string }[] = [
-    { loc: `${SITE}/`, pr: "1.0" }, { loc: `${SITE}/annuaire`, pr: "0.9" }, { loc: `${SITE}/explore`, pr: "0.8" },
-    { loc: `${SITE}/events`, pr: "0.6" }, { loc: `${SITE}/promos`, pr: "0.5" }, { loc: `${SITE}/pros`, pr: "0.5" },
+    // Adresses françaises uniquement : les anciennes (/explore, /events, /promos)
+    // redirigent, on ne les déclare donc plus à Google.
+    { loc: `${SITE}/`, pr: "1.0" }, { loc: `${SITE}/annuaire`, pr: "0.9" }, { loc: `${SITE}/explorer`, pr: "0.8" },
+    { loc: `${SITE}/agenda`, pr: "0.6" }, { loc: `${SITE}/promotions`, pr: "0.5" }, { loc: `${SITE}/pros`, pr: "0.5" },
   ];
   const cats = new Map<string, number>();
   for (const e of all) cats.set(e.category, (cats.get(e.category) || 0) + 1);
