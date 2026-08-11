@@ -205,31 +205,19 @@ export default function Promos() {
         </div>
       )}
 
-      {/* Aucune promotion : on le dit franchement. Afficher un grand « réservé aux
-          membres Premium » ici laissait croire que des offres étaient cachées, alors
-          qu'il n'y en avait simplement aucune. Le rappel du pass reste, en petit,
-          parce qu'il explique à quoi il sert le jour où une offre arrive. */}
+      {/* Rien à afficher : on le dit, et on s'arrête là. Vanter le pass Premium
+          juste sous « aucune promotion » n'a aucun sens : on proposerait de payer
+          pour utiliser des offres qui n'existent pas. L'invitation au pass n'a lieu
+          d'être que lorsqu'il y a réellement des offres à convoiter (bandeau au-dessus
+          de la liste). */}
       {filtered.length === 0 && (
-        <div className="text-center py-16 space-y-4">
+        <div className="text-center py-16 space-y-3">
           <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400">
-            Aucune promotion en cours pour le moment.
+            {promos.length === 0
+              ? 'Aucune promotion en cours pour le moment.'
+              : 'Aucune promotion ne correspond à votre recherche.'}
           </p>
-          {!isPremium && (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                {premiumText.body}
-              </p>
-              <button
-                onClick={() => setUpgradeOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: '#7B2D8B' }}
-              >
-                <Crown size={16} />
-                {premiumText.cta}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
