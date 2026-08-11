@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X, Check, Copy, Power, Repeat } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateDbError } from '../../lib/dbErrors';
 import type { Establishment, Promotion } from '../../lib/types';
 import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -206,7 +207,7 @@ export default function PartnerPromotions() {
       setFormOpen(false);
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
+      toast.error(translateDbError(err, 'Erreur lors de la sauvegarde'));
     }
     setSaving(false);
   };
@@ -221,7 +222,7 @@ export default function PartnerPromotions() {
       setDeleteTarget(null);
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      toast.error(translateDbError(err, 'Erreur lors de la suppression'));
     }
     setDeleting(false);
   };

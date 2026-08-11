@@ -179,52 +179,29 @@ export default function Promos() {
         )}
       </div>
 
+      {/* Les promotions sont une VITRINE : tout le monde voit ce qu'il y a à gagner
+          (le lieu, la réduction, la validité). C'est pour en profiter qu'il faut un
+          compte, et ce verrou est sur la page de détail. Avant, la liste était
+          floutée en entier : personne ne pouvait avoir envie de ce qu'il ne voyait
+          pas, donc rien ne poussait à s'inscrire. */}
       {!isPremium && filtered.length > 0 && (
-        <div className="relative">
-          <div className="space-y-3" style={{ filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
-            {filtered.slice(0, 4).map((promo) => {
-              const est = promo.establishment;
-              return (
-                <div key={promo.id} className="card p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Tag size={24} className="text-primary/50" />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {est?.name || 'Promotion'}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Promotion exclusive reservee aux membres
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        <div
+          className="flex items-start gap-3 rounded-card p-4"
+          style={{ background: 'rgba(123,45,139,0.08)', border: '1px solid rgba(123,45,139,0.25)' }}
+        >
+          <Lock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{premiumText.title}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{premiumText.body}</p>
           </div>
-
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-3">
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
-                style={{ background: 'rgba(123,45,139,0.15)' }}
-              >
-                <Lock size={24} style={{ color: '#7B2D8B' }} />
-              </div>
-              <p className="text-base font-semibold text-gray-900 dark:text-white">
-                {premiumText.title}
-              </p>
-              <button
-                onClick={() => setUpgradeOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: '#7B2D8B' }}
-              >
-                <Crown size={16} />
-                {premiumText.cta}
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
+          >
+            <Crown size={15} />
+            {premiumText.cta}
+          </button>
         </div>
       )}
 
@@ -262,7 +239,7 @@ export default function Promos() {
         </div>
       )}
 
-      {isPremium && filtered.length > 0 && (
+      {filtered.length > 0 && (
         <div className="space-y-3">
           {filtered.map((promo) => {
             const est = promo.establishment;
@@ -302,11 +279,18 @@ export default function Promos() {
                       </span>
                     </div>
 
-                    {promo.description && (
+                    {promo.description ? (
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
                         {promo.description}
                       </p>
-                    )}
+                    ) : !isPremium ? (
+                      // La description fait partie du détail, donc réservée. On dit
+                      // ce qu'il faut faire pour l'obtenir, au lieu de laisser un vide.
+                      <p className="flex items-center gap-1.5 text-sm" style={{ color: '#7B2D8B' }}>
+                        <Lock size={13} />
+                        Comment en profiter : réservé aux membres
+                      </p>
+                    ) : null}
 
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="badge bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 text-xs">

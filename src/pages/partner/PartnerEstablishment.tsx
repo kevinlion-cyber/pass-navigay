@@ -5,6 +5,7 @@ import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { translateDbError } from '../../lib/dbErrors';
 import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
@@ -224,7 +225,7 @@ export default function PartnerEstablishment() {
       setUploadProgress('');
       reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
+      toast.error(translateDbError(err, 'Erreur lors de la sauvegarde'));
     }
     setSaving(false);
     setUploadProgress('');

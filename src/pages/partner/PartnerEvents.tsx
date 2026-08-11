@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Plus, Pencil, Trash2, X, Check, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateDbError } from '../../lib/dbErrors';
 import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import type { Establishment, Event } from '../../lib/types';
 import ProGate from '../../components/partner/ProGate';
@@ -175,7 +176,7 @@ export default function PartnerEvents() {
       setFormOpen(false);
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
+      toast.error(translateDbError(err, 'Erreur lors de la sauvegarde'));
     }
     setSaving(false);
   };
@@ -190,7 +191,7 @@ export default function PartnerEvents() {
       setDeleteTarget(null);
       load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      toast.error(translateDbError(err, 'Erreur lors de la suppression'));
     }
     setDeleting(false);
   };
