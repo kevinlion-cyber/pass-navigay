@@ -205,37 +205,31 @@ export default function Promos() {
         </div>
       )}
 
-      {!isPremium && filtered.length === 0 && (
+      {/* Aucune promotion : on le dit franchement. Afficher un grand « réservé aux
+          membres Premium » ici laissait croire que des offres étaient cachées, alors
+          qu'il n'y en avait simplement aucune. Le rappel du pass reste, en petit,
+          parce qu'il explique à quoi il sert le jour où une offre arrive. */}
+      {filtered.length === 0 && (
         <div className="text-center py-16 space-y-4">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
-            style={{ background: 'rgba(123,45,139,0.15)' }}
-          >
-            <Lock size={24} style={{ color: '#7B2D8B' }} />
-          </div>
-          <div className="space-y-1">
-            <p className="text-base font-semibold text-gray-900 dark:text-white">
-              {premiumText.title}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {premiumText.body}
-            </p>
-          </div>
-          <button
-            onClick={() => setUpgradeOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: '#7B2D8B' }}
-          >
-            <Crown size={16} />
-            {premiumText.cta}
-          </button>
-        </div>
-      )}
-
-      {isPremium && filtered.length === 0 && (
-        <div className="text-center py-16 space-y-3">
           <Tag size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">Aucune promotion trouvée</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            Aucune promotion en cours pour le moment.
+          </p>
+          {!isPremium && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                {premiumText.body}
+              </p>
+              <button
+                onClick={() => setUpgradeOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#7B2D8B' }}
+              >
+                <Crown size={16} />
+                {premiumText.cta}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -279,18 +273,11 @@ export default function Promos() {
                       </span>
                     </div>
 
-                    {promo.description ? (
+                    {promo.description && (
                       <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
                         {promo.description}
                       </p>
-                    ) : !isPremium ? (
-                      // La description fait partie du détail, donc réservée. On dit
-                      // ce qu'il faut faire pour l'obtenir, au lieu de laisser un vide.
-                      <p className="flex items-center gap-1.5 text-sm" style={{ color: '#7B2D8B' }}>
-                        <Lock size={13} />
-                        Comment en profiter : réservé aux membres
-                      </p>
-                    ) : null}
+                    )}
 
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="badge bg-gray-100 dark:bg-dark-border text-gray-500 dark:text-gray-400 text-xs">

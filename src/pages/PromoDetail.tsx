@@ -176,7 +176,13 @@ export default function PromoDetail() {
               >
                 <Lock size={18} style={{ color: '#7B2D8B' }} />
                 <div className="flex-1">
-                  <p className="text-[13px] text-gray-300">Réservé aux membres Premium</p>
+                  {/* On dit ce qui est réservé : l'offre, elle, est visible en entier.
+                      « Réservé aux membres Premium » tout court laissait croire que la
+                      page était bloquée. Couleur adaptée au thème clair (elle était
+                      figée en gris clair, illisible sur fond blanc). */}
+                  <p className="text-[13px] text-gray-700 dark:text-gray-300">
+                    L'utilisation de cette promotion est réservée aux membres Premium.
+                  </p>
                 </div>
                 <button
                   onClick={() => setUpgradeOpen(true)}

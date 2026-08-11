@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { X, Check, Loader2, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -19,13 +20,22 @@ const PREMIUM_FEATURES = [
 
 export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeModalProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
 
   if (!open) return null;
 
   const handleUpgrade = async () => {
-    if (!user) return;
+    // Sans compte, il n'y a rien à facturer : on envoyait la personne dans le vide
+    // (le bouton ne faisait rien, en silence). On l'emmène créer son compte, où le
+    // choix Gratuit / Premium est proposé, puis elle revient sur cette page.
+    if (!user) {
+      onClose();
+      navigate(`/inscription?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
     setLoading(true);
 
     try {

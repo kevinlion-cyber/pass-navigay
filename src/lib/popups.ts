@@ -29,8 +29,8 @@ export const POPUP_META: Record<PopupKey, { label: string; where: string }> = {
     where: "Écran affiché aux membres non Premium sur l'onglet Messages.",
   },
   promos_premium: {
-    label: 'Promotions Premium',
-    where: "Bloc affiché aux membres non Premium sur l'onglet Promotions.",
+    label: 'Promotions (invitation au pass Premium)',
+    where: "Bandeau affiché aux visiteurs non Premium sur l'onglet Promotions. Les offres restent visibles par tous : c'est leur utilisation qui demande le pass.",
   },
 };
 
@@ -46,8 +46,10 @@ export const POPUP_DEFAULTS: Record<PopupKey, PopupText> = {
     cta: 'Passer Premium',
   },
   promos_premium: {
-    title: 'Réservé aux membres Premium',
-    body: 'Les promotions de nos partenaires sont réservées aux membres Premium.',
+    // Les promotions sont visibles par tout le monde : seul le fait d'en PROFITER
+    // demande le pass. Le texte doit le dire, sinon il décourage au lieu d'attirer.
+    title: 'Profitez des promotions avec le pass Premium',
+    body: 'Toutes les offres sont visibles. Le pass Premium vous permet de les utiliser chez nos partenaires.',
     cta: 'Passer Premium',
   },
 };
