@@ -13,7 +13,12 @@ const NAV_TABS = [
   { path: '/messages', label: 'Messages', authOnly: true },
 ];
 
-const MAIN_PATHS = ['/explorer', '/agenda', '/promotions', '/membres', '/messages'];
+// Pages principales : elles montrent le menu et pas de flèche « retour ».
+// ⚠️ L'ACCUEIL « / » EN FAIT PARTIE : depuis qu'on arrive directement dans
+// l'annuaire, il affiche exactement la même chose que /explorer. Sans lui, un
+// visiteur sur ordinateur arrivait sans menu, avec une flèche « retour » absurde,
+// et le menu n'apparaissait qu'après un premier clic (le logo mène à /explorer).
+const MAIN_PATHS = ['/', '/explorer', '/agenda', '/promotions', '/membres', '/messages'];
 
 export default function Header() {
   const { user, profile } = useAuth();
@@ -82,7 +87,11 @@ export default function Header() {
         {isMainPage && (
           <nav className="hidden md:flex items-center gap-1 mx-6">
             {NAV_TABS.filter((t) => !t.authOnly || user).map(({ path, label }) => {
-              const isActive = location.pathname.startsWith(path);
+              // L'accueil montre l'annuaire : c'est l'onglet « Lieux » qui doit y
+              // être souligné, sinon aucun onglet ne l'est et le menu semble éteint.
+              const isActive = path === '/explorer'
+                ? (location.pathname === '/' || location.pathname.startsWith('/explorer'))
+                : location.pathname.startsWith(path);
               return (
                 <Link
                   key={path}
