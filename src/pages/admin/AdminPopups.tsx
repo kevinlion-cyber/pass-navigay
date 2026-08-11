@@ -121,14 +121,35 @@ export default function AdminPopups() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">Bouton</label>
+                  <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">
+                    {def.cta2 ? 'Premier bouton' : 'Bouton'}
+                  </label>
                   <input
                     value={t.cta}
                     onChange={(e) => setField(key, 'cta', e.target.value)}
                     placeholder={def.cta}
                     className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-full py-2 md:max-w-xs"
                   />
+                  {def.cta2 && (
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Mène à la création d'un compte gratuit. Masqué pour un membre déjà connecté.
+                    </p>
+                  )}
                 </div>
+                {/* Second bouton : seule la fenêtre de l'agenda en a un (compte gratuit
+                    d'un côté, pass Premium de l'autre). */}
+                {def.cta2 && (
+                  <div>
+                    <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">Second bouton</label>
+                    <input
+                      value={t.cta2 || ''}
+                      onChange={(e) => setField(key, 'cta2', e.target.value)}
+                      placeholder={def.cta2}
+                      className="input-field bg-light-surface dark:bg-dark-surface border-light-border dark:border-dark-border text-gray-900 dark:text-white text-sm w-full py-2 md:max-w-xs"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">Mène à la page Tarifs, au pass Premium.</p>
+                  </div>
+                )}
               </div>
             </div>
           );

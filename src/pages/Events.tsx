@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Search, X, Store } from 'lucide-react';
+import { Calendar, MapPin, Search, X, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { useCategories } from '../contexts/CategoriesContext';
 import { useCoveredCities, slugifyCity } from '../lib/cities';
 import type { Event, CategoryKey } from '../lib/types';
@@ -39,15 +40,20 @@ export default function Events() {
   const { categories, categoryKeys } = useCategories();
   const coveredCities = useCoveredCities();
   const eventsPopup = usePopupText('events');
+  const { user, profile } = useAuth();
+  const isPremium = profile?.is_premium === true;
 
-  // Invitation à créer un profil d'établissement : une fois par visite, non bloquante.
+  // Invitation à créer un compte : une fois par visite, non bloquante. Un membre
+  // déjà Premium a tout, on ne lui propose rien (demande de Kevin : cet appel à
+  // l'action vise l'inscription des visiteurs, pas les établissements).
   useEffect(() => {
+    if (isPremium) { setShowProPopup(false); return; }
     try {
       if (sessionStorage.getItem('pn_events_popup_seen') !== '1') setShowProPopup(true);
     } catch {
       setShowProPopup(true);
     }
-  }, []);
+  }, [isPremium]);
 
   const closeProPopup = () => {
     setShowProPopup(false);
@@ -287,17 +293,30 @@ export default function Events() {
             </button>
 
             <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
-              <Store size={26} style={{ color: '#7B2D8B' }} />
+              <Sparkles size={26} style={{ color: '#7B2D8B' }} />
             </div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{eventsPopup.title}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">{eventsPopup.body}</p>
 
+            {/* Deux issues : le compte gratuit, ou le pass Premium. Un visiteur non
+                connecté commence par créer son compte ; un membre déjà inscrit n'a
+                plus que le Premium à découvrir, on ne lui repropose pas l'inscription. */}
             <div className="space-y-3 pt-1">
+              {!user && (
+                <button
+                  onClick={() => { closeProPopup(); navigate('/inscription'); }}
+                  className="btn-primary w-full py-3"
+                >
+                  {eventsPopup.cta}
+                </button>
+              )}
               <button
-                onClick={() => { closeProPopup(); navigate('/pros'); }}
-                className="btn-primary w-full py-3"
+                onClick={() => { closeProPopup(); navigate('/tarifs'); }}
+                className={user
+                  ? 'btn-primary w-full py-3'
+                  : 'w-full py-3 rounded-input border border-light-border dark:border-dark-border text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors'}
               >
-                {eventsPopup.cta}
+                {eventsPopup.cta2 || 'Découvrir le pass Premium'}
               </button>
               <button
                 onClick={closeProPopup}

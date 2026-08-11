@@ -16,6 +16,8 @@ export interface PopupText {
   title: string;
   body: string;
   cta: string;
+  /** Second bouton, utilisé par la fenêtre de l'agenda (compte gratuit / pass Premium). */
+  cta2?: string;
 }
 
 /** Libellé et emplacement de chaque fenêtre, pour l'écran d'administration. */
@@ -33,8 +35,8 @@ export const POPUP_META: Record<PopupKey, { label: string; where: string }> = {
     where: "Bloc affiché aux membres non Premium sur l'onglet Promotions.",
   },
   events: {
-    label: 'Événements (invitation à créer un profil)',
-    where: "Fenêtre affichée sur l'onglet Événements pour inviter à créer un profil d'établissement.",
+    label: 'Agenda (invitation à créer un compte)',
+    where: "Fenêtre affichée sur l'onglet Agenda : elle invite à créer un compte gratuit ou à découvrir le pass Premium. Elle n'apparaît jamais aux membres déjà Premium.",
   },
 };
 
@@ -55,9 +57,10 @@ export const POPUP_DEFAULTS: Record<PopupKey, PopupText> = {
     cta: 'Passer Premium',
   },
   events: {
-    title: 'Vous organisez des événements ?',
-    body: "Créez le profil de votre établissement pour publier vos événements et toucher toute la communauté.",
-    cta: 'Créer un profil',
+    title: 'Ne manquez plus aucune sortie',
+    body: "Créez votre compte gratuit pour suivre les événements de la communauté, ou passez au pass Premium pour profiter aussi des promotions et de la messagerie.",
+    cta: 'Créer mon compte gratuit',
+    cta2: 'Découvrir le pass Premium',
   },
 };
 
@@ -87,6 +90,7 @@ export async function fetchPopups(): Promise<Record<PopupKey, PopupText>> {
           if (typeof o.title === 'string' && o.title.trim()) merged[k].title = o.title;
           if (typeof o.body === 'string' && o.body.trim()) merged[k].body = o.body;
           if (typeof o.cta === 'string' && o.cta.trim()) merged[k].cta = o.cta;
+          if (typeof o.cta2 === 'string' && o.cta2.trim()) merged[k].cta2 = o.cta2;
         }
       });
     }
