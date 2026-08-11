@@ -13,12 +13,14 @@ const NAV_TABS = [
   { path: '/messages', label: 'Messages', authOnly: true },
 ];
 
-// Pages principales : elles montrent le menu et pas de flèche « retour ».
-// ⚠️ L'ACCUEIL « / » EN FAIT PARTIE : depuis qu'on arrive directement dans
-// l'annuaire, il affiche exactement la même chose que /explorer. Sans lui, un
-// visiteur sur ordinateur arrivait sans menu, avec une flèche « retour » absurde,
-// et le menu n'apparaissait qu'après un premier clic (le logo mène à /explorer).
-const MAIN_PATHS = ['/', '/explorer', '/agenda', '/promotions', '/membres', '/messages'];
+// ⛔ Le menu est affiché PARTOUT, sans condition. Il était réservé à une liste de
+// « pages principales » : on se retrouvait sans navigation sur l'accueil et sur
+// toutes les pages de détail, ce qui est une impasse pour le visiteur.
+//
+// Cette liste ne sert plus qu'à une chose : décider si on ajoute une flèche
+// « retour » à gauche du logo, utile sur une fiche ou un événement, inutile sur
+// une page de premier niveau.
+const TOP_LEVEL_PATHS = ['/', '/explorer', '/agenda', '/promotions', '/membres', '/messages'];
 
 export default function Header() {
   const { user, profile } = useAuth();
@@ -27,7 +29,7 @@ export default function Header() {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const isMainPage = MAIN_PATHS.some((p) => location.pathname === p);
+  const isTopLevel = TOP_LEVEL_PATHS.some((p) => location.pathname === p);
 
   useEffect(() => {
     if (!user) {
@@ -66,7 +68,7 @@ export default function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-light-surface/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-light-border dark:border-dark-border">
       <div className="max-w-7xl mx-auto h-full px-4 flex items-center justify-between">
         <div className="flex items-center shrink-0 gap-1">
-          {!isMainPage && (
+          {!isTopLevel && (
             <button
               onClick={() => navigate(-1)}
               aria-label="Retour"
@@ -84,40 +86,38 @@ export default function Header() {
           </Link>
         </div>
 
-        {isMainPage && (
-          <nav className="hidden md:flex items-center gap-1 mx-6">
-            {NAV_TABS.filter((t) => !t.authOnly || user).map(({ path, label }) => {
-              // L'accueil montre l'annuaire : c'est l'onglet « Lieux » qui doit y
-              // être souligné, sinon aucun onglet ne l'est et le menu semble éteint.
-              const isActive = path === '/explorer'
-                ? (location.pathname === '/' || location.pathname.startsWith('/explorer'))
-                : location.pathname.startsWith(path);
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`relative px-4 py-4 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-primary'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {label}
-                    {path === '/messages' && unreadCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+        <nav className="hidden md:flex items-center gap-1 mx-6">
+          {NAV_TABS.filter((t) => !t.authOnly || user).map(({ path, label }) => {
+            // L'accueil montre l'annuaire : c'est l'onglet « Lieux » qui doit y
+            // être souligné, sinon aucun onglet ne l'est et le menu semble éteint.
+            const isActive = path === '/explorer'
+              ? (location.pathname === '/' || location.pathname.startsWith('/explorer'))
+              : location.pathname.startsWith(path);
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={`relative px-4 py-4 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'text-primary'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {label}
+                  {path === '/messages' && unreadCount > 0 && (
+                    <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                   )}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+                </span>
+                {isActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
         <div className="flex items-center gap-2 shrink-0">
           <button

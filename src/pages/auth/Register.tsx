@@ -28,7 +28,12 @@ const BOT_MESSAGES = {
   done: "Ton compte est créé ! Vérifie ton email pour activer ton accès.",
 };
 
-export default function Register() {
+interface RegisterProps {
+  /** Fourni quand la modale est ouverte par-dessus une page : on la referme sur place. */
+  onDismiss?: () => void;
+}
+
+export default function Register({ onDismiss }: RegisterProps = {}) {
   const [tunnelStep, setTunnelStep] = useState<TunnelStep>('plan');
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('yearly');
@@ -211,8 +216,13 @@ export default function Register() {
   // On change d'avis : on ferme et on retombe sur l'annuaire, pas sur une page
   // blanche. `navigate(-1)` ne menait nulle part quand on arrivait ici en direct
   // (lien d'une pub, favori, redirection depuis une page réservée aux membres).
+  //
+  // Quand cette modale est ouverte PAR-DESSUS une page (l'agenda, par exemple),
+  // `onDismiss` est fourni : on referme simplement et on laisse le visiteur là où
+  // il était, au lieu de le déplacer sur l'accueil.
   const handleClose = () => {
     markWelcomeSeen();
+    if (onDismiss) { onDismiss(); return; }
     navigate('/', { replace: true });
   };
 

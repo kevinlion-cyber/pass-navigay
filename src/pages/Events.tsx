@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Search, X, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Search, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCategories } from '../contexts/CategoriesContext';
@@ -8,7 +8,7 @@ import { useCoveredCities, slugifyCity } from '../lib/cities';
 import type { Event, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { usePopupText } from '../lib/popups';
+import Register from './auth/Register';
 
 const THEME_FILTERS = [
   'Tous',
@@ -39,21 +39,20 @@ export default function Events() {
   const navigate = useNavigate();
   const { categories, categoryKeys } = useCategories();
   const coveredCities = useCoveredCities();
-  const eventsPopup = usePopupText('events');
-  const { user, profile } = useAuth();
-  const isPremium = profile?.is_premium === true;
+  const { user } = useAuth();
 
-  // Invitation à créer un compte : une fois par visite, non bloquante. Un membre
-  // déjà Premium a tout, on ne lui propose rien (demande de Kevin : cet appel à
-  // l'action vise l'inscription des visiteurs, pas les établissements).
+  // Invitation à s'inscrire : une fois par visite, non bloquante, et seulement
+  // pour un visiteur SANS compte. Demande de Kevin : cet appel à l'action vise
+  // l'inscription des visiteurs (formule gratuite ou pass Premium), pas les
+  // établissements. Quelqu'un de déjà connecté n'a rien à créer.
   useEffect(() => {
-    if (isPremium) { setShowProPopup(false); return; }
+    if (user) { setShowProPopup(false); return; }
     try {
       if (sessionStorage.getItem('pn_events_popup_seen') !== '1') setShowProPopup(true);
     } catch {
       setShowProPopup(true);
     }
-  }, [isPremium]);
+  }, [user]);
 
   const closeProPopup = () => {
     setShowProPopup(false);
@@ -273,61 +272,12 @@ export default function Events() {
         </div>
       )}
 
-      {showProPopup && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onClick={closeProPopup}
-        >
-          <div
-            className="relative w-full max-w-md rounded-card bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border p-6 sm:p-7 space-y-5 shadow-2xl text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={closeProPopup}
-              aria-label="Fermer"
-              className="absolute right-3 top-3 w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-light-bg dark:hover:bg-dark-bg transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
-              <Sparkles size={26} style={{ color: '#7B2D8B' }} />
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{eventsPopup.title}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{eventsPopup.body}</p>
-
-            {/* Deux issues : le compte gratuit, ou le pass Premium. Un visiteur non
-                connecté commence par créer son compte ; un membre déjà inscrit n'a
-                plus que le Premium à découvrir, on ne lui repropose pas l'inscription. */}
-            <div className="space-y-3 pt-1">
-              {!user && (
-                <button
-                  onClick={() => { closeProPopup(); navigate('/inscription'); }}
-                  className="btn-primary w-full py-3"
-                >
-                  {eventsPopup.cta}
-                </button>
-              )}
-              <button
-                onClick={() => { closeProPopup(); navigate('/tarifs'); }}
-                className={user
-                  ? 'btn-primary w-full py-3'
-                  : 'w-full py-3 rounded-input border border-light-border dark:border-dark-border text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors'}
-              >
-                {eventsPopup.cta2 || 'Découvrir le pass Premium'}
-              </button>
-              <button
-                onClick={closeProPopup}
-                className="w-full py-2.5 rounded-input text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-              >
-                Plus tard
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Le choix des deux formules (gratuit / Premium) est celui de l'inscription :
+          on réutilise la même modale plutôt que d'en entretenir une deuxième, avec
+          ses propres textes et ses propres prix qui finiraient par diverger.
+          Elle garde sa sortie « Pas maintenant », qui referme et laisse le visiteur
+          sur l'agenda. */}
+      {showProPopup && <Register onDismiss={closeProPopup} />}
     </div>
   );
 }

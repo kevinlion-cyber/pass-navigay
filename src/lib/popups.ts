@@ -10,14 +10,12 @@ import { supabase } from './supabase';
  * ce sont les défauts qui s'affichent : aucune fenêtre ne peut se retrouver vide.
  */
 
-export type PopupKey = 'welcome' | 'messages_premium' | 'promos_premium' | 'events';
+export type PopupKey = 'welcome' | 'messages_premium' | 'promos_premium';
 
 export interface PopupText {
   title: string;
   body: string;
   cta: string;
-  /** Second bouton, utilisé par la fenêtre de l'agenda (compte gratuit / pass Premium). */
-  cta2?: string;
 }
 
 /** Libellé et emplacement de chaque fenêtre, pour l'écran d'administration. */
@@ -33,10 +31,6 @@ export const POPUP_META: Record<PopupKey, { label: string; where: string }> = {
   promos_premium: {
     label: 'Promotions Premium',
     where: "Bloc affiché aux membres non Premium sur l'onglet Promotions.",
-  },
-  events: {
-    label: 'Agenda (invitation à créer un compte)',
-    where: "Fenêtre affichée sur l'onglet Agenda : elle invite à créer un compte gratuit ou à découvrir le pass Premium. Elle n'apparaît jamais aux membres déjà Premium.",
   },
 };
 
@@ -56,12 +50,6 @@ export const POPUP_DEFAULTS: Record<PopupKey, PopupText> = {
     body: 'Les promotions de nos partenaires sont réservées aux membres Premium.',
     cta: 'Passer Premium',
   },
-  events: {
-    title: 'Ne manquez plus aucune sortie',
-    body: "Créez votre compte gratuit pour suivre les événements de la communauté, ou passez au pass Premium pour profiter aussi des promotions et de la messagerie.",
-    cta: 'Créer mon compte gratuit',
-    cta2: 'Découvrir le pass Premium',
-  },
 };
 
 // Cache mémoire : les fenêtres sont lues souvent, la config change rarement.
@@ -78,7 +66,6 @@ export async function fetchPopups(): Promise<Record<PopupKey, PopupText>> {
     welcome: { ...POPUP_DEFAULTS.welcome },
     messages_premium: { ...POPUP_DEFAULTS.messages_premium },
     promos_premium: { ...POPUP_DEFAULTS.promos_premium },
-    events: { ...POPUP_DEFAULTS.events },
   };
   try {
     const { data } = await supabase.from('app_settings').select('value').eq('key', 'popups_config').maybeSingle();
@@ -90,7 +77,6 @@ export async function fetchPopups(): Promise<Record<PopupKey, PopupText>> {
           if (typeof o.title === 'string' && o.title.trim()) merged[k].title = o.title;
           if (typeof o.body === 'string' && o.body.trim()) merged[k].body = o.body;
           if (typeof o.cta === 'string' && o.cta.trim()) merged[k].cta = o.cta;
-          if (typeof o.cta2 === 'string' && o.cta2.trim()) merged[k].cta2 = o.cta2;
         }
       });
     }
