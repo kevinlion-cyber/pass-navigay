@@ -472,6 +472,8 @@ export default function Explore() {
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
               fitToCity={citySlug}
+              category={selectedCategory}
+              subcategories={selectedSubcategories}
               selectedId={selectedPinId} highlightId={hoveredId}
             />
           </div>
@@ -496,6 +498,8 @@ export default function Explore() {
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
             fitToCity={citySlug}
+            category={selectedCategory}
+            subcategories={selectedSubcategories}
             selectedId={selectedPinId} highlightId={hoveredId}
           />
         </div>

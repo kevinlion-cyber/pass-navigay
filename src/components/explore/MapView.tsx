@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import { DEFAULT_CENTER } from '../../lib/constants';
 import { useCategories } from '../../contexts/CategoriesContext';
 import { supabase } from '../../lib/supabase';
+import { useMapPins, type MapPin, type PinBounds } from '../../lib/mapPins';
 
 interface MapViewProps {
   establishments: Establishment[];
@@ -15,6 +17,9 @@ interface MapViewProps {
   selectedId?: string | null;
   highlightId?: string | null;
   fitToCity?: string | null;
+  /** Filtres de l'annuaire, pour que la carte montre la même chose que la liste. */
+  category?: string | null;
+  subcategories?: string[];
 }
 
 interface PopupData {
@@ -57,7 +62,7 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
   return result;
 }
 
-function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId, fitToCity }: MapViewProps) {
+function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId, fitToCity, category, subcategories }: MapViewProps) {
   const map = useMap();
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<PopupData>({});
@@ -65,18 +70,25 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
   const boundsTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastFitRef = useRef<string | null>(null);
 
+  // Cadrage courant de la carte : il pilote les points affichés. La carte est
+  // ainsi autonome, elle ne dépend plus de la page de liste en cours.
+  const [pinBounds, setPinBounds] = useState<PinBounds | null>(null);
+  const { pins } = useMapPins(pinBounds, { category, subcategories });
+
   const emitBounds = useCallback(() => {
     if (!map) return;
     const bounds = map.getBounds();
     if (!bounds) return;
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
-    onBoundsChange({
+    const b = {
       north: ne.lat(),
       south: sw.lat(),
       east: ne.lng(),
       west: sw.lng(),
-    });
+    };
+    setPinBounds(b);
+    onBoundsChange(b);
   }, [map, onBoundsChange]);
 
   useEffect(() => {
@@ -129,7 +141,7 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     }
   }, [selectedId]);
 
-  const handleMarkerClick = async (est: Establishment) => {
+  const handleMarkerClick = async (est: Establishment | MapPin) => {
     setActiveMarker(est.id);
     onPinSelect?.(est.id);
     setPopupLoading(true);
@@ -144,7 +156,63 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     onPinSelect?.(null);
   };
 
-  const activeEst = establishments.find((e) => e.id === activeMarker);
+  // La fiche ouverte dans la bulle peut venir de la liste (données complètes) ou
+  // d'un point de la carte (données minimales) : on prend ce qu'on a.
+  const activeFromList = establishments.find((e) => e.id === activeMarker);
+  const activePin = pins.find((p) => p.id === activeMarker);
+  const activeEst = activeFromList
+    || (activePin ? ({ ...activePin, address: '', city: '' } as unknown as Establishment) : undefined);
+
+  // Regroupement des points (bibliothèque officielle Google). Avec 886 lieux, poser
+  // un marqueur par lieu rendait la carte illisible et lente : les points proches
+  // sont donc rassemblés en pastilles qui se séparent au zoom.
+  const clustererRef = useRef<MarkerClusterer | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  // La bibliothèque des marqueurs se charge à la demande : sans attendre qu'elle
+  // soit prête, l'effet passait trop tôt et aucun point n'était posé.
+  const markerLib = useMapsLibrary('marker');
+
+  useEffect(() => {
+    if (!map || !markerLib) return;
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({ map });
+    }
+
+    // On repart des points courants à chaque changement de cadrage ou de filtre.
+    clustererRef.current.clearMarkers();
+    markersRef.current.forEach((m) => { m.map = null; });
+    markersRef.current = [];
+
+    const { AdvancedMarkerElement } = markerLib;
+
+    const created = pins
+      .filter((p) => Math.abs(p.latitude) > 0.0001 || Math.abs(p.longitude) > 0.0001)
+      .map((p) => {
+        const dot = document.createElement('div');
+        dot.className = 'w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md';
+        dot.style.backgroundColor = p.is_sponsor ? '#d4a017' : '#7B2D8B';
+        dot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+        dot.title = p.name;
+
+        const marker = new AdvancedMarkerElement({
+          position: { lat: p.latitude, lng: p.longitude },
+          content: dot,
+        });
+        marker.addListener('click', () => handleMarkerClick(p));
+        return marker;
+      });
+
+    markersRef.current = created;
+    clustererRef.current.addMarkers(created);
+  }, [map, markerLib, pins]);
+
+  // Nettoyage au démontage : sans ça, les marqueurs restent attachés à la carte.
+  useEffect(() => () => {
+    clustererRef.current?.clearMarkers();
+    markersRef.current.forEach((m) => { m.map = null; });
+    markersRef.current = [];
+    clustererRef.current = null;
+  }, []);
 
   return (
     <>
@@ -158,26 +226,32 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
         style={{ width: '100%', height: '100%' }}
         colorScheme="DARK"
       >
-        {establishments.map((est) => (
-          <AdvancedMarker
-            key={est.id}
-            position={{ lat: est.latitude, lng: est.longitude }}
-            onClick={() => handleMarkerClick(est)}
-          >
-            <div
-              className="w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md"
-              style={{
-                backgroundColor: est.is_sponsor ? '#d4a017' : '#7B2D8B',
-                // Halo si actif (clic) ou survolé depuis la liste ; zoom uniquement au survol liste (E2).
-                boxShadow: (activeMarker === est.id || highlightId === est.id)
-                  ? '0 0 0 4px rgba(123,45,139,0.45)'
-                  : '0 1px 3px rgba(0,0,0,0.3)',
-                transform: (highlightId === est.id || activeMarker === est.id) ? 'scale(1.4)' : 'scale(1)',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-              }}
-            />
-          </AdvancedMarker>
-        ))}
+        {/* Les points sont posés et regroupés par la bibliothèque de regroupement
+            (voir l'effet plus haut), pas un par un ici : au-delà de quelques
+            dizaines de lieux, un marqueur React par lieu sature la carte.
+            On garde toutefois un marqueur mis en avant pour le lieu survolé dans
+            la liste, sinon le lien entre la liste et la carte serait perdu. */}
+        {highlightId && (() => {
+          const h = establishments.find((e) => e.id === highlightId) || pins.find((p) => p.id === highlightId);
+          if (!h || (Math.abs(h.latitude) < 0.0001 && Math.abs(h.longitude) < 0.0001)) return null;
+          return (
+            <AdvancedMarker
+              key={`highlight-${h.id}`}
+              position={{ lat: h.latitude, lng: h.longitude }}
+              zIndex={999}
+              onClick={() => handleMarkerClick(h)}
+            >
+              <div
+                className="w-5 h-5 rounded-full border-2 border-white cursor-pointer"
+                style={{
+                  backgroundColor: h.is_sponsor ? '#d4a017' : '#7B2D8B',
+                  boxShadow: '0 0 0 4px rgba(123,45,139,0.45)',
+                  transform: 'scale(1.4)',
+                }}
+              />
+            </AdvancedMarker>
+          );
+        })()}
 
         {activeEst && (
           <InfoWindow
