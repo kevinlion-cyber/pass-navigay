@@ -16,13 +16,20 @@ export interface PopupText {
   title: string;
   body: string;
   cta: string;
+  /**
+   * Logo affiché en haut de la fenêtre (fenêtre d'accueil uniquement).
+   * Vide = on retombe sur le logo du site. Modifiable dans l'administration, pour
+   * que changer d'identité visuelle ne demande pas de toucher au code.
+   */
+  logo_url?: string;
 }
 
 /** Libellé et emplacement de chaque fenêtre, pour l'écran d'administration. */
-export const POPUP_META: Record<PopupKey, { label: string; where: string }> = {
+export const POPUP_META: Record<PopupKey, { label: string; where: string; hasLogo?: boolean }> = {
   welcome: {
     label: 'Accueil (message de bienvenue)',
     where: "Fenêtre affichée sur la page d'accueil, par-dessus l'annuaire.",
+    hasLogo: true,
   },
   messages_premium: {
     label: 'Messagerie Premium',
@@ -79,6 +86,9 @@ export async function fetchPopups(): Promise<Record<PopupKey, PopupText>> {
           if (typeof o.title === 'string' && o.title.trim()) merged[k].title = o.title;
           if (typeof o.body === 'string' && o.body.trim()) merged[k].body = o.body;
           if (typeof o.cta === 'string' && o.cta.trim()) merged[k].cta = o.cta;
+          // Le logo peut être VIDÉ volontairement (retour au logo du site) : on
+          // accepte donc la chaîne vide, contrairement aux textes.
+          if (typeof o.logo_url === 'string') merged[k].logo_url = o.logo_url;
         }
       });
     }

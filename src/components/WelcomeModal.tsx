@@ -31,6 +31,7 @@ export default function WelcomeModal() {
   const [open, setOpen] = useState(false);
   const [requireSignup, setRequireSignup] = useState(true);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [logoBroken, setLogoBroken] = useState(false);
   const t = usePopupText('welcome');
 
   // Un membre qui a demandé à ne plus voir ce message ne le revoit jamais ;
@@ -90,9 +91,22 @@ export default function WelcomeModal() {
         </button>
 
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center">
-            <span className="text-white text-2xl font-semibold">P</span>
-          </div>
+          {/* Logo : celui choisi dans l'administration, sinon celui du site. La
+              lettre « P » ne sert plus que si aucune image ne charge : c'était un
+              simple bouche-trou, et il n'y avait aucun moyen de le remplacer sans
+              toucher au code. */}
+          {logoBroken ? (
+            <div className="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center">
+              <span className="text-white text-2xl font-semibold">P</span>
+            </div>
+          ) : (
+            <img
+              src={t.logo_url || '/logo.png?v=2'}
+              alt=""
+              onError={() => setLogoBroken(true)}
+              className="w-16 h-16 mx-auto object-contain"
+            />
+          )}
           <h1 id="welcome-title" className="text-2xl font-semibold text-gray-900 dark:text-white">{t.title}</h1>
           <p className="text-gray-600 dark:text-gray-400">{t.body}</p>
         </div>

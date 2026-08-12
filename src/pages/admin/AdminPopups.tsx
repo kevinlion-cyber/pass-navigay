@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessageSquare, Loader2, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { translateDbError } from '../../lib/dbErrors';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import {
   POPUP_DEFAULTS,
@@ -18,6 +19,7 @@ export default function AdminPopups() {
   const [texts, setTexts] = useState<Record<PopupKey, PopupText>>(POPUP_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     supabase.from('app_settings').select('value').eq('key', SETTINGS_KEY).maybeSingle().then(({ data }) => {
@@ -48,17 +50,60 @@ export default function AdminPopups() {
     setTexts((prev) => ({ ...prev, [key]: { ...POPUP_DEFAULTS[key] } }));
   };
 
+  // Téléversement du logo de la fenêtre d'accueil. On enregistre tout de suite dans
+  // les réglages : sinon un logo envoyé mais non sauvegardé resterait dans le
+  // stockage sans être utilisé, et la personne croirait avoir fini.
+  const handleLogoFile = async (key: PopupKey, file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Choisissez un fichier image (PNG, JPG ou WEBP).');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Le logo doit peser moins de 2 Mo.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const path = `logo-${key}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from('site-assets')
+        .upload(path, file, { contentType: file.type, upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('site-assets').getPublicUrl(path);
+      const next = { ...texts, [key]: { ...texts[key], logo_url: urlData.publicUrl } };
+      setTexts(next);
+      await persist(next);
+      toast.success('Logo mis à jour');
+    } catch (e) {
+      toast.error(translateDbError(e, "L'envoi du logo a échoué. Réessayez."));
+    }
+    setUploading(false);
+  };
+
+  const removeLogo = async (key: PopupKey) => {
+    const next = { ...texts, [key]: { ...texts[key], logo_url: '' } };
+    setTexts(next);
+    await persist(next);
+    toast.success('Logo retiré : le logo du site est utilisé.');
+  };
+
+  const persist = async (value: Record<PopupKey, PopupText>) => {
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key: SETTINGS_KEY, value: JSON.stringify(value), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    if (error) throw error;
+    clearPopupsCache();
+  };
+
   const save = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({ key: SETTINGS_KEY, value: JSON.stringify(texts), updated_at: new Date().toISOString() }, { onConflict: 'key' });
-      if (error) throw error;
-      clearPopupsCache();
+      await persist(texts);
       toast.success('Textes des pop-ups enregistrés');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erreur');
+      toast.error(translateDbError(e, "L'enregistrement a échoué. Réessayez."));
     }
     setSaving(false);
   };
@@ -100,6 +145,41 @@ export default function AdminPopups() {
               </div>
 
               <div className="space-y-3">
+                {/* Logo : uniquement la fenêtre d'accueil en a un. */}
+                {meta.hasLogo && (
+                  <div>
+                    <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">Logo</label>
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={t.logo_url || '/logo.png?v=2'}
+                        alt=""
+                        className="w-16 h-16 object-contain rounded-lg bg-light-bg dark:bg-dark-bg p-1"
+                      />
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          disabled={uploading}
+                          onChange={(e) => { handleLogoFile(key, e.target.files?.[0]); e.target.value = ''; }}
+                          className="block text-[13px] text-gray-600 dark:text-gray-300"
+                        />
+                        <p className="text-[11px] text-gray-500">
+                          PNG, JPG ou WEBP · 2 Mo maximum. {t.logo_url
+                            ? 'Votre logo est utilisé.'
+                            : 'Aucun logo choisi : celui du site est utilisé.'}
+                        </p>
+                        {t.logo_url && (
+                          <button
+                            onClick={() => removeLogo(key)}
+                            className="text-[12px] text-gray-500 hover:text-alert transition-colors"
+                          >
+                            Retirer et revenir au logo du site
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">Titre</label>
                   <input
