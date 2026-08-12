@@ -29,7 +29,6 @@ interface PromoForm {
   description: string;
   promo_type: PromoType;
   value: number;
-  offer_text: string;
   is_permanent: boolean;
   recurrence: Recurrence;
   valid_from: string;
@@ -47,7 +46,6 @@ const EMPTY_FORM: PromoForm = {
   description: '',
   promo_type: 'percentage',
   value: 0,
-  offer_text: '',
   is_permanent: false,
   recurrence: 'none',
   valid_from: '',
@@ -101,7 +99,6 @@ export default function PartnerPromotions() {
       description: p.description || '',
       promo_type: p.promo_type,
       value: p.value || 0,
-      offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
       is_permanent: p.is_permanent ?? false,
       recurrence: p.is_recurring ? (p.recurrence_rule === 'monthly' ? 'monthly' : 'weekly') : 'none',
       valid_from: p.valid_from ? p.valid_from.slice(0, 16) : '',
@@ -119,7 +116,6 @@ export default function PartnerPromotions() {
       description: p.description || '',
       promo_type: p.promo_type,
       value: p.value || 0,
-      offer_text: p.promo_type === 'offer' ? (p.description || '') : '',
       is_permanent: p.is_permanent ?? false,
       recurrence: p.is_recurring ? (p.recurrence_rule === 'monthly' ? 'monthly' : 'weekly') : 'none',
       valid_from: '',
@@ -171,13 +167,12 @@ export default function PartnerPromotions() {
         image_url = urlData.publicUrl;
       }
 
-      // Le texte de l'offre spéciale est stocké dans `description` : c'est déjà là que
-      // openEdit va le relire. On ne remplace la description classique que si le gérant
-      // a effectivement rempli « Décrivez l'offre », sinon on la conserve telle quelle.
-      const offerText = form.offer_text.trim();
-      const description = form.promo_type === 'offer' && offerText
-        ? offerText
-        : form.description.trim();
+      // ⛔ Une seule zone de saisie écrit dans `description`. Il y en avait DEUX
+      // (la description, et un champ « Décrivez l'offre » pour le type offre
+      // spéciale) : elles visaient la même colonne, donc modifier la description
+      // était sans effet, l'autre champ l'écrasait à l'enregistrement avec son
+      // ancienne valeur. Le champ en double a été retiré du formulaire.
+      const description = form.description.trim();
 
       const payload = {
         establishment_id: establishment.id,
@@ -325,13 +320,10 @@ export default function PartnerPromotions() {
                   </div>
                 )}
                 {form.promo_type === 'offer' && (
-                  <div className="mt-3">
-                    <label className="block text-xs uppercase tracking-wide text-gray-500 mb-1.5">Décrivez l'offre</label>
-                    <input value={form.offer_text}
-                      onChange={e => setForm({ ...form, offer_text: e.target.value })}
-                      placeholder="1 cocktail offert pour 1 acheté"
-                      className="input-field bg-light-bg dark:bg-dark-bg border-light-border dark:border-dark-border text-gray-900 dark:text-white" />
-                  </div>
+                  <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    Décrivez l'offre dans la description ci-dessous, par exemple
+                    « 1 cocktail offert pour 1 acheté ».
+                  </p>
                 )}
               </div>
 

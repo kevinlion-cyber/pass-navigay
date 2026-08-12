@@ -71,10 +71,28 @@ export default function PartnerLayout() {
       }
       setEstablishments(list);
       setActiveId(list[0].id);
+      setOwnerId(session.user.id);
       setLoading(false);
     };
     check();
   }, []);
+
+  // ⚠️ Le navigateur PARTAGE la session entre tous les onglets d'un même site.
+  // Se connecter avec un autre compte ailleurs (l'administration, un compte membre)
+  // remplace donc silencieusement la session de cet onglet : l'espace partenaire
+  // reste affiché, mais tout enregistrement est refusé par la base, avec un message
+  // incompréhensible. On surveille le compte actif et on le dit franchement.
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [sessionMismatch, setSessionMismatch] = useState<null | 'autre-compte' | 'deconnecte'>(null);
+
+  useEffect(() => {
+    if (!ownerId) return;
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) { setSessionMismatch('deconnecte'); return; }
+      setSessionMismatch(session.user.id === ownerId ? null : 'autre-compte');
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [ownerId]);
 
   useEffect(() => {
     if (!establishment) return;
@@ -120,6 +138,33 @@ export default function PartnerLayout() {
     return (
       <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex items-center justify-center">
         <LoadingSpinner size={32} />
+      </div>
+    );
+  }
+
+  // Le compte actif n'est plus celui du gérant : on arrête tout de suite, avant
+  // qu'il ne remplisse un formulaire que la base refusera.
+  if (sessionMismatch) {
+    return (
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'rgba(192,57,43,0.12)' }}>
+          <LogOut size={26} style={{ color: '#c0392b' }} />
+        </div>
+        <div className="space-y-1 max-w-md">
+          <p className="text-base font-semibold text-gray-900 dark:text-white">
+            {sessionMismatch === 'deconnecte'
+              ? 'Vous avez été déconnecté'
+              : 'Vous êtes maintenant connecté avec un autre compte'}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {sessionMismatch === 'deconnecte'
+              ? 'Reconnectez-vous à votre espace partenaire pour continuer.'
+              : "Ce compte n'est pas le propriétaire de cet établissement, vos modifications seraient refusées. Cela arrive en se connectant avec un autre compte dans un autre onglet : le navigateur ne garde qu'une seule session à la fois."}
+          </p>
+        </div>
+        <button onClick={() => navigate('/pros')} className="btn-primary py-2.5 px-5 text-sm">
+          Me reconnecter à mon espace partenaire
+        </button>
       </div>
     );
   }
