@@ -7,6 +7,7 @@ import type { Profile } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import Register from './auth/Register';
 
 interface MemberWithMeta extends Profile {
   favorites_count: number;
@@ -32,8 +33,11 @@ export default function Members() {
   const [pronounsFilter, setPronounsFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // Visiteur sans compte : on lui ouvre la modale d'inscription (choix des deux
+  // formules) au lieu de l'écran d'abonnement, qui n'a rien à facturer sans compte.
+  const [registerOpen, setRegisterOpen] = useState(false);
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const isPremium = profile?.is_premium === true;
 
   useEffect(() => {
@@ -97,6 +101,33 @@ export default function Members() {
         </p>
       </div>
 
+      {/* Bandeau du même modèle que l'onglet Promotions : il annonce le verrou sans
+          occuper toute la page. */}
+      {!isPremium && (
+        <div
+          className="flex items-start gap-3 rounded-card p-4"
+          style={{ background: 'rgba(123,45,139,0.08)', border: '1px solid rgba(123,45,139,0.25)' }}
+        >
+          <Lock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              Réservé aux membres Premium
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Le pass Premium donne accès aux profils, à la messagerie et aux promotions.
+            </p>
+          </div>
+          <button
+            onClick={() => (user ? setUpgradeOpen(true) : setRegisterOpen(true))}
+            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
+          >
+            <Crown size={15} />
+            {user ? 'Passer Premium' : 'Créer mon compte'}
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <div className="relative flex-1 min-w-0">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -135,18 +166,44 @@ export default function Members() {
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {/* Sans Premium : on n'affiche AUCUN profil. La vie privée des membres d'un
+          annuaire LGBT n'est pas une vitrine, même floutée : une image floue reste
+          une image, et le nombre de profils suffit à donner envie. */}
+      {!isPremium && (
+        <div className="text-center py-14 space-y-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
+            <Lock size={28} style={{ color: '#7B2D8B' }} />
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-gray-900 dark:text-white">
+              L'espace membres est réservé aux membres Premium
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+              Par respect pour la vie privée de chacun, les profils ne sont visibles
+              que par les membres Premium. Le pass vous donne aussi la messagerie et
+              les promotions de nos partenaires.
+            </p>
+          </div>
+          <button
+            onClick={() => (user ? setUpgradeOpen(true) : setRegisterOpen(true))}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: '#7B2D8B' }}
+          >
+            <Crown size={16} />
+            {user ? 'Passer Premium' : 'Créer mon compte'}
+          </button>
+        </div>
+      )}
+
+      {isPremium && filtered.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <Users size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400">Aucun membre trouvé</p>
         </div>
-      ) : (
+      ) : isPremium ? (
         <div className="relative">
-        <div
-          className={`grid grid-cols-2 gap-3 ${!isPremium ? 'pointer-events-none select-none' : ''}`}
-          style={!isPremium ? { filter: 'blur(5px)' } : undefined}
-        >
-          {(isPremium ? filtered : filtered.slice(0, 6)).map((member) => (
+        <div className="grid grid-cols-2 gap-3">
+          {filtered.map((member) => (
             <button
               key={member.id}
               onClick={() => navigate(`/profil/${member.id}`)}
@@ -225,28 +282,19 @@ export default function Members() {
             </button>
           ))}
         </div>
-        {!isPremium && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center space-y-3">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(123,45,139,0.15)' }}>
-                <Lock size={24} style={{ color: '#7B2D8B' }} />
-              </div>
-              <p className="text-base font-semibold text-gray-900 dark:text-white">Réservé aux membres Premium</p>
-              <button
-                onClick={() => setUpgradeOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
-                style={{ background: '#7B2D8B' }}
-              >
-                <Crown size={16} />
-                Passer Premium
-              </button>
-            </div>
-          </div>
-        )}
         </div>
-      )}
+      ) : null}
 
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+
+      {/* Visiteur sans compte : la modale d'inscription (choix Gratuit / Premium),
+          précédée du motif pour qu'il sache pourquoi on lui demande de s'inscrire. */}
+      {registerOpen && (
+        <Register
+          intro="L'espace membres est réservé aux membres Premium."
+          onDismiss={() => setRegisterOpen(false)}
+        />
+      )}
     </div>
   );
 }

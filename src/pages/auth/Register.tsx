@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft } from 'lucide-react';
+import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -31,9 +31,15 @@ const BOT_MESSAGES = {
 interface RegisterProps {
   /** Fourni quand la modale est ouverte par-dessus une page : on la referme sur place. */
   onDismiss?: () => void;
+  /**
+   * Raison de l'inscription, affichée en haut de la modale. Ouverte depuis une page
+   * réservée, la personne doit savoir POURQUOI on lui demande de s'inscrire, sinon
+   * la fenêtre ressemble à un péage arbitraire.
+   */
+  intro?: string;
 }
 
-export default function Register({ onDismiss }: RegisterProps = {}) {
+export default function Register({ onDismiss, intro }: RegisterProps = {}) {
   const [tunnelStep, setTunnelStep] = useState<TunnelStep>('plan');
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('yearly');
@@ -299,6 +305,15 @@ export default function Register({ onDismiss }: RegisterProps = {}) {
 
         {tunnelStep === 'plan' && (
           <div className="overflow-y-auto flex-1 min-h-0">
+            {intro && (
+              <div
+                className="mx-6 mt-5 flex items-start gap-2.5 rounded-[10px] px-4 py-3"
+                style={{ background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.3)' }}
+              >
+                <Lock size={16} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} />
+                <p className="text-[13px]" style={{ color: '#c084f5' }}>{intro}</p>
+              </div>
+            )}
             <PlanSelection
               selectedPlan={selectedPlan}
               onSelect={setSelectedPlan}

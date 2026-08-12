@@ -130,11 +130,20 @@ export default function App() {
               <Route path="/promos" element={<LegacyRedirect to="/promotions" />} />
               <Route path="/promos/:promoId" element={<LegacyRedirect to="/promotions/:promoId" />} />
               <Route path="/pricing" element={<LegacyRedirect to="/tarifs" />} />
+
+              {/*
+                Membres : la page reste ACCESSIBLE sans compte. Elle était derrière la
+                garde, donc un visiteur curieux était renvoyé à l'accueil avec une
+                fenêtre d'inscription, sans jamais voir de quoi on parle. Elle explique
+                maintenant ce qu'on y trouve, sans montrer un seul profil : c'est la
+                page elle-même qui gère le verrou (réservé aux membres Premium).
+              */}
+              <Route path="/membres" element={<Members />} />
+              <Route path="/members" element={<LegacyRedirect to="/membres" />} />
             </Route>
 
             {/* Espace membre : demande un compte, quel que soit le réglage. */}
             <Route element={<AppLayout requireAuth />}>
-              <Route path="/membres" element={<Members />} />
               <Route path="/ajouter-un-lieu" element={<EstablishmentForm />} />
               <Route path="/lieu/:id/modifier" element={<EstablishmentForm />} />
               <Route path="/favoris" element={<Favorites />} />
