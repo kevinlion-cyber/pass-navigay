@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare,
+  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare, ClipboardList,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/admin/etablissements', icon: Building2, label: 'Établissements' },
   { to: '/admin/fiches-auto', icon: Sparkles, label: 'Fiches auto' },
   { to: '/admin/villes', icon: MapPin, label: 'Villes' },
+  { to: '/admin/questionnaire', icon: ClipboardList, label: 'Questionnaire' },
   { to: '/admin/reseaux-sociaux', icon: Megaphone, label: 'Social' },
   { to: '/admin/revendications', icon: BadgeCheck, label: 'Revendications' },
   { to: '/admin/evenements', icon: CalendarDays, label: 'Événements' },

@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
 import AppLayout from './components/layout/AppLayout';
 import WelcomeModal from './components/WelcomeModal';
+import Survey from './pages/Survey';
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Verify from './pages/auth/Verify';
@@ -32,6 +33,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminSeo from './pages/admin/AdminSeo';
 import AdminEstablishments from './pages/admin/AdminEstablishments';
 import AdminDrafts from './pages/admin/AdminDrafts';
+import AdminSurvey from './pages/admin/AdminSurvey';
 import AdminCities from './pages/admin/AdminCities';
 import AdminSocial from './pages/admin/AdminSocial';
 import AdminClaims from './pages/admin/AdminClaims';
@@ -113,6 +115,9 @@ export default function App() {
               <Route path="/promotions/:promoId" element={<PromoDetail />} />
               <Route path="/lieu/:slug" element={<EstablishmentDetail />} />
               <Route path="/tarifs" element={<Pricing />} />
+              {/* Questionnaire de Kevin : page publique, anonyme. */}
+              <Route path="/questionnaire" element={<Survey />} />
+              <Route path="/questionnaire-pass-navigay" element={<LegacyRedirect to="/questionnaire" />} />
               <Route path="/revendiquer/:id" element={<Revendiquer />} />
 
               {/*
@@ -169,6 +174,7 @@ export default function App() {
               <Route path="etablissements" element={<AdminEstablishments />} />
               <Route path="fiches-auto" element={<AdminDrafts />} />
               <Route path="villes" element={<AdminCities />} />
+              <Route path="questionnaire" element={<AdminSurvey />} />
               <Route path="reseaux-sociaux" element={<AdminSocial />} />
               <Route path="revendications" element={<AdminClaims />} />
               <Route path="evenements" element={<AdminEvents />} />
