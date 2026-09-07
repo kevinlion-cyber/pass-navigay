@@ -120,7 +120,16 @@ export default function Events() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+    /*
+     * Cadre à hauteur fixe, la liste défile à l'intérieur (même principe que la
+     * page Lieux). Avant, c'était toute la page qui défilait : sur téléphone, la
+     * barre d'outils du navigateur se rétracte pendant le défilement et masque la
+     * barre d'onglets du bas, qui ne réapparaissait qu'arrivé tout en bas.
+     * On retire la hauteur de l'en-tête (3,5rem) et, sur téléphone seulement,
+     * celle de la barre d'onglets (4rem), qui n'existe pas sur grand écran.
+     */
+    <div className="flex flex-col overflow-hidden h-[calc(100dvh-3.5rem-4rem)] md:h-[calc(100dvh-3.5rem)]">
+      <div className="shrink-0 w-full max-w-4xl mx-auto px-4 pt-6 pb-3 space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Événements</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -206,7 +215,12 @@ export default function Events() {
             className="text-xs text-primary hover:underline">Réinitialiser les dates</button>
         )}
       </div>
+      </div>
 
+      {/* Seule cette zone défile : la barre d'onglets du bas reste donc toujours
+          visible sur téléphone, et les filtres restent à portée de main. */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="w-full max-w-4xl mx-auto px-4 pb-6">
       {filtered.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <Calendar size={48} className="mx-auto text-gray-300 dark:text-gray-600" />
@@ -271,6 +285,8 @@ export default function Events() {
           })}
         </div>
       )}
+        </div>
+      </div>
 
       {/* Le choix des deux formules (gratuit / Premium) est celui de l'inscription :
           on réutilise la même modale plutôt que d'en entretenir une deuxième, avec

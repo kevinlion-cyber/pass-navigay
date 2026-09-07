@@ -117,9 +117,16 @@ export default function Promos() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+    /*
+     * Cadre à hauteur fixe, la liste défile à l'intérieur (même principe que la
+     * page Lieux). Avant, c'était toute la page qui défilait : sur téléphone, la
+     * barre d'outils du navigateur se rétracte pendant le défilement et masque la
+     * barre d'onglets du bas, qui ne réapparaissait qu'arrivé tout en bas.
+     */
+    <div className="flex flex-col overflow-hidden h-[calc(100dvh-3.5rem-4rem)] md:h-[calc(100dvh-3.5rem)]">
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
 
+      <div className="shrink-0 w-full max-w-4xl mx-auto px-4 pt-6 pb-3 space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Promotions</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -178,7 +185,12 @@ export default function Promos() {
           />
         )}
       </div>
+      </div>
 
+      {/* Seule cette zone défile : la barre d'onglets du bas reste donc toujours
+          visible sur téléphone, et les filtres restent à portée de main. */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="w-full max-w-4xl mx-auto px-4 pb-6 space-y-4">
       {/* Les promotions sont une VITRINE : tout le monde voit ce qu'il y a à gagner
           (le lieu, la réduction, la validité). C'est pour en profiter qu'il faut un
           compte, et ce verrou est sur la page de détail. Avant, la liste était
@@ -302,6 +314,8 @@ export default function Promos() {
           })}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }
