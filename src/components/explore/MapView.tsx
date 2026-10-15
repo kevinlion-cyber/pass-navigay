@@ -25,13 +25,20 @@ interface MapViewProps {
 interface PopupData {
   promo?: { title: string };
   event?: { title: string; dateLabel: string };
+  /**
+   * Image, logo et adresse du lieu. Les points de la carte ne portent que le strict
+   * nécessaire à leur affichage (nom, position, catégorie) : un lieu ouvert depuis un
+   * point, et absent de la liste chargée, s'affichait donc sans sa photo ni son adresse.
+   * On les charge au moment du clic, pas sur les centaines de points du cadrage.
+   */
+  fiche?: { banner_url: string | null; logo_url: string | null; address: string | null; city: string | null };
 }
 
 async function fetchPopupExtras(estId: string): Promise<PopupData> {
   const now = new Date().toISOString();
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [promoRes, eventRes] = await Promise.all([
+  const [promoRes, eventRes, ficheRes] = await Promise.all([
     supabase
       .from('public_promotions')
       .select('title')
@@ -47,9 +54,15 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
       .lte('event_date', weekFromNow)
       .order('event_date', { ascending: true })
       .limit(1),
+    supabase
+      .from('establishments')
+      .select('banner_url, logo_url, address, city')
+      .eq('id', estId)
+      .maybeSingle(),
   ]);
 
   const result: PopupData = {};
+  if (ficheRes.data) result.fiche = ficheRes.data;
   if (promoRes.data?.[0]) result.promo = promoRes.data[0];
   if (eventRes.data?.[0]) {
     const ev = eventRes.data[0];
@@ -281,14 +294,33 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
 function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment; extras: PopupData; loading: boolean; onNavigate: (id: string) => void }) {
   const { categories } = useCategories();
   const catLabel = categories[est.category as CategoryKey]?.label || est.category;
+  // Ce que la liste connaît déjà, sinon ce qui vient d'être chargé pour la bulle.
+  const banner = est.banner_url || extras.fiche?.banner_url || null;
+  const logo = est.logo_url || extras.fiche?.logo_url || null;
+  const adresse = [est.address || extras.fiche?.address, est.city || extras.fiche?.city].filter(Boolean).join(', ');
 
   return (
-    <div className="w-[240px] font-sans">
-      {est.banner_url && (
-        <div className="relative h-[80px] -mx-2 -mt-2 mb-2 overflow-hidden rounded-t">
-          <img src={est.banner_url} alt="" className="w-full h-full object-cover" />
-          {est.logo_url && (
-            <img src={est.logo_url} alt="" className="absolute bottom-[-8px] left-2 w-7 h-7 rounded-full border-2 border-white object-cover bg-white" />
+    // ⛔ Google enferme le contenu de la bulle dans sa propre zone défilante, dont la
+    // hauteur dépend de la place au-dessus du point : 165 px, parfois 135. Tout ce qui
+    // dépasse n'est atteignable qu'en faisant défiler DANS la bulle, ce que personne ne
+    // devine, et le bouton « Voir la fiche » tombait en dessous dès qu'il y avait une
+    // image. D'où deux précautions : un contenu court (image basse, marges serrées) et
+    // surtout une bulle entièrement cliquable, pour que la fiche s'ouvre même quand le
+    // bouton est hors cadre.
+    <div
+      className="w-[240px] font-sans cursor-pointer"
+      role="link"
+      tabIndex={0}
+      onClick={() => onNavigate(est.id)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate(est.id); } }}
+    >
+      {/* Un lieu ouvert depuis un point de la carte n'a que son nom et sa position :
+          image, logo et adresse arrivent avec le reste de la bulle. */}
+      {banner && (
+        <div className="relative h-[48px] -mx-2 -mt-2 mb-1.5 overflow-hidden rounded-t">
+          <img src={banner} alt="" className="w-full h-full object-cover" />
+          {logo && (
+            <img src={logo} alt="" className="absolute bottom-[-8px] left-2 w-6 h-6 rounded-full border-2 border-white object-cover bg-white" />
           )}
         </div>
       )}
@@ -301,36 +333,15 @@ function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment
         {est.is_sponsor && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">Sponsor</span>}
       </div>
 
-      <p className="text-[11px] text-gray-500 mt-0.5">{catLabel} · {est.subcategory}</p>
-      {/* Un lieu ouvert depuis un point de la carte n'a pas encore son adresse :
-          sans ce garde-fou, la bulle affichait une virgule toute seule. */}
-      {(est.address || est.city) && (
-        <p className="text-[11px] text-gray-500 mt-0.5 truncate">{[est.address, est.city].filter(Boolean).join(', ')}</p>
-      )}
-
-      {((est.avg_rating ?? 0) > 0 || (est.avg_safety_rating ?? 0) > 0) && (
-        <div className="flex items-center gap-2 mt-1">
-          {(est.avg_rating ?? 0) > 0 && (
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : 'none'} stroke={i <= Math.round(est.avg_rating || 0) ? '#d4a017' : '#ccc'} strokeWidth="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-              ))}
-              <span className="text-[10px] text-gray-400 ml-0.5">({est.review_count || 0})</span>
-            </div>
-          )}
-          {(est.avg_safety_rating ?? 0) > 0 && (
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill={i <= Math.round(est.avg_safety_rating || 0) ? '#10b981' : 'none'} stroke={i <= Math.round(est.avg_safety_rating || 0) ? '#10b981' : '#ccc'} strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* La note tenait sur une ligne d'étoiles à elle seule, 18 px que la bulle n'a pas :
+          elle se lit maintenant au bout de la catégorie. Le détail est sur la fiche. */}
+      <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+        {catLabel} · {est.subcategory}
+        {(est.avg_rating ?? 0) > 0 && (
+          <span className="text-gray-700"> · ★ {(est.avg_rating || 0).toFixed(1)} ({est.review_count || 0})</span>
+        )}
+      </p>
+      {adresse && <p className="text-[11px] text-gray-500 mt-0.5 truncate">{adresse}</p>}
 
       {loading && (
         <div className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-400">
@@ -351,13 +362,10 @@ function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment
         </div>
       )}
 
-      <button
-        onClick={() => onNavigate(est.id)}
-        className="mt-2 w-full py-1.5 rounded-lg text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
-        style={{ background: '#7B2D8B' }}
-      >
-        Voir la fiche
-      </button>
+      {/* Un bouton plein prenait 27 px ; avec une image et un nom sur deux lignes, il
+          passait sous le bord de la bulle. Ce lien en tient 13, et de toute façon c'est
+          la bulle entière qui ouvre la fiche. */}
+      <p className="mt-1 text-[12px] font-semibold" style={{ color: '#7B2D8B' }}>Voir la fiche ›</p>
     </div>
   );
 }
