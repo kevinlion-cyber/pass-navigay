@@ -194,11 +194,17 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
         dot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
         dot.title = p.name;
 
+        // Sans `gmpClickable`, Google ne rend pas le point interactif : au doigt, rien ne
+        // se passait et la fiche ne s'ouvrait jamais sur téléphone. À la souris le clic
+        // atteignait quand même le contenu du marqueur, d'où un défaut invisible sur
+        // ordinateur. L'événement à écouter devient `gmp-click` (`addListener('click')`
+        // est l'ancien chemin, que l'API signale maintenant comme obsolète).
         const marker = new AdvancedMarkerElement({
           position: { lat: p.latitude, lng: p.longitude },
           content: dot,
+          gmpClickable: true,
         });
-        marker.addListener('click', () => handleMarkerClick(p));
+        marker.addEventListener('gmp-click', () => handleMarkerClick(p));
         return marker;
       });
 
