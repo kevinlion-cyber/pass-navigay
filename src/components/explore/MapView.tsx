@@ -287,14 +287,20 @@ function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment
         </div>
       )}
 
-      <div className="flex items-center gap-1 flex-wrap">
-        <span className="text-[13px] font-semibold text-gray-900 truncate max-w-[150px]">{est.name}</span>
-        {est.is_pro && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">PRO</span>}
-        {est.is_sponsor && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Sponsor</span>}
+      {/* Le nom tenait sur 150 px dans une bulle de 240 : la moitié des lieux s'affichaient
+          coupés (« Ma Beauté Florale - In… »). Il prend la largeur et passe à la ligne. */}
+      <div className="flex items-start gap-1 flex-wrap">
+        <span className="text-[13px] font-semibold text-gray-900 leading-snug">{est.name}</span>
+        {est.is_pro && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 shrink-0">PRO</span>}
+        {est.is_sponsor && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">Sponsor</span>}
       </div>
 
       <p className="text-[11px] text-gray-500 mt-0.5">{catLabel} · {est.subcategory}</p>
-      <p className="text-[11px] text-gray-500 mt-0.5 truncate">{est.address}, {est.city}</p>
+      {/* Un lieu ouvert depuis un point de la carte n'a pas encore son adresse :
+          sans ce garde-fou, la bulle affichait une virgule toute seule. */}
+      {(est.address || est.city) && (
+        <p className="text-[11px] text-gray-500 mt-0.5 truncate">{[est.address, est.city].filter(Boolean).join(', ')}</p>
+      )}
 
       {((est.avg_rating ?? 0) > 0 || (est.avg_safety_rating ?? 0) > 0) && (
         <div className="flex items-center gap-2 mt-1">

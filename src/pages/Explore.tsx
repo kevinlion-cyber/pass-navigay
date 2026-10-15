@@ -64,6 +64,8 @@ export default function Explore() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
+  /** Le lieu touché sur la carte, montré en tête de liste même s'il n'est pas dans la page chargée. */
+  const [lieuEpingle, setLieuEpingle] = useState<Establishment | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(null);
   const [emptyText, setEmptyText] = useState('');
@@ -287,6 +289,10 @@ export default function Explore() {
   }, [page, selectedCategory, selectedSubcategories, debouncedSearch, bounds, citySlug, aroundInfo]);
 
   useEffect(() => {
+    // Changer de ville, de catégorie ou lancer une recherche, c'est repartir d'une autre
+    // intention : le lieu touché sur la carte n'a plus de raison de rester en tête.
+    setLieuEpingle(null);
+    setSelectedPinId(null);
     fetchEstablishments(true);
   }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug, aroundInfo]);
 
@@ -316,14 +322,32 @@ export default function Explore() {
     fetchEstablishments();
   };
 
-  const handlePinSelect = useCallback((id: string | null) => {
+  /**
+   * La fiche du lieu touché sur la carte, amenée sous la carte.
+   *
+   * La carte pose un point pour TOUS les lieux du cadrage ; la liste n'en charge que les
+   * premiers, par pages. Toucher un point au-delà de la première page ne donnait donc rien
+   * en dessous : ni fiche, ni défilement.
+   *
+   * On ne peut pas se contenter d'ajouter le lieu à la liste : sélectionner un point
+   * recentre la carte, le nouveau cadrage relance le chargement et l'ajout disparaît
+   * aussitôt. Le lieu touché est donc gardé à part et affiché en tête, quoi qu'il arrive
+   * à la liste en dessous.
+   */
+  const carteDuLieu = (id: string) =>
+    Array.from(document.querySelectorAll<HTMLElement>(`[data-est-id="${id}"]`))
+      // Les deux colonnes (ordinateur et téléphone) sont montées en même temps :
+      // on ne garde que celle qui est réellement affichée.
+      .find((el) => el.getBoundingClientRect().width > 0) || null;
+
+  const handlePinSelect = useCallback(async (id: string | null) => {
     setSelectedPinId(id);
-    if (id) {
-      const el = cardRefs.current.get(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-    }
+    if (!id) { setLieuEpingle(null); return; }
+
+    const { data } = await supabase.from('establishments').select('*').eq('id', id).maybeSingle();
+    if (data) setLieuEpingle(data as Establishment);
+    // Le temps que la fiche soit posée par React.
+    setTimeout(() => carteDuLieu(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   }, []);
 
   const registerCardRef = useCallback((id: string, el: HTMLDivElement | null) => {
@@ -359,7 +383,7 @@ export default function Explore() {
         </p>
       )}
 
-      {establishments.map((est) => (
+      {(lieuEpingle ? [lieuEpingle, ...establishments.filter((e) => e.id !== lieuEpingle.id)] : establishments).map((est) => (
         <div
           key={est.id}
           data-est-id={est.id}
@@ -429,8 +453,12 @@ export default function Explore() {
       <FeaturedEvents />
 
       <div className="shrink-0 px-4 pt-2 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 min-w-0">
+        {/* Sur téléphone, les trois commandes tenaient sur une seule ligne : la ville et la
+            catégorie prenaient toute la largeur et la recherche tombait à la taille de ses
+            propres marges. On tapait sans rien voir. Elle a donc sa ligne, les deux filtres
+            la suivante ; à partir de la tablette, tout revient sur une ligne. */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="relative sm:flex-1 sm:min-w-0">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             {searchLoading && (
               <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
@@ -440,24 +468,27 @@ export default function Explore() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un lieu, une ville..."
-              className="input-field pl-9 pr-9 text-xs w-full"
+              enterKeyHint="search"
+              className="input-field pl-9 pr-9 text-sm sm:text-xs w-full"
               style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
             />
           </div>
-          <CityFilter
-            cities={cities}
-            value={citySlug}
-            onSelectCity={selectCity}
-            onAroundMe={goAroundMe}
-            aroundMe={aroundMe}
-            locating={locating}
-          />
-          <CategoryFilters
-            selectedCategory={selectedCategory}
-            selectedSubcategories={selectedSubcategories}
-            onCategoryChange={handleCategoryChange}
-            onSubcategoryToggle={handleSubcategoryToggle}
-          />
+          <div className="flex items-center gap-2">
+            <CityFilter
+              cities={cities}
+              value={citySlug}
+              onSelectCity={selectCity}
+              onAroundMe={goAroundMe}
+              aroundMe={aroundMe}
+              locating={locating}
+            />
+            <CategoryFilters
+              selectedCategory={selectedCategory}
+              selectedSubcategories={selectedSubcategories}
+              onCategoryChange={handleCategoryChange}
+              onSubcategoryToggle={handleSubcategoryToggle}
+            />
+          </div>
         </div>
       </div>
 
