@@ -1,15 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
-import { ZoomIn, ZoomOut, X, Check, Camera, Store as StoreIcon, Clock } from 'lucide-react';
+import { X, Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { translateDbError } from '../../lib/dbErrors';
 import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
-import cropImage from '../../lib/cropImage';
+import RecadrageModal from '../../components/ui/RecadrageModal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import EstablishmentGallerySection from './EstablishmentGallerySection';
 
@@ -60,16 +58,10 @@ export default function PartnerEstablishment() {
   });
 
   const [logoCropSrc, setLogoCropSrc] = useState<string | null>(null);
-  const [logoCrop, setLogoCrop] = useState({ x: 0, y: 0 });
-  const [logoZoom, setLogoZoom] = useState(1);
-  const [logoCroppedArea, setLogoCroppedArea] = useState<Area | null>(null);
   const [croppedLogoBlob, setCroppedLogoBlob] = useState<Blob | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const [bannerCropSrc, setBannerCropSrc] = useState<string | null>(null);
-  const [bannerCrop, setBannerCrop] = useState({ x: 0, y: 0 });
-  const [bannerZoom, setBannerZoom] = useState(1);
-  const [bannerCroppedArea, setBannerCroppedArea] = useState<Area | null>(null);
   const [croppedBannerBlob, setCroppedBannerBlob] = useState<Blob | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
@@ -104,25 +96,7 @@ export default function PartnerEstablishment() {
       return;
     }
     setLogoCropSrc(URL.createObjectURL(file));
-    setLogoCrop({ x: 0, y: 0 });
-    setLogoZoom(1);
     e.target.value = '';
-  };
-
-  const onLogoCropComplete = useCallback((_: Area, croppedPixels: Area) => {
-    setLogoCroppedArea(croppedPixels);
-  }, []);
-
-  const handleLogoConfirm = async () => {
-    if (!logoCropSrc || !logoCroppedArea) return;
-    try {
-      const blob = await cropImage(logoCropSrc, logoCroppedArea, 400, 400);
-      setCroppedLogoBlob(blob);
-      setLogoPreview(URL.createObjectURL(blob));
-      setLogoCropSrc(null);
-    } catch {
-      toast.error('Erreur lors du recadrage du logo');
-    }
   };
 
   const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,25 +108,7 @@ export default function PartnerEstablishment() {
       return;
     }
     setBannerCropSrc(URL.createObjectURL(file));
-    setBannerCrop({ x: 0, y: 0 });
-    setBannerZoom(1);
     e.target.value = '';
-  };
-
-  const onBannerCropComplete = useCallback((_: Area, croppedPixels: Area) => {
-    setBannerCroppedArea(croppedPixels);
-  }, []);
-
-  const handleBannerConfirm = async () => {
-    if (!bannerCropSrc || !bannerCroppedArea) return;
-    try {
-      const blob = await cropImage(bannerCropSrc, bannerCroppedArea, 1280, 720);
-      setCroppedBannerBlob(blob);
-      setBannerPreview(URL.createObjectURL(blob));
-      setBannerCropSrc(null);
-    } catch {
-      toast.error('Erreur lors du recadrage de la bannière');
-    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -500,58 +456,37 @@ export default function PartnerEstablishment() {
       </div>
 
       {logoCropSrc && (
-        <CropModal src={logoCropSrc} crop={logoCrop} zoom={logoZoom} aspect={1} cropShape="round"
-          onCropChange={setLogoCrop} onZoomChange={setLogoZoom} onCropComplete={onLogoCropComplete}
-          onConfirm={handleLogoConfirm} onCancel={() => setLogoCropSrc(null)} />
+        <RecadrageModal
+          source={logoCropSrc}
+          proportion={1}
+          forme="round"
+          titre="Recadrer le logo"
+          largeurSortie={400}
+          hauteurSortie={400}
+          onValider={(blob) => {
+            setCroppedLogoBlob(blob);
+            setLogoPreview(URL.createObjectURL(blob));
+            setLogoCropSrc(null);
+          }}
+          onAnnuler={() => setLogoCropSrc(null)}
+        />
       )}
 
       {bannerCropSrc && (
-        <CropModal src={bannerCropSrc} crop={bannerCrop} zoom={bannerZoom} aspect={16 / 9} cropShape="rect"
-          onCropChange={setBannerCrop} onZoomChange={setBannerZoom} onCropComplete={onBannerCropComplete}
-          onConfirm={handleBannerConfirm} onCancel={() => setBannerCropSrc(null)} />
+        <RecadrageModal
+          source={bannerCropSrc}
+          proportion={16 / 9}
+          titre="Recadrer la bannière"
+          largeurSortie={1280}
+          hauteurSortie={720}
+          onValider={(blob) => {
+            setCroppedBannerBlob(blob);
+            setBannerPreview(URL.createObjectURL(blob));
+            setBannerCropSrc(null);
+          }}
+          onAnnuler={() => setBannerCropSrc(null)}
+        />
       )}
-    </div>
-  );
-}
-
-interface CropModalProps {
-  src: string;
-  crop: { x: number; y: number };
-  zoom: number;
-  aspect: number;
-  cropShape: 'round' | 'rect';
-  onCropChange: (c: { x: number; y: number }) => void;
-  onZoomChange: (z: number) => void;
-  onCropComplete: (area: Area, pixels: Area) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function CropModal({ src, crop, zoom, aspect, cropShape, onCropChange, onZoomChange, onCropComplete, onConfirm, onCancel }: CropModalProps) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card w-full max-w-md overflow-hidden">
-        <div className="relative w-full aspect-square bg-black">
-          <Cropper image={src} crop={crop} zoom={zoom} aspect={aspect} cropShape={cropShape}
-            showGrid={false} onCropChange={onCropChange} onZoomChange={onZoomChange} onCropComplete={onCropComplete} />
-        </div>
-        <div className="px-5 py-3 flex items-center gap-3">
-          <ZoomOut size={16} className="text-gray-400 shrink-0" />
-          <input type="range" min={1} max={3} step={0.05} value={zoom}
-            onChange={e => onZoomChange(Number(e.target.value))} className="flex-1 accent-primary h-1" />
-          <ZoomIn size={16} className="text-gray-400 shrink-0" />
-        </div>
-        <div className="flex gap-3 px-5 py-4 border-t border-light-border dark:border-dark-border">
-          <button type="button" onClick={onCancel}
-            className="flex-1 btn-ghost py-2.5 text-sm flex items-center justify-center gap-2">
-            <X size={16} /> Annuler
-          </button>
-          <button type="button" onClick={onConfirm}
-            className="flex-1 btn-primary py-2.5 text-sm flex items-center justify-center gap-2">
-            <Check size={16} /> Valider
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

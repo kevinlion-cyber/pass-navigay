@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Profile } from '../../lib/types';
-import AvatarCropModal from '../../components/ui/AvatarCropModal';
+import RecadrageModal from '../../components/ui/RecadrageModal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 interface ProfileHeaderProps {
@@ -325,10 +325,15 @@ export default function ProfileHeader({ profile }: ProfileHeaderProps) {
       </div>
 
       {cropSrc && (
-        <AvatarCropModal
-          imageSrc={cropSrc}
-          onCancel={() => setCropSrc(null)}
-          onConfirm={handleCropConfirm}
+        <RecadrageModal
+          source={cropSrc}
+          proportion={1}
+          forme="round"
+          titre="Recadrer la photo"
+          largeurSortie={400}
+          hauteurSortie={400}
+          onAnnuler={() => setCropSrc(null)}
+          onValider={handleCropConfirm}
         />
       )}
     </>

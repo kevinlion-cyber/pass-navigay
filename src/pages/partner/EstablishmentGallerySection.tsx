@@ -1,29 +1,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Trash2, Plus, Image as ImageIcon } from 'lucide-react';
-import Cropper from 'react-easy-crop';
-import type { Area } from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import type { EstablishmentPhoto } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import RecadrageModal from '../../components/ui/RecadrageModal';
 
 const MAX_PHOTOS = 20;
 // Limite de poids alignée sur le parcours d'inscription (RegisterStep3) : le texte
 // annonçait « Max 5 Mo chacune » sans qu'aucune vérification soit faite, donc une
 // photo trop lourde partait et échouait avec un message technique en anglais.
 const MAX_PHOTO_MB = 5;
-
-async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
-  const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()));
-  const canvas = document.createElement('canvas');
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))), 'image/jpeg', 0.9);
-  });
-}
 
 interface Props {
   establishmentId: string;
@@ -42,9 +29,6 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
   const [cropQueue, setCropQueue] = useState<string[]>([]);
   const [cropIndex, setCropIndex] = useState(0);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [croppedResults, setCroppedResults] = useState<{ blob: Blob; preview: string }[]>([]);
 
   const loadPhotos = useCallback(async () => {
@@ -94,10 +78,6 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     setCaptionTimers(prev => ({ ...prev, [photoId]: timer }));
   };
 
-  const onCropComplete = useCallback((_: Area, pixels: Area) => {
-    setCroppedAreaPixels(pixels);
-  }, []);
-
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -122,34 +102,23 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
     setCropIndex(0);
     setCroppedResults([]);
     setCropSrc(urls[0]);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
     if (fileRef.current) fileRef.current.value = '';
   };
 
-  const handleCropValidate = async () => {
-    if (!cropSrc || !croppedAreaPixels) return;
-    try {
-      const blob = await getCroppedImg(cropSrc, croppedAreaPixels);
-      const preview = URL.createObjectURL(blob);
-      const newResults = [...croppedResults, { blob, preview }];
-      setCroppedResults(newResults);
+  /** Une photo recadrée : on enchaîne sur la suivante, ou on rend le lot. */
+  const handlePhotoRecadree = (blob: Blob) => {
+    const resultats = [...croppedResults, { blob, preview: URL.createObjectURL(blob) }];
+    setCroppedResults(resultats);
 
-      const nextIdx = cropIndex + 1;
-      if (nextIdx < cropQueue.length) {
-        setCropIndex(nextIdx);
-        setCropSrc(cropQueue[nextIdx]);
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
-        setCroppedAreaPixels(null);
-      } else {
-        onPendingChange([...pendingPhotos, ...newResults]);
-        setCropSrc(null);
-        setCropQueue([]);
-        setCroppedResults([]);
-      }
-    } catch {
-      toast.error('Erreur lors du recadrage');
+    const suivante = cropIndex + 1;
+    if (suivante < cropQueue.length) {
+      setCropIndex(suivante);
+      setCropSrc(cropQueue[suivante]);
+    } else {
+      onPendingChange([...pendingPhotos, ...resultats]);
+      setCropSrc(null);
+      setCropQueue([]);
+      setCroppedResults([]);
     }
   };
 
@@ -247,42 +216,14 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
       )}
 
       {cropSrc && (
-        <div className="fixed inset-0 z-[2000] flex flex-col" style={{ background: 'var(--pn-bg2)' }}>
-          <div className="shrink-0 flex items-center justify-between px-5 py-4"
-            style={{ background: 'var(--pn-surface2)', borderBottom: '1px solid var(--pn-border)' }}>
-            <span className="text-[15px] font-semibold text-gray-900 dark:text-white">
-              Recadrez la photo {cropIndex + 1}/{cropQueue.length}
-            </span>
-            <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
-              className="text-[#606070] hover:text-gray-900 dark:hover:text-white transition-colors text-sm">
-              Annuler tout
-            </button>
-          </div>
-          <div className="flex-1 relative" style={{ minHeight: 300, background: '#000' }}>
-            <Cropper image={cropSrc} crop={crop} zoom={zoom} aspect={4 / 3}
-              onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete}
-              cropShape="rect" showGrid={false} />
-          </div>
-          <div className="shrink-0 px-5 py-4 space-y-4" style={{ background: 'var(--pn-surface2)', borderTop: '1px solid var(--pn-border)' }}>
-            <div className="flex items-center gap-3">
-              <span className="text-[13px] text-[#a0a0b0] shrink-0">Zoom</span>
-              <input type="range" min={1} max={3} step={0.01} value={zoom}
-                onChange={e => setZoom(Number(e.target.value))} className="flex-1" style={{ accentColor: '#7B2D8B' }} />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
-                className="flex-1 py-2.5 rounded-lg text-[14px] transition-colors hover:opacity-90"
-                style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
-                Annuler
-              </button>
-              <button onClick={handleCropValidate}
-                className="flex-[2] py-2.5 rounded-lg text-[14px] font-semibold text-white transition-colors hover:opacity-90"
-                style={{ background: '#7B2D8B' }}>
-                Valider
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecadrageModal
+          source={cropSrc}
+          proportion={4 / 3}
+          titre={`Recadrez la photo ${cropIndex + 1}/${cropQueue.length}`}
+          largeurSortie={1200}
+          onValider={handlePhotoRecadree}
+          onAnnuler={() => { setCropSrc(null); setCropQueue([]); setCroppedResults([]); }}
+        />
       )}
 
       <ConfirmModal open={!!deleteTarget} title="Supprimer cette photo ?"

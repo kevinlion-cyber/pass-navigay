@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { X, Camera, Image as ImageIcon, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ProsCropModal from './ProsCropModal';
+import RecadrageModal from '../../components/ui/RecadrageModal';
 
 export interface Step3Data {
   logoBlob: Blob | null;
@@ -274,14 +274,14 @@ export default function RegisterStep3({ data, onChange, onPrev, onSubmit, submit
       </div>
 
       {cropSrc && (
-        <ProsCropModal
-          imageSrc={cropSrc}
-          aspect={cropAspect}
-          title={cropTitle}
-          outputWidth={cropOutputW}
-          outputHeight={cropOutputH}
-          onCancel={handleCropCancel}
-          onConfirm={handleCropConfirm}
+        <RecadrageModal
+          source={cropSrc}
+          proportion={cropAspect}
+          titre={cropTitle}
+          largeurSortie={cropOutputW}
+          hauteurSortie={cropOutputH}
+          onAnnuler={handleCropCancel}
+          onValider={handleCropConfirm}
         />
       )}
     </div>
