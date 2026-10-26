@@ -36,6 +36,32 @@ export function zoomImageEntiere(largeurImage: number, hauteurImage: number, pro
   return Math.min(proportionImage / proportionCadre, proportionCadre / proportionImage);
 }
 
+/**
+ * L'image étirée en largeur et/ou en hauteur, indépendamment l'une de l'autre.
+ *
+ * Demandé par Kévin (26/10/2026) pour faire entrer une photo dans un cadre qui n'a pas
+ * ses proportions. ⚠ Cela DÉFORME la photo : à 1 de chaque côté, elle est intacte.
+ *
+ * On travaille sur une copie bornée en taille : étirer une photo d'appareil photo au
+ * double sans garde-fou fabriquerait une image énorme à chaque mouvement du curseur.
+ */
+export function etirerImage(img: HTMLImageElement, etireLargeur: number, etireHauteur: number, coteMax = 2000): string {
+  let l = img.width * etireLargeur;
+  let h = img.height * etireHauteur;
+  const reduction = Math.min(1, coteMax / Math.max(l, h));
+  l = Math.max(1, Math.round(l * reduction));
+  h = Math.max(1, Math.round(h * reduction));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = l;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return img.src;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, l, h);
+  return canvas.toDataURL('image/jpeg', 0.92);
+}
+
 export async function genererImage(
   source: string,
   aire: AireRecadrage,

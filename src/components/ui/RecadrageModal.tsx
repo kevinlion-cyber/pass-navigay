@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
-import { Maximize2, Minimize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Maximize2, Minimize2, MoveHorizontal, MoveVertical, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
-import { chargerImage, genererImage, zoomImageEntiere, type Fond } from '../../lib/recadrage';
+import { chargerImage, etirerImage, genererImage, zoomImageEntiere, type Fond } from '../../lib/recadrage';
 
 interface RecadrageModalProps {
   source: string;
@@ -48,29 +48,61 @@ export default function RecadrageModal({
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  // Le plancher du zoom dépend de la photo : inutile de laisser descendre plus bas que
-  // le moment où elle tient entière dans le cadre.
+  // Étirement demandé par Kévin : la largeur et la hauteur se règlent séparément.
+  // 1 et 1 = photo intacte. On déforme la photo une fois, et tout le reste (zoom,
+  // déplacement, recadrage, bords) travaille ensuite sur cette version : ce qu'on voit
+  // à l'écran est exactement ce qui sera enregistré.
+  const [etireLargeur, setEtireLargeur] = useState(1);
+  const [etireHauteur, setEtireHauteur] = useState(1);
+  const [original, setOriginal] = useState<HTMLImageElement | null>(null);
+  const [sourceTravail, setSourceTravail] = useState(source);
+  const deforme = etireLargeur !== 1 || etireHauteur !== 1;
+
   useEffect(() => {
     let vivant = true;
+    setSourceTravail(source);
     chargerImage(source)
-      .then((img) => {
-        if (!vivant) return;
-        const entiere = zoomImageEntiere(img.width, img.height, proportion);
-        setZoomMini(Math.min(entiere, 1) * 0.9);
-      })
+      .then((img) => { if (vivant) setOriginal(img) })
       .catch(() => { if (vivant) setErreur("Cette image n'a pas pu être ouverte. Essayez-en une autre."); });
     return () => { vivant = false };
-  }, [source, proportion]);
+  }, [source]);
+
+  // Le curseur envoie beaucoup d'événements : on ne refabrique l'image qu'une fois le
+  // geste posé, sinon on recalcule une image entière à chaque pixel parcouru.
+  useEffect(() => {
+    if (!original) return;
+    if (!deforme) { setSourceTravail(source); return }
+    const t = setTimeout(() => setSourceTravail(etirerImage(original, etireLargeur, etireHauteur)), 120);
+    return () => clearTimeout(t);
+  }, [original, etireLargeur, etireHauteur, deforme, source]);
+
+  // Le plancher du zoom dépend des proportions de la photo, étirement compris : inutile
+  // de laisser descendre plus bas que le moment où elle tient entière dans le cadre.
+  useEffect(() => {
+    let vivant = true;
+    chargerImage(sourceTravail)
+      .then((img) => {
+        if (!vivant) return;
+        setZoomMini(Math.min(zoomImageEntiere(img.width, img.height, proportion), 1) * 0.9);
+      })
+      .catch(() => { /* l'erreur est déjà signalée au chargement de la source */ });
+    return () => { vivant = false };
+  }, [sourceTravail, proportion]);
 
   const surRecadrage = useCallback((_: Area, pixels: Area) => setAire(pixels), []);
 
   /** La photo entière, visible d'un coup, sans rien couper. */
   const toutVoir = async () => {
     try {
-      const img = await chargerImage(source);
+      const img = await chargerImage(sourceTravail);
       setZoom(zoomImageEntiere(img.width, img.height, proportion));
       setPosition({ x: 0, y: 0 });
     } catch { /* le message d'erreur est déjà posé */ }
+  };
+
+  const rétablirProportions = () => {
+    setEtireLargeur(1);
+    setEtireHauteur(1);
   };
 
   /** La photo remplit le cadre : rien de vide, mais les bords sont coupés. */
@@ -84,7 +116,7 @@ export default function RecadrageModal({
     setEnCours(true);
     try {
       const h = hauteurSortie ?? Math.round(largeurSortie / proportion);
-      onValider(await genererImage(source, aire, largeurSortie, h, fond));
+      onValider(await genererImage(sourceTravail, aire, largeurSortie, h, fond));
     } catch {
       setEnCours(false);
       setErreur("Le recadrage n'a pas abouti. Réessayez, ou choisissez une autre image.");
@@ -109,7 +141,7 @@ export default function RecadrageModal({
 
         <div className="relative flex-1 min-h-[280px] bg-black">
           <Cropper
-            image={source}
+            image={sourceTravail}
             crop={position}
             zoom={zoom}
             aspect={proportion}
@@ -160,6 +192,45 @@ export default function RecadrageModal({
               style={{ accentColor: '#7B2D8B' }}
             />
             <ZoomIn size={16} className="shrink-0" style={{ color: '#606070' }} />
+          </div>
+
+          {/* Largeur et hauteur séparées : la photo se déforme, c'est voulu. */}
+          <div className="flex items-center gap-2">
+            <MoveHorizontal size={16} className="shrink-0" style={{ color: '#606070' }} />
+            <input
+              type="range"
+              aria-label="Étirer en largeur"
+              min={0.5}
+              max={2}
+              step={0.01}
+              value={etireLargeur}
+              onChange={(e) => setEtireLargeur(Number(e.target.value))}
+              className="flex-1 h-1 min-w-0"
+              style={{ accentColor: '#7B2D8B' }}
+            />
+            <MoveVertical size={16} className="shrink-0" style={{ color: '#606070' }} />
+            <input
+              type="range"
+              aria-label="Étirer en hauteur"
+              min={0.5}
+              max={2}
+              step={0.01}
+              value={etireHauteur}
+              onChange={(e) => setEtireHauteur(Number(e.target.value))}
+              className="flex-1 h-1 min-w-0"
+              style={{ accentColor: '#7B2D8B' }}
+            />
+            <button
+              type="button"
+              onClick={rétablirProportions}
+              disabled={!deforme}
+              aria-label="Rétablir les proportions"
+              title="Rétablir les proportions"
+              className="shrink-0 p-1 rounded transition-colors disabled:opacity-30"
+              style={{ color: deforme ? '#fff' : '#606070' }}
+            >
+              <RotateCcw size={15} />
+            </button>
           </div>
 
           {bordsVides && (
