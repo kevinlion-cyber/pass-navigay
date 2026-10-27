@@ -286,10 +286,31 @@ export default function EstablishmentDetail() {
         </div>
       )}
 
-      {/* Hero immersif : pour un lieu, la photo EST le héros */}
-      <div className="relative w-full h-64 md:h-80 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg">
+      {/*
+        Hero immersif : pour un lieu, la photo EST le héros.
+
+        Le bandeau tenait dans une hauteur fixe sur toute la largeur : ses proportions
+        changeaient donc avec l'écran (1,5 sur un téléphone, près de 4 sur un grand
+        écran) et `object-cover` recoupait la bannière. Un gérant cadrait en 16/9 dans
+        son espace et retrouvait autre chose en ligne (Kévin, 27/10/2026).
+        Le bandeau suit maintenant le format du recadrage, la bannière s'affiche
+        ENTIÈRE, et quand la place ne tombe pas juste c'est la photo elle-même, floutée,
+        qui comble les côtés au lieu de couper dedans.
+      */}
+      <div
+        className="relative w-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg"
+        style={{ aspectRatio: '16 / 9', maxHeight: 420 }}
+      >
         {establishment.banner_url ? (
-          <img src={establishment.banner_url} alt="" className="w-full h-full object-cover" />
+          <>
+            <img
+              src={establishment.banner_url}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-70"
+            />
+            <img src={establishment.banner_url} alt="" className="relative w-full h-full object-contain" />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <MapPin size={44} className="text-gray-300 dark:text-gray-600" />
