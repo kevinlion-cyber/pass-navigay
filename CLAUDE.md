@@ -1,5 +1,23 @@
 # CLAUDE.md — PASS NAVIGAY
 
+## ⚡ NOUVELLE SESSION OU NOUVEAU COMPTE : À LIRE EN PREMIER
+
+Si tu découvres ce projet (nouvelle session, nouveau compte Claude), **lis d abord
+`REPRISE-NOUVEAU-COMPTE.md` à la racine de ce dossier.** Il dit qui est Frédéric, comment
+il veut qu on travaille, où en est Pass Navigay, et ce qui attend sa décision.
+
+Toute la connaissance accumulée (401 fiches : règles, chantiers, pièges qui ont coûté de
+l argent) est sur le disque, PAS dans le compte :
+
+```
+C:\Users\magic\.claude\projects\C--Users-magic-Desktop-Claude-joyeusefete\memory\
+```
+
+`MEMORY.md` y est l index. ⚠️ Ce chemin vient du dossier joyeusefête, mais **c est le SEUL
+dossier mémoire de la machine, y compris pour ce projet-ci.** Ne jamais commencer à
+travailler sans l avoir lu.
+
+
 Document de contexte projet pour Claude Code. À placer à la racine du projet. Ce fichier décrit l'intégralité du projet Pass Navigay : architecture, stack, base de données, fonctionnalités, design et règles métier.
 
 ## 1. VUE D'ENSEMBLE
