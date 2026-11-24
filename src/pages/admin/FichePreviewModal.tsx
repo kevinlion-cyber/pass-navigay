@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fichesPhotoUrl } from '../../lib/fichesPhoto';
 import { X, MapPin, Phone, Globe, Map, Heart, Share2,
   Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, type LucideIcon } from 'lucide-react';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -35,9 +36,7 @@ const AMENITY_ICONS: Record<string, LucideIcon> = {
   'Parking': Car, 'CB acceptée': Wallet,
 };
 
-const PHOTO_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fiches-photo`;
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const photoUrl = (name: string, w = 1000) => `${PHOTO_BASE}?name=${encodeURIComponent(name)}&w=${w}&apikey=${ANON}`;
+const photoUrl = (name: string, w = 1000) => fichesPhotoUrl({ name, w });
 
 export default function FichePreviewModal({ data, open, onClose }: { data: FichePreviewData | null; open: boolean; onClose: () => void }) {
   const { categories } = useCategories();
@@ -48,7 +47,7 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
   useEffect(() => {
     if (!open || !data?.place_id || stored) { setPhotos([]); return; }
     let cancelled = false;
-    fetch(`${PHOTO_BASE}?place_id=${encodeURIComponent(data.place_id)}&apikey=${ANON}`)
+    fetch(fichesPhotoUrl({ place_id: data.place_id }))
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setPhotos(d.photos || []); })
       .catch(() => { if (!cancelled) setPhotos([]); });

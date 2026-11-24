@@ -3,6 +3,7 @@ import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, S
 import toast from 'react-hot-toast';
 import { draftIdsToPublish, publishDraftIds } from '../../lib/publishDrafts';
 import { supabase } from '../../lib/supabase';
+import { fichesPhotoUrl } from '../../lib/fichesPhoto';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -41,9 +42,7 @@ interface Draft {
 
 type StatusFilter = 'enriched' | 'approved' | 'rejected' | 'all';
 
-const PHOTO_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fiches-photo`;
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const thumbUrl = (placeId: string, w = 120) => `${PHOTO_BASE}?place_id=${encodeURIComponent(placeId)}&i=0&w=${w}&apikey=${ANON}`;
+const thumbUrl = (placeId: string, w = 120) => fichesPhotoUrl({ place_id: placeId, i: 0, w });
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   enriched: { label: 'À valider', bg: 'rgba(210,153,34,0.15)', color: '#e3b341' },
