@@ -1,10 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { serviceClient } from "../_shared/auth.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 // Callback OAuth Meta (Facebook Login). Cible du redirect_uri.
 // Échange le code contre un token de page long-lived + l'ID du compte Instagram Business,
 // et les stocke (social_integrations). Puis renvoie l'admin vers /admin/social.
 // Public (--no-verify-jwt) : c'est l'URL de redirection Facebook.
+// Sécurité (point M2 de l'audit, 24/11/2026) : le retour doit porter un jeton
+// « state » à usage unique créé par un admin juste avant (table oauth_states,
+// migration 68), sinon il est refusé — un tiers ne peut plus remplacer la page
+// Facebook/Instagram connectée par la sienne.
+// Fichier autonome : peut être redéployé depuis l'éditeur du tableau de bord Supabase.
 Deno.serve(async (req: Request) => {
   const site = Deno.env.get("PUBLIC_SITE_URL") || "https://passnavigay.com";
   const back = (params: string) => new Response(null, { status: 302, headers: { Location: `${site}/admin/social?${params}` } });
@@ -13,6 +18,15 @@ Deno.serve(async (req: Request) => {
   if (url.searchParams.get("error")) return back(`meta_error=${encodeURIComponent(url.searchParams.get("error_description") || "refus")}`);
   const code = url.searchParams.get("code");
   if (!code) return back("meta_error=nocode");
+
+  // Jeton « state » : doit exister, dater de moins de 15 minutes, et n'est utilisable qu'une fois.
+  const state = url.searchParams.get("state") ?? "";
+  const svc = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  if (!state) return back("meta_error=state");
+  const { data: used } = await svc.from("oauth_states").delete().eq("state", state).select("created_at").maybeSingle();
+  if (!used || Date.now() - new Date(used.created_at).getTime() > 15 * 60 * 1000) {
+    return back("meta_error=state");
+  }
 
   const appId = Deno.env.get("META_APP_ID");
   const appSecret = Deno.env.get("META_APP_SECRET");
@@ -35,7 +49,6 @@ Deno.serve(async (req: Request) => {
     const page = pages.find((p: { instagram_business_account?: unknown }) => p.instagram_business_account) || pages[0];
     if (!page) return back("meta_error=nopage");
 
-    const svc = serviceClient();
     await svc.from("social_integrations").upsert({
       id: 1,
       provider: "meta",

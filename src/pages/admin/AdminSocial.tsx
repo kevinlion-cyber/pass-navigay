@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Megaphone, Instagram, Facebook, RefreshCw, Loader2, ExternalLink, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SocialPost {
   id: string;
@@ -39,16 +40,28 @@ const META_SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement,in
 // renseignée on l'utilise, sinon on retombe sur les scopes. Ça évite d'avoir à
 // redéployer si la connexion par scopes se fait refuser.
 const META_CONFIG_ID = import.meta.env.VITE_META_CONFIG_ID as string | undefined;
-const metaOauthUrl = () => {
+const metaOauthUrl = (state: string) => {
   const auth = META_CONFIG_ID ? `config_id=${META_CONFIG_ID}` : `scope=${META_SCOPES}`;
-  return `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&${auth}&response_type=code`;
+  return `https://www.facebook.com/v21.0/dialog/oauth?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(META_REDIRECT)}&${auth}&response_type=code&state=${encodeURIComponent(state)}`;
 };
+
+// M2 : jeton à usage unique enregistré avant de partir chez Facebook ; meta-oauth
+// refuse tout retour qui ne le porte pas (un tiers ne peut plus connecter sa page).
+async function startMetaOauth(userId: string | undefined) {
+  if (!userId) { toast.error('Session expirée, reconnectez-vous.'); return; }
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  const { error } = await supabase.from('oauth_states').insert({ state, created_by: userId });
+  if (error) { toast.error('Impossible de lancer la connexion Facebook. Réessayez.'); return; }
+  window.location.href = metaOauthUrl(state);
+}
 
 interface Integration { page_name: string | null; ig_username: string | null; connected_at: string | null; }
 
 interface Cmt { id: string; platform: string; author: string | null; text: string | null; commented_at: string | null }
 
 export default function AdminSocial() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -88,7 +101,7 @@ export default function AdminSocial() {
       .then(({ data }) => setInteg(data as Integration | null));
     const p = new URLSearchParams(window.location.search);
     if (p.get('connected')) toast.success('Instagram + Facebook connectés !');
-    if (p.get('meta_error')) toast.error('Connexion Meta : ' + p.get('meta_error'));
+    if (p.get('meta_error')) toast.error(p.get('meta_error') === 'state' ? 'Connexion Meta refusée : relancez-la depuis ce bouton (lien expiré ou non sollicité).' : 'Connexion Meta : ' + p.get('meta_error'));
     if (p.get('connected') || p.get('meta_error')) window.history.replaceState({}, '', '/admin/reseaux-sociaux');
   }, []);
 
@@ -138,9 +151,9 @@ export default function AdminSocial() {
           )}
         </div>
         {META_APP_ID ? (
-          <a href={metaOauthUrl()} className="btn-primary text-sm py-2 px-4">
+          <button onClick={() => startMetaOauth(user?.id)} className="btn-primary text-sm py-2 px-4">
             {integ?.connected_at ? 'Reconnecter' : 'Connecter Instagram + Facebook'}
-          </a>
+          </button>
         ) : (
           <span className="text-xs text-gray-500 italic">Configuration Meta requise (App ID)</span>
         )}
