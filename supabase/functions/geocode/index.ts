@@ -1,7 +1,11 @@
-// Géocodage côté serveur via OpenStreetMap / Nominatim (gratuit, sans clé).
-// Remplace l'appel direct à l'API Google Geocoding qui est refusée côté client
-// (la clé Maps est restreinte par référent → le web service Geocoding la rejette).
-// Si une clé serveur Google est fournie (GOOGLE_GEOCODING_KEY), on l'utilise en priorité.
+// Géocodage côté serveur.
+// 1) Géoplateforme IGN / Base Adresse Nationale (service public, gratuit, sans clé,
+//    fait pour les adresses françaises) — source principale depuis le 24/11/2026.
+//    Nominatim (OpenStreetMap) seul ne répondait plus : sa règle d'usage est d'une
+//    requête par seconde, et le site en envoyait une à chaque lettre tapée.
+// 2) Google, si une clé serveur est fournie (GOOGLE_GEOCODING_KEY).
+// 3) Nominatim en dernier recours.
+// Fichier autonome : peut être redéployé depuis l'éditeur du tableau de bord Supabase.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +25,22 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function viaGeoplateforme(query: string, limit: number): Promise<Suggestion[]> {
+  const url = `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(query)}&limit=${limit}&index=address`;
+  const r = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!r.ok) {
+    console.error("geocode: Géoplateforme a répondu", r.status);
+    return [];
+  }
+  const d = await r.json();
+  return (d.features || []).map((f: any) => ({
+    place_name: f.properties?.label || "",
+    center: [f.geometry.coordinates[0], f.geometry.coordinates[1]] as [number, number],
+    city: f.properties?.city || "",
+    postcode: f.properties?.postcode || "",
+  })).filter((x: Suggestion) => x.place_name);
 }
 
 async function viaGoogle(query: string, key: string, limit: number): Promise<Suggestion[]> {
@@ -72,8 +92,10 @@ Deno.serve(async (req: Request) => {
     const googleKey = Deno.env.get("GOOGLE_GEOCODING_KEY");
 
     let results: Suggestion[] = [];
-    if (googleKey) results = await viaGoogle(query.trim(), googleKey, max);
-    if (results.length === 0) results = await viaNominatim(query.trim(), max);
+    const q = query.trim();
+    try { results = await viaGeoplateforme(q, max); } catch (e) { console.error("geocode: Géoplateforme", e); }
+    if (results.length === 0 && googleKey) results = await viaGoogle(q, googleKey, max);
+    if (results.length === 0) results = await viaNominatim(q, max);
 
     return json({ results });
   } catch (err) {
