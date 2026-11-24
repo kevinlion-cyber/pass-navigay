@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 
 // Récupère les COMMENTAIRES laissés sur nos publications (Facebook + Instagram)
 // et les stocke → on sait ce que les gens pensent de nos posts.
@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
       const user = await getAuthenticatedUser(req);
       if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
       const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-      if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+      if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
     }
 
     const { data: integ } = await svc.from("social_integrations").select("page_access_token").eq("id", 1).maybeSingle();

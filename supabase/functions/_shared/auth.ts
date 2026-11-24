@@ -41,3 +41,19 @@ export async function getAuthenticatedUser(req: Request): Promise<User | null> {
   if (error || !data.user) return null;
   return data.user;
 }
+
+// Double authentification (24/11/2026) : vrai si la session de l'appelant a été
+// validée par le code de l'application d'authentification (niveau « aal2 »).
+// À utiliser APRÈS getAuthenticatedUser (qui vérifie la signature du jeton) :
+// on lit seulement la revendication « aal » du jeton déjà validé.
+export function hasAal2(req: Request): boolean {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) return false;
+  try {
+    const part = authHeader.slice(7).split(".")[1];
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=");
+    return JSON.parse(atob(b64)).aal === "aal2";
+  } catch {
+    return false;
+  }
+}

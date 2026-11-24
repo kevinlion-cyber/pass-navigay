@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { getAuthenticatedUser, jsonResponse, serviceClient, corsHeaders } from "../_shared/auth.ts";
+import { getAuthenticatedUser, jsonResponse, serviceClient, corsHeaders, hasAal2 } from "../_shared/auth.ts";
 
 // Module 5 : lecture des analytics (JWT requis). Deux modes :
 //   - overview      (admin)        : audience + entonnoir de conversion sur N jours
@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
       if (!estId) return jsonResponse({ error: "establishmentId requis" }, 400);
       const { data: est } = await svc.from("establishments").select("owner_id").eq("id", estId).maybeSingle();
       if (!est) return jsonResponse({ error: "Établissement introuvable" }, 404);
-      if (!me?.is_admin && est.owner_id !== user.id) return jsonResponse({ error: "Accès refusé" }, 403);
+      if (!(me?.is_admin && hasAal2(req)) && est.owner_id !== user.id) return jsonResponse({ error: "Accès refusé" }, 403);
 
       const since30 = sinceIso(30);
       const since7 = sinceIso(7);
@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // ---- Vue d'ensemble (admin only) ----
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
     const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
     const since = sinceIso(days);
 

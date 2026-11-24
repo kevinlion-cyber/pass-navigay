@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 import { buildQueries, searchText, passesGate, isRealVenue, PN_CATEGORIES } from "../_shared/fiches.ts";
 
 // Découverte de candidats (admin only). Ne stocke RIEN : renvoie une liste au front
@@ -14,7 +14,7 @@ Deno.serve(async (req: Request) => {
     if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
     const svc = serviceClient();
     const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
 
     const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
     if (!apiKey) return jsonResponse({ error: "GOOGLE_PLACES_API_KEY manquante" }, 500);

@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { getAuthenticatedUser, jsonResponse, serviceClient, corsHeaders } from "../_shared/auth.ts";
+import { getAuthenticatedUser, jsonResponse, serviceClient, corsHeaders, hasAal2 } from "../_shared/auth.ts";
 
 // Module 5 (admin) : suivi utilisateur « façon Intercom ». Une PERSONNE = un membre
 // (toutes ses sessions liées par user_id) ou un visiteur anonyme (session isolée).
@@ -67,7 +67,7 @@ Deno.serve(async (req: Request) => {
     if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
     const svc = serviceClient();
     const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const mode = body.mode || "list";

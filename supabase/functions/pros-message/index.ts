@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 
 // Demande Kevin : envoyer un message (e-mail) aux établissements QUI ONT UN COMPTE
 // (owner_id renseigné). Modes :
@@ -31,7 +31,7 @@ Deno.serve(async (req: Request) => {
     if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
     const svc = serviceClient();
     const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
 
     const { mode, target = "all", subject, message } = await req.json().catch(() => ({}));
 

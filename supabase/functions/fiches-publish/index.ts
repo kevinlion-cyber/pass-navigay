@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 import { getPhotoNames, fetchPhotoMedia, PN_CATEGORIES } from "../_shared/fiches.ts";
 
 // Publication d'un brouillon (admin only) : crée l'établissement public à partir du
@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
       const user = await getAuthenticatedUser(req);
       if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
       const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-      if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+      if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
     }
 
     const { draftId } = await req.json().catch(() => ({}));
