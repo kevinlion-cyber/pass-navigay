@@ -1,21 +1,18 @@
 # CLAUDE.md — PASS NAVIGAY
 
-## ⚡ NOUVELLE SESSION OU NOUVEAU COMPTE : À LIRE EN PREMIER
+## ⚡ À LIRE EN PREMIER (mis à jour le 24/11/2026)
 
-Si tu découvres ce projet (nouvelle session, nouveau compte Claude), **lis d abord
-`REPRISE-NOUVEAU-COMPTE.md` à la racine de ce dossier.** Il dit qui est Frédéric, comment
-il veut qu on travaille, où en est Pass Navigay, et ce qui attend sa décision.
-
-Toute la connaissance accumulée (401 fiches : règles, chantiers, pièges qui ont coûté de
-l argent) est sur le disque, PAS dans le compte :
-
-```
-C:\Users\magic\.claude\projects\C--Users-magic-Desktop-Claude-joyeusefete\memory\
-```
-
-`MEMORY.md` y est l index. ⚠️ Ce chemin vient du dossier joyeusefête, mais **c est le SEUL
-dossier mémoire de la machine, y compris pour ce projet-ci.** Ne jamais commencer à
-travailler sans l avoir lu.
+* **Sécurité** : un audit complet a été réalisé et corrigé le 24/11/2026 (demandes GitHub #1 à #12,
+  migrations 64 à 69). Avant toute modification touchant aux droits, aux profils, aux paiements ou aux
+  données sensibles, lire la section **« 13. SÉCURITÉ — ÉTAT AU 24/11/2026 »** en bas de ce fichier.
+* **Données intimes** : orientation, identité de genre, pronoms, attirance et « ce que je recherche » ne
+  sont enregistrés et montrés qu'avec un consentement explicite (RGPD, migration 69). Ne jamais lire la
+  table `profiles` pour afficher un autre membre : passer par la vue `public_profiles`.
+* **Fonctions Supabase** : la plupart sont désormais autonomes (pas d'import `../_shared`) pour pouvoir
+  être redéployées depuis le tableau de bord. Conserver ce principe.
+* Note historique : l'ancien prestataire utilisait un dossier mémoire sur sa propre machine
+  (`C:\Users\magic\...`) et un fichier `REPRISE-NOUVEAU-COMPTE.md`. Ni l'un ni l'autre n'est disponible
+  dans ce dépôt ni sur le poste de Kévin : ne pas les chercher.
 
 
 Document de contexte projet pour Claude Code. À placer à la racine du projet. Ce fichier décrit l'intégralité du projet Pass Navigay : architecture, stack, base de données, fonctionnalités, design et règles métier.
@@ -301,7 +298,7 @@ Clés : `disclaimer_text`, `onboarding_title`, `onboarding_text`, `maintenance_m
 
 ### RLS
 
-RLS activé sur toutes les tables. Profils lisibles publiquement, modifiables par leur propriétaire. Messages lisibles uniquement par expéditeur et destinataire. Établissements lisibles publiquement, modifiables par leur owner.
+RLS activé sur toutes les tables. La table `profiles` n'est lisible que par son propriétaire et les admins ; les autres lisent la vue `public_profiles`, qui filtre selon qui regarde (voir section 13). Messages lisibles uniquement par expéditeur et destinataire (et masqués entre membres bloqués). Établissements lisibles publiquement, modifiables par leur owner.
 
 ## 5. MODÈLE ÉCONOMIQUE
 
@@ -448,7 +445,7 @@ Si Gratuit : page de vente Pro. Si Pro : statut, barre de progression période, 
 
 ## 8. ESPACE ADMIN (`/admin`)
 
-Ton : neutre professionnel. Protégé par mot de passe `admin2025` (stocké en sessionStorage, pas de vérif Supabase).
+Ton : neutre professionnel. Accès réservé aux comptes Supabase avec `profiles.is_admin = true` (vérifié en base ; l'ancien mot de passe `admin2025` n'existe plus).
 
 ### Layout
 
@@ -472,14 +469,18 @@ Bouton dans la sidebar membre (Premium) ou établissement (Pro). Modale : durée
 
 ## 9. STRIPE — WEBHOOKS
 
-Edge Function `stripe-webhook` qui écoute :
+Destination Stripe « PassNavigay – Supabase » (créée le 24/11/2026) vers l'Edge Function `stripe-webhook`
+(déployée **sans** vérification JWT ; sécurité = signature Stripe vérifiée avec `constructEventAsync`).
+Événements écoutés :
 
-* `checkout.session.completed` → active Premium (user) ou Pro (établissement) selon `metadata.type`
+* `checkout.session.completed` → active Premium (`metadata.userId`) ou Pro (`metadata.establishmentId`)
+* `invoice.paid` → renouvellement : nouvelle date de fin lue sur l'abonnement Stripe
+* `customer.subscription.updated` → résiliation en fin de période, impayé, changement de formule
 * `customer.subscription.deleted` → désactive
-* `customer.subscription.updated` → met à jour la date d'expiration
-* `invoice.payment_failed` → email via Resend
 
-Edge Function `create-premium-checkout` : session Checkout abonnement 6,69€/mois. Edge Function pour le Pro établissement : abonnement 69€/mois avec `metadata.establishment_id`.
+La date de fin d'accès est toujours celle de la période payée chez Stripe. En cas d'échec d'écriture, la
+fonction répond 500 pour que Stripe réessaie. Secret : `STRIPE_WEBHOOK_SECRET`.
+Les Premium / Pro échus depuis plus de 3 jours repassent en gratuit chaque nuit (`expire_offers`, pg_cron).
 
 ## 10. RÈGLES & CONVENTIONS DU PROJET
 
@@ -514,3 +515,43 @@ Toujours vérifier l'état réel du code avant d'implémenter — certaines fonc
 * Domaine : passnavigay.com
 * Hébergement et services tiers : entièrement gérés par le client
 * Garantie : correction des bugs pendant 1 mois (à partir du 15 juin 2026). Les nouvelles fonctionnalités sont facturées séparément.
+
+## 13. SÉCURITÉ — ÉTAT AU 24/11/2026
+
+Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs). Résumé des protections en place :
+
+* **Droits** : déclencheurs qui empêchent un utilisateur de se donner `is_admin`, `is_premium`, `is_pro`,
+  `is_verified`, `is_sponsor` ou des dates d'abonnement, à la création (migration 64) comme à la
+  modification (migration 31). Seuls un admin ou le `service_role` le peuvent.
+* **Profils** : vue `public_profiles` (migrations 65, 66, 69) — visiteur / gratuit / pro : pseudo, prénom,
+  initiale du nom, photo, badges ; Premium : bio, ville, galerie, et réponses du questionnaire seulement si
+  le membre les a rendues visibles ET a consenti pour les données sensibles ; le membre lui-même et les
+  admins : tout. Membres bloqués invisibles l'un pour l'autre.
+* **Blocage / signalement** (migration 66) : `user_blocks`, `user_reports`, `report_member()` (preuves
+  capturées côté serveur), alerte email `report-alert` (secret `ADMIN_ALERT_EMAIL`), page Admin → Signalements.
+* **Messages** : seule la colonne `is_read` est modifiable (migration 67) ; push uniquement pour un vrai
+  message récent (`send-message-push`).
+* **Promotions** : limite, date et statut vérifiés par la base ; compteur tenu par déclencheurs (migration 67).
+* **Suppression de compte** : fonction `delete-account` (abonnements Stripe arrêtés ou fin de période,
+  fichiers supprimés, compte de connexion supprimé ; fiches pro supprimées ou gardées sans propriétaire).
+* **Emails** : `send-welcome-email` uniquement vers l'adresse du compte connecté, une fois, sous 24 h.
+  La clé Resend existe à DEUX endroits : secret `RESEND_API_KEY` (fonctions) et mot de passe SMTP de
+  Supabase Auth (codes de vérification). Penser aux deux en cas de changement.
+* **RGPD** (migration 69) : consentement explicite aux données sensibles (`give_sensitive_consent`,
+  `withdraw_sensitive_consent` = effacement) ; purge nocturne `purge_old_data` (statistiques 13 mois,
+  questionnaire public 2 ans, signalements clos 1 an). Bandeau de consentement aux statistiques : sans
+  accord, statistiques anonymes (identifiant limité à l'onglet, jamais relié au compte).
+* **Pages SEO** (`netlify/edge-functions/seo.ts`) : JSON-LD échappé avec `jsonForScript` (ne jamais
+  réinsérer `JSON.stringify` brut dans une balise `<script>`).
+* **Adresses** : `geocode` interroge d'abord la Géoplateforme IGN (Base Adresse Nationale, gratuite) ;
+  les champs d'adresse utilisent `geocodeSuggest` (une requête après la frappe).
+* **Proxys Google** : `fiches-photo` réservé aux admins (jeton dans l'adresse).
+* **Connexion Meta** : jeton `state` à usage unique (`oauth_states`, migration 68).
+* **En-têtes** : `netlify.toml` (anti-iframe, nosniff, HSTS, Referrer-Policy, Permissions-Policy, CSP minimale).
+
+Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC).
+
+Restent à traiter : double authentification des admins, relecture juridique de la politique de
+confidentialité (texte proposé dans le rapport d'audit), analyse d'impact (AIPD) à évaluer, durée de
+conservation des comptes inactifs, produits Stripe mensuels créés à la volée par le code.
+

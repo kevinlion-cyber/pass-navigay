@@ -2,7 +2,7 @@
 
 Consolidé depuis les 3 emails de Kevin (notes initiales + modifs finales). Statuts : ⬜ À faire · 🟡 En cours · ✅ Fait · 🔵 À décider (Fred/Kevin) · ❓ Question/clarif.
 
-_Dernière mise à jour : 2026-06-20._
+_Dernière mise à jour : 2026-11-24._
 
 ## A. Mobile / PWA
 | # | Demande | Statut |
@@ -100,3 +100,24 @@ _Dernière mise à jour : 2026-06-20._
 |---|---------|--------|
 | P1 | « API ? » | Probablement Google Maps API — déjà en place (carte + géocodage). À confirmer ce qu'il vise. |
 | P2 | Où trouver les paramètres administrateur ? | Voir L3 (compte Supabase `is_admin`). |
+
+## Q. Audit sécurité et corrections du 24/11/2026 (agent CTO, validé par Kévin)
+| # | Point | Statut |
+|---|---------|--------|
+| Q1 | C1 — un utilisateur pouvait se donner les droits admin / Premium à la création de sa fiche | ✅ migration 64 (appliquée en base) |
+| Q2 | C2 — orientation, identité, nom complet de tous les membres lisibles sans connexion | ✅ migration 65 puis 66/69 |
+| Q3 | C3 — clé Resend dans l'historique GitHub | ✅ clés remplacées (fonctions + SMTP Auth) |
+| Q4 | E1 — code piégé possible dans les pages SEO des lieux | ✅ #1 |
+| Q5 | E2 — établissement créé directement en Pro | ✅ migration 64 |
+| Q6 | E3 — « Supprimer mon compte » incomplet (Stripe continuait de prélever) | ✅ #2, fonction delete-account |
+| Q7 | Suggestions d'adresse en panne (inscription pro bloquée) | ✅ #3, Base Adresse Nationale |
+| Q8 | E5 / M1 — emails de bienvenue et notifications push abusables | ✅ #4 |
+| Q9 | M4 — webhook Stripe inopérant (aucune destination + vérification synchrone impossible sous Deno) | ✅ #5, destination créée — premier paiement réel à vérifier |
+| Q10 | E4 — bloquer et signaler un membre | ✅ #6, #7, migration 66 |
+| Q11 | M5 / M6 / M7 — messages modifiables, limite des promos, cadeaux sans fin | ✅ #8, migration 67 |
+| Q12 | M8 / M9 — dépendances, en-têtes de sécurité | ✅ #9 |
+| Q13 | M2 / M3 — connexion Meta sans « state », proxy photos Google public | ✅ #10, migration 68 |
+| Q14 | RGPD — consentement aux données sensibles, durées de conservation | ✅ #11, migration 69 |
+| Q15 | Points faibles — bandeau statistiques, redirection après connexion, mots de passe 8 caractères | ✅ #12 |
+| Q16 | Double authentification admin, relecture juridique, AIPD, comptes inactifs | ⬜ à faire |
+
