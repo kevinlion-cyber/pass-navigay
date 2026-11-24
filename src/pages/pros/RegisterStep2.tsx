@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
+import { geocodeSuggest, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey } from '../../lib/types';
 
@@ -39,7 +39,8 @@ export default function RegisterStep2({ data, onChange, onNext, onPrev }: Regist
     set('address', query);
     if (query.length < 3) { setSuggestions([]); return; }
     try {
-      setSuggestions(await geocodeAddress(query));
+      const found = await geocodeSuggest(query);
+      if (found) setSuggestions(found);
     } catch { /* skip */ }
   };
 

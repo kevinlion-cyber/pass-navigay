@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { X, Camera, Store as StoreIcon, Clock } from 'lucide-react';
+import { Camera, Store as StoreIcon, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { translateDbError } from '../../lib/dbErrors';
-import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
+import { geocodeSuggest, type GeoFeature } from '../../lib/geocode';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { CategoryKey, Establishment, OpeningHours } from '../../lib/types';
 import RecadrageModal from '../../components/ui/RecadrageModal';
@@ -71,7 +71,8 @@ export default function PartnerEstablishment() {
     setAddress(query);
     if (query.length < 3) { setAddressSuggestions([]); return; }
     try {
-      setAddressSuggestions(await geocodeAddress(query));
+      const found = await geocodeSuggest(query);
+      if (found) setAddressSuggestions(found);
     } catch { /* ignore */ }
   };
 

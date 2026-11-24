@@ -4,7 +4,7 @@ import { Plus, Pencil, Trash2, X, Check, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { translateDbError } from '../../lib/dbErrors';
-import { geocodeAddress, type GeoFeature } from '../../lib/geocode';
+import { geocodeSuggest, type GeoFeature } from '../../lib/geocode';
 import type { Establishment, Event } from '../../lib/types';
 import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -110,7 +110,8 @@ export default function PartnerEvents() {
     setForm(prev => ({ ...prev, custom_address: query }));
     if (query.length < 3) { setAddressSuggestions([]); return; }
     try {
-      setAddressSuggestions(await geocodeAddress(query));
+      const found = await geocodeSuggest(query);
+      if (found) setAddressSuggestions(found);
     } catch { /* ignore */ }
   };
 

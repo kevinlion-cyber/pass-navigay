@@ -31,6 +31,26 @@ export async function geocodeAddress(query: string, limit = 5): Promise<GeoFeatu
   }
 }
 
+// Version pour les champs d'adresse avec suggestions : n'interroge le serveur qu'une
+// fois la frappe terminée (pause de 350 ms) au lieu d'une requête par lettre.
+// Un appel dépassé par une frappe plus récente renvoie null : l'appelant l'ignore.
+let suggestTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingResolve: ((v: GeoFeature[] | null) => void) | null = null;
+let suggestSeq = 0;
+export function geocodeSuggest(query: string, limit = 5): Promise<GeoFeature[] | null> {
+  const seq = ++suggestSeq;
+  if (suggestTimer) clearTimeout(suggestTimer);
+  if (pendingResolve) pendingResolve(null);
+  return new Promise((resolve) => {
+    pendingResolve = resolve;
+    suggestTimer = setTimeout(async () => {
+      pendingResolve = null;
+      const res = await geocodeAddress(query, limit);
+      resolve(seq === suggestSeq ? res : null);
+    }, 350);
+  });
+}
+
 // Renvoie uniquement les coordonnées [lng,lat] du meilleur résultat (ou null).
 export async function geocodeFirst(query: string): Promise<[number, number] | null> {
   const r = await geocodeAddress(query, 1);
