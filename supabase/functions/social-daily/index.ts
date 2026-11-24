@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 
 // Module 2 : machine de contenu social quotidien.
 // Choisit un établissement (+ un événement à venir si dispo), génère une légende IA
@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
       if (!user) return jsonResponse({ error: "Non autorisé" }, 401);
       const svc0 = serviceClient();
       const { data: me } = await svc0.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-      if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+      if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
     }
 
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");

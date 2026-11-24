@@ -26,6 +26,14 @@ async function isAdminRequest(req: Request, url: URL): Promise<boolean> {
   const svc = createClient(supaUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data, error } = await svc.auth.getUser(token);
   if (error || !data.user) return false;
+  // Double authentification obligatoire (session « aal2 »).
+  try {
+    const part = token.split(".")[1];
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=");
+    if (JSON.parse(atob(b64)).aal !== "aal2") return false;
+  } catch {
+    return false;
+  }
   const { data: me } = await svc.from("profiles").select("is_admin").eq("id", data.user.id).maybeSingle();
   return !!me?.is_admin;
 }

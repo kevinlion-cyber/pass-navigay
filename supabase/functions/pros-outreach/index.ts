@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 
 // Module 3 : relance propriétaires (admin only). Trois modes :
 //   - stats    : combien d'établissements ont un site / un email / sont revendiquables
@@ -49,7 +49,7 @@ Deno.serve(async (req: Request) => {
     if (!user) return jsonResponse({ error: "Non authentifié" }, 401);
     const svc = serviceClient();
     const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
 
     const { mode, limit } = await req.json().catch(() => ({}));
     const n = Math.min(Number(limit) || 20, 50);

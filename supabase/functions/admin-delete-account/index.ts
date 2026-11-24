@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient } from "../_shared/auth.ts";
+import { corsHeaders, getAuthenticatedUser, jsonResponse, serviceClient, hasAal2 } from "../_shared/auth.ts";
 
 // Suppression complète d'un compte (admin uniquement) : supprime l'utilisateur
 // d'authentification, ce qui cascade sur le profil et tout ce qui lui est rattaché
@@ -17,7 +17,7 @@ Deno.serve(async (req: Request) => {
 
     // Vérifie que l'appelant est admin (côté serveur, jamais côté client).
     const { data: me } = await svc.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-    if (!me?.is_admin) return jsonResponse({ error: "Accès refusé" }, 403);
+    if (!me?.is_admin || !hasAal2(req)) return jsonResponse({ error: "Accès refusé" }, 403);
 
     const { userId } = await req.json().catch(() => ({}));
     if (!userId || typeof userId !== "string") {
