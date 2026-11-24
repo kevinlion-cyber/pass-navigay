@@ -54,6 +54,13 @@ function prettifyCity(slug: string): string {
 function esc(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+/** JSON sûr dans un <script> : un nom de lieu contenant « </script> » ne peut plus
+ *  fermer la balise et injecter du code (XSS stockée). Le JSON reste identique pour Google. */
+function jsonForScript(x: unknown): string {
+  return JSON.stringify(x)
+    .replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+}
 function snippet(desc: string | null, n = 155): string {
   if (!desc) return "";
   const c = desc.replace(/\s+/g, " ").trim();
@@ -100,7 +107,7 @@ function groupCities(all: Est[]): Map<string, { name: string; rows: Est[] }> {
 
 // ---------- Layout commun ----------
 function page(o: { title: string; description: string; canonical: string; noindex: boolean; jsonLd: object[]; body: string }): Response {
-  const ld = o.jsonLd.map((x) => `<script type="application/ld+json">${JSON.stringify(x)}</script>`).join("\n");
+  const ld = o.jsonLd.map((x) => `<script type="application/ld+json">${jsonForScript(x)}</script>`).join("\n");
   const html = `<!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(o.title)}</title>
@@ -372,7 +379,7 @@ async function ficheMeta(key: string, byId: boolean, context: any): Promise<Resp
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(canonical)}"><meta property="og:image" content="${esc(img)}"><meta property="og:site_name" content="Pass Navigay">
 <meta name="twitter:card" content="summary_large_image"><link rel="canonical" href="${esc(canonical)}">
-<script type="application/ld+json">${JSON.stringify(ld)}</script>`;
+<script type="application/ld+json">${jsonForScript(ld)}</script>`;
   const out = html
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`)
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(desc)}" />`)
