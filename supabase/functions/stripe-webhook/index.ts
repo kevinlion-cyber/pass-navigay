@@ -1,12 +1,102 @@
 import Stripe from "npm:stripe@14.14.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
+
+// Réception des événements Stripe (abonnements Premium membres et Pro établissements).
+//
+// Revu le 24/11/2026 (faille M4 de l'audit) :
+//  - la date de fin d'accès vient de Stripe (fin de la période payée), au lieu
+//    d'un calcul maison qui prolongeait un Pro mensuel d'un an et un Premium
+//    annuel d'un mois ;
+//  - si l'écriture en base échoue, on répond une erreur : Stripe réessaie
+//    automatiquement (avant, il recevait « OK » et le client payait sans accès) ;
+//  - nouvel événement géré : customer.subscription.updated (résiliation en fin
+//    de période, impayé définitif, changement de formule).
+//
+// Événements à cocher dans Stripe : checkout.session.completed, invoice.paid,
+// customer.subscription.updated, customer.subscription.deleted.
+// Cette fonction doit être déployée SANS vérification JWT (Stripe n'en envoie
+// pas) : la sécurité repose sur la signature Stripe, vérifiée ci-dessous.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, Stripe-Signature",
 };
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// Statuts pour lesquels l'accès reste ouvert (past_due = paiement en cours de relance).
+const ACCESS_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+function periodEndIso(sub: Stripe.Subscription): string {
+  // Selon la version d'API Stripe, la fin de période est sur l'abonnement ou sur sa ligne.
+  const end = sub.current_period_end
+    ?? (sub.items?.data?.[0] as unknown as { current_period_end?: number } | undefined)?.current_period_end;
+  if (!end) throw new Error(`fin de période introuvable pour ${sub.id}`);
+  return new Date(end * 1000).toISOString();
+}
+
+function intervalOf(sub: Stripe.Subscription): "monthly" | "yearly" {
+  return sub.items.data[0]?.price?.recurring?.interval === "month" ? "monthly" : "yearly";
+}
+
+// Lève une erreur si l'écriture échoue : la réponse sera 500 et Stripe réessaiera.
+function check(label: string, error: { message: string } | null) {
+  if (error) throw new Error(`${label}: ${error.message}`);
+}
+
+// Applique l'état d'un abonnement à l'établissement ou au profil concerné.
+async function applySubscription(
+  db: SupabaseClient,
+  sub: Stripe.Subscription,
+  hint: { establishmentId?: string | null; userId?: string | null } = {},
+) {
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+  const active = ACCESS_STATUSES.has(sub.status);
+
+  // 1. Établissement : par l'id fourni au paiement, sinon par l'id d'abonnement enregistré.
+  let estId = hint.establishmentId ?? null;
+  if (!estId) {
+    const { data: est, error } = await db
+      .from("establishments").select("id").eq("stripe_subscription_id", sub.id).maybeSingle();
+    check("lecture établissement", error);
+    estId = est?.id ?? null;
+  }
+  if (estId) {
+    const update = active
+      ? {
+        is_pro: true,
+        pro_expires_at: periodEndIso(sub),
+        pro_billing_interval: intervalOf(sub),
+        stripe_subscription_id: sub.id,
+        stripe_customer_id: customerId,
+      }
+      : { is_pro: false, pro_expires_at: null, stripe_subscription_id: null };
+    const { error } = await db.from("establishments").update(update).eq("id", estId);
+    check("mise à jour établissement", error);
+    return;
+  }
+
+  // 2. Membre Premium : par l'id fourni au paiement, sinon par le client Stripe enregistré.
+  let query = db.from("profiles").update(
+    active
+      ? {
+        is_premium: true,
+        premium_expires_at: periodEndIso(sub),
+        premium_billing_interval: intervalOf(sub),
+        stripe_customer_id: customerId,
+      }
+      : { is_premium: false, premium_expires_at: null },
+  );
+  query = hint.userId ? query.eq("id", hint.userId) : query.eq("stripe_customer_id", customerId);
+  const { error } = await query;
+  check("mise à jour profil", error);
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -15,159 +105,73 @@ Deno.serve(async (req: Request) => {
 
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
   if (!stripeKey || !webhookSecret) {
-    return new Response(
-      JSON.stringify({ error: "Stripe not configured" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("stripe-webhook: STRIPE_SECRET_KEY ou STRIPE_WEBHOOK_SECRET manquant");
+    return json({ error: "Stripe not configured" }, 500);
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+  // Signature : seule protection de cette adresse publique. Version asynchrone,
+  // celle prévue par Stripe pour l'environnement Deno des fonctions Supabase.
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
-
-  if (!sig) {
-    return new Response(
-      JSON.stringify({ error: "No signature" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
+  if (!sig) return json({ error: "No signature" }, 400);
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Signature verification failed";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    event = await stripe.webhooks.constructEventAsync(
+      body, sig, webhookSecret, undefined, Stripe.createSubtleCryptoProvider(),
     );
+  } catch (err) {
+    console.error("stripe-webhook: signature invalide", err instanceof Error ? err.message : err);
+    return json({ error: "Signature verification failed" }, 400);
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      const establishmentId = session.metadata?.establishmentId;
-      const subscriptionId = session.subscription as string;
-      const customerId = session.customer as string;
-
-      let billingInterval = "yearly";
-      if (subscriptionId) {
-        try {
-          const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          const interval = sub.items.data[0]?.price?.recurring?.interval;
-          billingInterval = interval === "month" ? "monthly" : "yearly";
-        } catch { /* fallback to yearly */ }
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (!session.subscription) break;
+        const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+        await applySubscription(db, sub, {
+          establishmentId: session.metadata?.establishmentId ?? null,
+          userId: session.metadata?.userId ?? null,
+        });
+        break;
       }
 
-      if (establishmentId) {
-        const expiresAt = new Date();
-        if (billingInterval === "monthly") {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-        } else {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        }
-        await supabase
-          .from("establishments")
-          .update({
-            is_pro: true,
-            pro_expires_at: expiresAt.toISOString(),
-            stripe_subscription_id: subscriptionId,
-            stripe_customer_id: customerId,
-            pro_billing_interval: billingInterval,
-          })
-          .eq("id", establishmentId);
-      } else if (userId) {
-        const expiresAt = new Date();
-        if (billingInterval === "monthly") {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-        } else {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        }
-        await supabase
-          .from("profiles")
-          .update({
-            is_premium: true,
-            premium_expires_at: expiresAt.toISOString(),
-            stripe_customer_id: customerId,
-            premium_billing_interval: billingInterval,
-          })
-          .eq("id", userId);
+      case "invoice.paid": {
+        // Renouvellement : on relit l'abonnement pour la nouvelle date de fin.
+        // Selon la version d'API du webhook, l'abonnement est sur la facture
+        // (anciennes versions) ou dans invoice.parent.subscription_details (2025+).
+        const invoice = event.data.object as Stripe.Invoice & {
+          parent?: { subscription_details?: { subscription?: string | { id: string } } };
+        };
+        const ref = invoice.subscription ?? invoice.parent?.subscription_details?.subscription;
+        const subId = typeof ref === "string" ? ref : ref?.id;
+        if (!subId) break;
+        const sub = await stripe.subscriptions.retrieve(subId);
+        await applySubscription(db, sub);
+        break;
       }
-      break;
+
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        // On relit l'abonnement avec la version d'API de ce code (le contenu de
+        // l'événement dépend de la version choisie dans Stripe pour le webhook).
+        const obj = event.data.object as Stripe.Subscription;
+        const sub = await stripe.subscriptions.retrieve(obj.id);
+        await applySubscription(db, sub);
+        break;
+      }
     }
-
-    case "invoice.paid": {
-      const invoice = event.data.object as Stripe.Invoice;
-      const subscriptionId = invoice.subscription as string;
-
-      if (subscriptionId) {
-        const { data: est } = await supabase
-          .from("establishments")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .maybeSingle();
-
-        if (est) {
-          const expiresAt = new Date();
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          await supabase
-            .from("establishments")
-            .update({ is_pro: true, pro_expires_at: expiresAt.toISOString() })
-            .eq("id", est.id);
-        } else {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("stripe_customer_id", invoice.customer as string)
-            .maybeSingle();
-
-          if (profile) {
-            const expiresAt = new Date();
-            expiresAt.setMonth(expiresAt.getMonth() + 1);
-            await supabase
-              .from("profiles")
-              .update({ is_premium: true, premium_expires_at: expiresAt.toISOString() })
-              .eq("id", profile.id);
-          }
-        }
-      }
-      break;
-    }
-
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription;
-      const subId = subscription.id;
-      const customerId = subscription.customer as string;
-
-      const { data: est } = await supabase
-        .from("establishments")
-        .select("id")
-        .eq("stripe_subscription_id", subId)
-        .maybeSingle();
-
-      if (est) {
-        await supabase
-          .from("establishments")
-          .update({ is_pro: false, pro_expires_at: null, stripe_subscription_id: null })
-          .eq("id", est.id);
-      } else {
-        await supabase
-          .from("profiles")
-          .update({ is_premium: false, premium_expires_at: null })
-          .eq("stripe_customer_id", customerId);
-      }
-      break;
-    }
+  } catch (err) {
+    // Erreur → 500 : Stripe renverra l'événement plus tard (jusqu'à 3 jours).
+    console.error("stripe-webhook:", event.type, event.id, err instanceof Error ? err.message : err);
+    return json({ error: "Processing failed" }, 500);
   }
 
-  return new Response(JSON.stringify({ received: true }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return json({ received: true });
 });
