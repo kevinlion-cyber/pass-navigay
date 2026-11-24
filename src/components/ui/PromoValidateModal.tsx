@@ -75,20 +75,26 @@ export default function PromoValidateModal({
       });
 
       if (error) {
+        // Les règles (limite, date, promo active) sont vérifiées par la base (migration 67).
+        const msg = error.message || '';
         if (error.code === '23505') {
-          toast.error('Tu as deja utilise cette promotion.');
+          toast.error('Tu as déjà utilisé cette promotion.');
+        } else if (msg.includes('PROMO_LIMITE_ATTEINTE')) {
+          toast.error("Le nombre maximum d'utilisations a été atteint.");
+        } else if (msg.includes('PROMO_EXPIREE')) {
+          toast.error('Cette promotion a expiré.');
+        } else if (msg.includes('PROMO_INACTIVE') || msg.includes('PROMO_INTROUVABLE')) {
+          toast.error("Cette promotion n'est plus disponible.");
         } else {
-          toast.error('Une erreur est survenue. Reessaie.');
+          toast.error('Une erreur est survenue. Réessaie.');
         }
         onClose();
         setSubmitting(false);
         return;
       }
 
-      await supabase
-        .from('promotions')
-        .update({ current_uses: (promo.current_uses || 0) + 1 })
-        .eq('id', promotionId);
+      // Le compteur current_uses est tenu par la base (migration 67) : plus de mise
+      // à jour ici (elle échouait pour les membres et comptait double pour le pro).
 
       onValidated();
       onClose();
