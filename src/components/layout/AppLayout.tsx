@@ -2,6 +2,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from './Header';
 import BottomNav from './BottomNav';
+import { SensitiveConsentPrompt } from '../ui/SensitiveConsent';
 
 /**
  * Coquille du site (en-tête + navigation).
@@ -36,6 +37,8 @@ export default function AppLayout({ requireAuth = false }: { requireAuth?: boole
         <Outlet />
       </main>
       <BottomNav />
+      {/* RGPD : accord demandé aux membres qui avaient répondu sans case de consentement */}
+      {user && <SensitiveConsentPrompt />}
     </div>
   );
 }

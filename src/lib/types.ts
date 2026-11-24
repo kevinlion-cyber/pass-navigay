@@ -60,6 +60,9 @@ export interface Profile {
   late_truth: string | null;
   questionnaire_completed: boolean;
   profile_visibility: ProfileVisibility;
+  // RGPD (migration 69) : consentement explicite aux données sensibles.
+  sensitive_consent_at?: string | null;
+  sensitive_consent_version?: string | null;
   city: string | null;
   account_type: string;
 }
