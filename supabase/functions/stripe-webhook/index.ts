@@ -144,9 +144,15 @@ Deno.serve(async (req: Request) => {
 
       case "invoice.paid": {
         // Renouvellement : on relit l'abonnement pour la nouvelle date de fin.
-        const invoice = event.data.object as Stripe.Invoice;
-        if (!invoice.subscription) break;
-        const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+        // Selon la version d'API du webhook, l'abonnement est sur la facture
+        // (anciennes versions) ou dans invoice.parent.subscription_details (2025+).
+        const invoice = event.data.object as Stripe.Invoice & {
+          parent?: { subscription_details?: { subscription?: string | { id: string } } };
+        };
+        const ref = invoice.subscription ?? invoice.parent?.subscription_details?.subscription;
+        const subId = typeof ref === "string" ? ref : ref?.id;
+        if (!subId) break;
+        const sub = await stripe.subscriptions.retrieve(subId);
         await applySubscription(db, sub);
         break;
       }
