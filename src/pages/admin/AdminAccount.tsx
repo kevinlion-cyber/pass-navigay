@@ -40,7 +40,7 @@ export default function AdminAccount() {
   };
 
   const savePassword = async () => {
-    if (password.length < 6) { toast.error('Le mot de passe doit contenir au moins 6 caractères.'); return; }
+    if (password.length < 8) { toast.error('Le mot de passe doit contenir au moins 8 caractères.'); return; }
     setSavingP(true);
     const { error } = await supabase.auth.updateUser({ password });
     setSavingP(false);
@@ -77,7 +77,7 @@ export default function AdminAccount() {
       <div className={card}>
         <p className={title}><Lock size={16} className="text-primary" /> Mot de passe</p>
         <div className="flex gap-2">
-          <input type="password" className={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Nouveau mot de passe (6 caractères min.)" autoComplete="new-password" />
+          <input type="password" className={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Nouveau mot de passe (8 caractères min.)" autoComplete="new-password" />
           <button onClick={savePassword} disabled={savingP} className="btn-primary flex items-center gap-2 text-sm shrink-0">
             {savingP ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Changer
           </button>

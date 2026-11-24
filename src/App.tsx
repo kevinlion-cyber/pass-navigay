@@ -67,6 +67,7 @@ import PartnerReviews from './pages/partner/PartnerReviews';
 import PartnerSubscription from './pages/partner/PartnerSubscription';
 import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
 import RouteTracker from './components/analytics/RouteTracker';
+import ConsentBanner from './components/ui/ConsentBanner';
 import LegacyRedirect from './components/LegacyRedirect';
 
 export default function App() {
@@ -231,6 +232,7 @@ export default function App() {
             </Route>
           </Routes>
           <PwaInstallPrompt />
+          <ConsentBanner />
         </CategoriesProvider>
         </ThemeProvider>
       </AuthProvider>

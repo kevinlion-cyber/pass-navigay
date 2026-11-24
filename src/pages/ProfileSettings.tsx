@@ -10,6 +10,7 @@ import ProfileEvents from './profile/ProfileEvents';
 import ProfileAccountSettings from './profile/ProfileAccountSettings';
 import ProfileVisibilitySettings from './profile/ProfileVisibilitySettings';
 import { SensitiveDataSettings } from '../components/ui/SensitiveConsent';
+import { openAnalyticsConsent } from '../lib/analytics';
 import PremiumBanner from './profile/PremiumBanner';
 import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
 
@@ -110,6 +111,7 @@ export default function ProfileSettings() {
           <Link to="/legal/confidentialite" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Confidentialité</Link>
           <Link to="/legal/mentions" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Mentions légales</Link>
           <Link to="/legal/contact" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Contact</Link>
+          <button onClick={openAnalyticsConsent} className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Cookies et statistiques</button>
         </div>
       </div>
 
