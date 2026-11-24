@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { enablePush, disablePush } from '../../lib/push';
 import type { Profile } from '../../lib/types';
+import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
 
 interface ProfileAccountSettingsProps {
   profile: Profile;
@@ -18,6 +19,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
   const navigate = useNavigate();
   const [notify, setNotify] = useState(profile.notify_messages !== false);
   const [notifyBusy, setNotifyBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const toggleNotify = async () => {
     if (!user || notifyBusy) return;
@@ -49,15 +51,6 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
   const handleLogout = async () => {
     await signOut();
     navigate('/explorer');
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!window.confirm('Supprimer ton compte ? Cette action est irreversible.')) return;
-    if (!user) return;
-    await supabase.from('profiles').delete().eq('id', user.id);
-    await signOut();
-    toast.success('Compte supprime.');
-    navigate('/');
   };
 
   return (
@@ -132,13 +125,14 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         </button>
 
         <button
-          onClick={handleDeleteAccount}
+          onClick={() => setDeleteOpen(true)}
           className="flex items-center gap-3 w-full text-left py-1 text-gray-400 hover:text-alert transition-colors"
         >
           <Trash2 size={14} />
           <span className="text-xs">Supprimer mon compte</span>
         </button>
       </div>
+      <DeleteAccountModal open={deleteOpen} tone="tu" onClose={() => setDeleteOpen(false)} />
     </section>
   );
 }
