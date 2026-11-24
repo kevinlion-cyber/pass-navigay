@@ -7,6 +7,7 @@ import type { Profile, ProfileVisibility, Establishment } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import MemberSafetyMenu from '../components/ui/MemberSafetyMenu';
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -154,6 +155,14 @@ export default function ProfilePublic() {
     <div className="max-w-xl mx-auto pb-28">
       {/* Hero header */}
       <div className="relative px-4 pt-8 pb-6">
+        {/* Signaler / Bloquer (E4) */}
+        <MemberSafetyMenu
+          memberId={profile.id}
+          memberName={firstName}
+          context="profil"
+          onBlocked={() => navigate('/membres')}
+          className="absolute top-3 right-3 z-10"
+        />
         <div className="flex flex-col items-center text-center">
           <div className="relative">
             <div

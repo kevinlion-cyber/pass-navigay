@@ -37,6 +37,7 @@ import AdminSurvey from './pages/admin/AdminSurvey';
 import AdminCities from './pages/admin/AdminCities';
 import AdminSocial from './pages/admin/AdminSocial';
 import AdminClaims from './pages/admin/AdminClaims';
+import AdminReports from './pages/admin/AdminReports';
 import AdminEvents from './pages/admin/AdminEvents';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminMembers from './pages/admin/AdminMembers';
@@ -177,6 +178,7 @@ export default function App() {
               <Route path="questionnaire" element={<AdminSurvey />} />
               <Route path="reseaux-sociaux" element={<AdminSocial />} />
               <Route path="revendications" element={<AdminClaims />} />
+              <Route path="signalements" element={<AdminReports />} />
               <Route path="evenements" element={<AdminEvents />} />
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="membres" element={<AdminMembers />} />

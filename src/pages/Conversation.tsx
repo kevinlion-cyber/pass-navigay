@@ -8,6 +8,7 @@ import type { Message, Profile } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import MemberSafetyMenu from '../components/ui/MemberSafetyMenu';
 
 export default function Conversation() {
   const { userId } = useParams<{ userId: string }>();
@@ -151,6 +152,16 @@ export default function Conversation() {
           )}
         </div>
         <span className="font-medium text-gray-900 dark:text-white">{otherUser?.username}</span>
+        <div className="flex-1" />
+        {/* Signaler / Bloquer (E4) */}
+        {userId && (
+          <MemberSafetyMenu
+            memberId={userId}
+            memberName={otherUser?.prenom || otherUser?.username || 'ce membre'}
+            context="conversation"
+            onBlocked={() => navigate('/messages')}
+          />
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

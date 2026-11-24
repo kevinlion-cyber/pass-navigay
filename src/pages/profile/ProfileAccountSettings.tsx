@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Sun, Moon, LogOut, Trash2, Crown, Building2, Bell } from 'lucide-react';
+import { Settings, Sun, Moon, LogOut, Trash2, Crown, Building2, Bell, Ban } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +8,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { enablePush, disablePush } from '../../lib/push';
 import type { Profile } from '../../lib/types';
 import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
+import BlockedMembersModal from '../../components/ui/BlockedMembersModal';
 
 interface ProfileAccountSettingsProps {
   profile: Profile;
@@ -20,6 +21,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
   const [notify, setNotify] = useState(profile.notify_messages !== false);
   const [notifyBusy, setNotifyBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const toggleNotify = async () => {
     if (!user || notifyBusy) return;
@@ -117,6 +119,16 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         <div className="border-t border-light-border dark:border-dark-border" />
 
         <button
+          onClick={() => setBlockedOpen(true)}
+          className="flex items-center gap-3 w-full text-left py-1"
+        >
+          <Ban size={16} className="text-gray-400" />
+          <span className="text-sm text-gray-700 dark:text-gray-300">Membres bloqués</span>
+        </button>
+
+        <div className="border-t border-light-border dark:border-dark-border" />
+
+        <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full text-left py-1 text-alert"
         >
@@ -133,6 +145,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         </button>
       </div>
       <DeleteAccountModal open={deleteOpen} tone="tu" onClose={() => setDeleteOpen(false)} />
+      <BlockedMembersModal open={blockedOpen} onClose={() => setBlockedOpen(false)} />
     </section>
   );
 }
