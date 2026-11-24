@@ -3,6 +3,11 @@ import { Send, ArrowRight, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { QUESTIONNAIRE_SECTIONS, TOTAL_QUESTIONS, type QuestionDef } from '../../lib/questionnaireData';
+import { SENSITIVE_FIELDS, CONSENT_TITLE, CONSENT_POINTS, CONSENT_CHECKBOX, giveSensitiveConsent } from '../../lib/consent';
+
+// RGPD (migration 69) : les questions sensibles ne sont posées qu'après un accord explicite.
+const isSensitive = (q: QuestionDef) => (SENSITIVE_FIELDS as readonly string[]).includes(q.field);
+type ConsentState = 'given' | 'skipped' | 'undecided';
 
 interface Props {
   onClose: () => void;
@@ -26,6 +31,11 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
   const [awaitingInput, setAwaitingInput] = useState(false);
   const [finished, setFinished] = useState(false);
   const [answeredCount, setAnsweredCount] = useState(0);
+  const [consent, setConsent] = useState<ConsentState>(profile?.sensitive_consent_at ? 'given' : 'undecided');
+  const [askingConsent, setAskingConsent] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentBusy, setConsentBusy] = useState(false);
+  const [pendingPos, setPendingPos] = useState<{ s: number; q: number; entering: boolean } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -59,36 +69,71 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
   const currentSection = QUESTIONNAIRE_SECTIONS[sectionIdx];
   const currentQuestion: QuestionDef | undefined = currentSection?.questions[questionIdx];
 
-  const advanceToNextQuestion = useCallback(async () => {
-    const nextQIdx = questionIdx + 1;
-    if (nextQIdx < currentSection.questions.length) {
-      setQuestionIdx(nextQIdx);
-      const nextQ = currentSection.questions[nextQIdx];
-      await addBot(nextQ.botMessage);
-      setAwaitingInput(true);
-    } else {
-      const nextSIdx = sectionIdx + 1;
-      if (nextSIdx < QUESTIONNAIRE_SECTIONS.length) {
-        setSectionIdx(nextSIdx);
-        setQuestionIdx(0);
-        const nextSec = QUESTIONNAIRE_SECTIONS[nextSIdx];
-        if (nextSec.intro) {
-          await addBot(nextSec.intro);
+  // Avance jusqu'à la prochaine question à poser, à partir de (sIdx, qIdx).
+  // Les questions sensibles sont sautées si la personne a refusé, et précédées
+  // de la demande d'accord si elle n'a pas encore décidé.
+  const goTo = useCallback(async (sIdx: number, qIdx: number, entering: boolean, consentState: ConsentState) => {
+    let s = sIdx, q = qIdx, enter = entering;
+    while (s < QUESTIONNAIRE_SECTIONS.length) {
+      const sec = QUESTIONNAIRE_SECTIONS[s];
+      while (q < sec.questions.length) {
+        const question = sec.questions[q];
+        if (isSensitive(question)) {
+          if (consentState === 'skipped') { q++; continue; }
+          if (consentState === 'undecided') {
+            setPendingPos({ s, q, entering: enter });
+            await addBot('Avant les prochaines questions, un point important pour toi.');
+            setAskingConsent(true);
+            return;
+          }
         }
-        const firstQ = nextSec.questions[0];
-        if (firstQ.botMessage) {
-          await addBot(firstQ.botMessage);
-        }
+        setSectionIdx(s);
+        setQuestionIdx(q);
+        if (enter && sec.intro) await addBot(sec.intro);
+        if (question.botMessage) await addBot(question.botMessage);
         setAwaitingInput(true);
-      } else {
-        if (user) {
-          await supabase.from('profiles').update({ questionnaire_completed: true }).eq('id', user.id);
-        }
-        await addBot("C'est tout ! Ton profil est maintenant créé. Tu peux modifier toutes ces infos à tout moment et choisir ce que tu veux montrer aux autres membres.");
-        setFinished(true);
+        return;
       }
+      s++; q = 0; enter = true;
     }
-  }, [sectionIdx, questionIdx, currentSection, addBot, user]);
+    if (user) {
+      await supabase.from('profiles').update({ questionnaire_completed: true }).eq('id', user.id);
+    }
+    await addBot("C'est tout ! Ton profil est maintenant créé. Tu peux modifier toutes ces infos à tout moment et choisir ce que tu veux montrer aux autres membres.");
+    setFinished(true);
+  }, [addBot, user]);
+
+  const advanceToNextQuestion = useCallback(async () => {
+    await goTo(sectionIdx, questionIdx + 1, false, consent);
+  }, [goTo, sectionIdx, questionIdx, consent]);
+
+  const acceptConsent = async () => {
+    if (!consentChecked || consentBusy) return;
+    setConsentBusy(true);
+    try {
+      await giveSensitiveConsent();
+    } catch (e) {
+      setConsentBusy(false);
+      await addBot((e as Error).message);
+      return;
+    }
+    setConsentBusy(false);
+    setAskingConsent(false);
+    setConsent('given');
+    addUser("J'accepte");
+    const pos = pendingPos ?? { s: sectionIdx, q: questionIdx, entering: false };
+    setPendingPos(null);
+    await goTo(pos.s, pos.q, pos.entering, 'given');
+  };
+
+  const skipConsent = async () => {
+    setAskingConsent(false);
+    setConsent('skipped');
+    addUser('Je préfère passer ces questions');
+    const pos = pendingPos ?? { s: sectionIdx, q: questionIdx, entering: false };
+    setPendingPos(null);
+    await goTo(pos.s, pos.q, pos.entering, 'skipped');
+  };
 
   useEffect(() => {
     const initChat = async () => {
@@ -258,6 +303,37 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
                   <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#606070', animationDelay: '150ms' }} />
                   <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#606070', animationDelay: '300ms' }} />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {askingConsent && !typing && !finished && (
+            <div className="pt-2 space-y-3 rounded-2xl p-4" style={{ background: '#14141e', border: '1px solid #2a2a3a', animation: 'fadeSlideIn 0.3s ease-out' }}>
+              <p className="text-[15px] font-semibold" style={{ color: '#fff' }}>{CONSENT_TITLE}</p>
+              <ul className="space-y-2 list-disc pl-5 text-[13px] leading-relaxed" style={{ color: '#b0b0c0' }}>
+                {CONSENT_POINTS.map((t) => <li key={t}>{t}</li>)}
+              </ul>
+              <label className="flex items-start gap-2 text-[13px] cursor-pointer" style={{ color: '#e0e0f0' }}>
+                <input type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} className="mt-1" />
+                {CONSENT_CHECKBOX}
+              </label>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  onClick={acceptConsent}
+                  disabled={!consentChecked || consentBusy}
+                  className="px-5 py-2.5 rounded-full text-[14px] font-semibold text-white disabled:opacity-40"
+                  style={{ background: '#7B2D8B' }}
+                >
+                  {consentBusy ? '…' : "J'accepte et je continue"}
+                </button>
+                <button
+                  onClick={skipConsent}
+                  disabled={consentBusy}
+                  className="px-5 py-2.5 rounded-full text-[14px]"
+                  style={{ background: 'transparent', border: '1px solid #2a2a3a', color: '#a0a0b0' }}
+                >
+                  Passer ces questions
+                </button>
               </div>
             </div>
           )}

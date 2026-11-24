@@ -22,6 +22,9 @@ export default function Survey() {
   const [showErrors, setShowErrors] = useState(false);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  // RGPD (migration 69) : la question facultative sur l'orientation ou l'identité
+  // est une donnée sensible ; si elle est remplie, un accord explicite est demandé.
+  const [sensitiveConsent, setSensitiveConsent] = useState(false);
 
   const sections = SURVEY_SECTIONS;
   const section = sections[step];
@@ -31,6 +34,9 @@ export default function Survey() {
     () => (section ? missingIn(section, answers) : []),
     [section, answers],
   );
+  const identiteFilled = typeof answers.identite === 'string' && answers.identite.trim() !== '';
+  const sectionHasIdentite = !!section?.questions.some((q) => q.id === 'identite');
+  const consentMissing = sectionHasIdentite && identiteFilled && !sensitiveConsent;
 
   const set = (id: string, value: Answers[string]) => {
     setAnswers((a) => ({ ...a, [id]: value }));
@@ -47,7 +53,7 @@ export default function Survey() {
   };
 
   const next = () => {
-    if (missing.length) { setShowErrors(true); return; }
+    if (missing.length || consentMissing) { setShowErrors(true); return; }
     setShowErrors(false);
     setStep((s) => s + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -60,7 +66,7 @@ export default function Survey() {
   };
 
   const submit = async () => {
-    if (missing.length) { setShowErrors(true); return; }
+    if (missing.length || consentMissing) { setShowErrors(true); return; }
     setSending(true);
     try {
       const recontact = answers.recontact === 'oui';
@@ -69,6 +75,7 @@ export default function Survey() {
         answers,
         email: recontact && email ? email : null,
         recontact,
+        sensitive_consent: identiteFilled && sensitiveConsent,
         session_id: (() => { try { return localStorage.getItem('pn_session_id'); } catch { return null; } })(),
         user_agent: navigator.userAgent.slice(0, 300),
       });
@@ -157,9 +164,21 @@ export default function Survey() {
         ))}
       </div>
 
-      {showErrors && missing.length > 0 && (
+      {sectionHasIdentite && identiteFilled && (
+        <label className={`flex items-start gap-2 mt-8 text-sm cursor-pointer ${showErrors && consentMissing ? 'text-alert' : 'text-gray-700 dark:text-gray-300'}`}>
+          <input type="checkbox" checked={sensitiveConsent} onChange={(e) => { setSensitiveConsent(e.target.checked); setShowErrors(false); }} className="mt-1" />
+          <span>
+            J’accepte que ma réponse sur mon orientation ou mon identité soit utilisée par l’équipe Pass Navigay pour cette étude.
+            Elle n’est jamais publiée ni transmise. Sinon, vous pouvez simplement vider ce champ.
+          </span>
+        </label>
+      )}
+
+      {showErrors && (missing.length > 0 || consentMissing) && (
         <p className="text-sm text-alert mt-6">
-          Il reste {missing.length === 1 ? 'une réponse' : `${missing.length} réponses`} à compléter au-dessus.
+          {missing.length === 0
+            ? 'Cochez la case d’accord ci-dessus, ou videz le champ sur votre orientation ou identité.'
+            : <>Il reste {missing.length === 1 ? 'une réponse' : `${missing.length} réponses`} à compléter au-dessus.</>}
         </p>
       )}
 
@@ -189,7 +208,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <p className="flex items-center justify-center gap-1.5 text-xs text-gray-400 mt-4">
-        <Lock size={12} /> Réponses anonymes, lues uniquement par l'équipe de Pass Navigay.
+        <Lock size={12} /> Réponses confidentielles, lues uniquement par l'équipe de Pass Navigay.
       </p>
     </div>
   );

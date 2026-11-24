@@ -9,6 +9,7 @@ import ProfileFavorites from './profile/ProfileFavorites';
 import ProfileEvents from './profile/ProfileEvents';
 import ProfileAccountSettings from './profile/ProfileAccountSettings';
 import ProfileVisibilitySettings from './profile/ProfileVisibilitySettings';
+import { SensitiveDataSettings } from '../components/ui/SensitiveConsent';
 import PremiumBanner from './profile/PremiumBanner';
 import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
 
@@ -99,6 +100,7 @@ export default function ProfileSettings() {
       <ProfileFavorites userId={user.id} />
       <ProfileEvents userId={user.id} />
       <ProfileVisibilitySettings profile={profile} />
+      <SensitiveDataSettings profile={profile} />
       <ProfileAccountSettings profile={profile} />
 
       <div className="pt-4 border-t border-light-border dark:border-dark-border">
