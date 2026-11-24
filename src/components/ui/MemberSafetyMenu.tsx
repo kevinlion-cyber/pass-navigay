@@ -12,9 +12,11 @@ interface Props {
   context: 'profil' | 'conversation';
   onBlocked: () => void;
   className?: string;
+  // 'label' : bouton lisible « Signaler ou bloquer » (choix de Kévin) ; 'icon' : « … » compact.
+  variant?: 'label' | 'icon';
 }
 
-export default function MemberSafetyMenu({ memberId, memberName, context, onBlocked, className = '' }: Props) {
+export default function MemberSafetyMenu({ memberId, memberName, context, onBlocked, className = '', variant = 'label' }: Props) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -34,13 +36,22 @@ export default function MemberSafetyMenu({ memberId, memberName, context, onBloc
 
   return (
     <div ref={menuRef} className={`relative ${className}`}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Plus d'options"
-        className="p-2 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-      >
-        <MoreHorizontal size={20} />
-      </button>
+      {variant === 'icon' ? (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Signaler ou bloquer"
+          className="p-2 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+        >
+          <MoreHorizontal size={20} />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-400/40 text-gray-400 hover:text-alert hover:border-alert/60 transition-colors"
+        >
+          <Flag size={13} /> Signaler ou bloquer
+        </button>
+      )}
       {open && (
         <div className="absolute right-0 mt-1 w-48 z-50 rounded-input border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface shadow-lg overflow-hidden">
           <button
