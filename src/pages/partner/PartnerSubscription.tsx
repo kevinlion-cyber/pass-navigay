@@ -5,6 +5,7 @@ import type { Establishment } from '../../lib/types';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
 import toast from 'react-hot-toast';
 // Prix : même source que la landing Pros (app_settings.pros_landing, éditable dans
 // /admin/tarifs). Ils étaient écrits en dur ici, donc les deux écrans pouvaient
@@ -85,7 +86,14 @@ export default function PartnerSubscription() {
   };
 
   if (!establishment.is_pro) {
-    return <FreeView establishment={establishment} />;
+    return (
+      <>
+        <FreeView establishment={establishment} />
+        <div className="max-w-2xl mt-10">
+          <DeleteAccountSection />
+        </div>
+      </>
+    );
   }
 
   return (
@@ -169,6 +177,28 @@ export default function PartnerSubscription() {
           setCancelOpen(false);
         }}
       />
+
+      <DeleteAccountSection />
+    </div>
+  );
+}
+
+// Suppression du compte pro (faille E3) : abonnement, fiches et compte, au choix du pro.
+function DeleteAccountSection() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-input p-5" style={{ border: '1px solid var(--pn-border2)' }}>
+      <h3 className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Supprimer mon compte</h3>
+      <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+        Vous pourrez choisir de rester en gratuit à la fin de votre abonnement, ou de tout supprimer
+        (et décider si vos fiches restent dans l'annuaire).
+      </p>
+      <button onClick={() => setOpen(true)}
+        className="py-2 px-4 rounded-input text-xs font-medium transition-colors hover:opacity-90 text-gray-500 hover:text-alert"
+        style={{ background: 'transparent', border: '1px solid var(--pn-border2)' }}>
+        Supprimer mon compte
+      </button>
+      <DeleteAccountModal open={open} tone="vous" onClose={() => setOpen(false)} />
     </div>
   );
 }
