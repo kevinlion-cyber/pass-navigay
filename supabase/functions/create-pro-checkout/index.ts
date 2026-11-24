@@ -1,5 +1,32 @@
 import Stripe from "npm:stripe@14.14.0";
-import { corsHeaders, jsonResponse, getAuthenticatedUser, serviceClient } from "../_shared/auth.ts";
+import { createClient, type User } from "npm:@supabase/supabase-js@2.57.4";
+
+// Fichier autonome (24/11/2026) : les aides de ../_shared/auth.ts sont recopiées
+// ici pour pouvoir redéployer la fonction depuis le tableau de bord Supabase.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+function serviceClient() {
+  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+}
+async function getAuthenticatedUser(req: Request): Promise<User | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+  const client = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data, error } = await client.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user;
+}
 
 const PRO_YEARLY_PRICE_ID = "price_1Th1ix18e2LOhPJqyeE1nmX1";
 const MONTHLY_AMOUNT = 6900;
@@ -86,8 +113,9 @@ Deno.serve(async (req: Request) => {
       payment_method_types: ["card"],
       customer_email: user.email,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/partner/subscription?status=success`,
-      cancel_url: `${appUrl}/partner/subscription?status=cancelled`,
+      // /partner/subscription n'existe pas : le pro tombait sur une page vide après paiement.
+      success_url: `${appUrl}/pros/abonnement?status=success`,
+      cancel_url: `${appUrl}/pros/abonnement?status=cancelled`,
       metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
     });
 
@@ -95,6 +123,6 @@ Deno.serve(async (req: Request) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("create-pro-checkout error:", message);
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: "Le paiement n'a pas pu être préparé. Réessayez dans quelques instants." }, 500);
   }
 });
