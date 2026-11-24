@@ -1,11 +1,28 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+
+// Email de bienvenue (membre ou pro).
+// Sécurité (faille E5 de l'audit, 24/11/2026) : avant, n'importe qui pouvait
+// déclencher un envoi vers n'importe quelle adresse, avec un texte libre dans
+// l'objet — un relais de spam au nom de passnavigay.com. Désormais :
+//   - l'appelant doit être connecté (jeton vérifié ici) ;
+//   - l'email part uniquement vers SA propre adresse ;
+//   - une seule fois par compte, et seulement dans les 24 h suivant l'inscription.
+// Fichier autonome : peut être redéployé depuis l'éditeur du tableau de bord Supabase.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -15,24 +32,26 @@ Deno.serve(async (req: Request) => {
   try {
     // Jamais de clé en dur : la fonction échoue proprement si l'env n'est pas configuré.
     const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendKey) {
-      return new Response(
-        JSON.stringify({ error: "Email service is not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (!resendKey) return json({ error: "Email service is not configured" }, 500);
 
-    const { email, username, type } = await req.json().catch(() => ({}));
+    // 1. Qui appelle ?
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "Non authentifié" }, 401);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: auth, error: authErr } = await userClient.auth.getUser();
+    const user = auth?.user;
+    if (authErr || !user || !user.email) return json({ error: "Non authentifié" }, 401);
 
-    // Validation basique de l'email (anti-abus de relais).
-    const emailOk = typeof email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
-    if (!emailOk) {
-      return new Response(
-        JSON.stringify({ error: "Valid email is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // 2. Une seule fois, et seulement pour un compte tout juste créé.
+    if (user.app_metadata?.welcome_sent_at) return json({ success: true, skipped: "already_sent" });
+    const ageMs = Date.now() - new Date(user.created_at).getTime();
+    if (ageMs > 24 * 60 * 60 * 1000) return json({ success: true, skipped: "too_old" });
 
+    const { username, type } = await req.json().catch(() => ({}));
+    const email = user.email; // jamais l'adresse fournie par le navigateur
     const isPro = type === "pro";
     const rawName = (typeof username === "string" && username.trim()) || email.split("@")[0];
     const displayName = escapeHtml(rawName).slice(0, 80);
@@ -40,17 +59,17 @@ Deno.serve(async (req: Request) => {
     const subject = isPro
       ? `Bienvenue sur Pass Navigay, ${displayName} ! Votre espace partenaire est pret`
       : `Bienvenue sur Pass Navigay, ${displayName} !`;
+    const htmlBody = isPro ? buildProEmailHtml(displayName) : buildUserEmailHtml(displayName);
 
-    const htmlBody = isPro
-      ? buildProEmailHtml(displayName)
-      : buildUserEmailHtml(displayName);
+    // On marque l'envoi AVANT d'envoyer : deux appels simultanés ne partent pas deux fois.
+    const svc = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    await svc.auth.admin.updateUserById(user.id, {
+      app_metadata: { ...(user.app_metadata || {}), welcome_sent_at: new Date().toISOString() },
+    });
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${resendKey}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
       body: JSON.stringify({
         from: "Pass Navigay <bonjour@passnavigay.com>",
         to: [email],
@@ -58,25 +77,15 @@ Deno.serve(async (req: Request) => {
         html: htmlBody,
       }),
     });
-
-    const data = await res.json();
-
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return new Response(
-        JSON.stringify({ error: data.message || "Failed to send email" }),
-        { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("send-welcome-email: Resend", res.status, data?.message);
+      return json({ error: "Failed to send email" }, 502);
     }
-
-    return new Response(JSON.stringify({ success: true, id: data.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, id: data.id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("send-welcome-email:", err);
+    return json({ error: "Unknown error" }, 500);
   }
 });
 

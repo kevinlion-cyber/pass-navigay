@@ -140,11 +140,6 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
           await addBotMessage("Hmm, quelque chose n'a pas fonctionné. Réessaie.");
         }
       } else {
-        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, username, type: 'user' }),
-        }).catch(() => {});
         await addBotMessage(BOT_MESSAGES.done);
         setChatStep('done');
         setTimeout(() => {
@@ -172,6 +167,10 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
 
     // Analytics : inscription menée à terme (dernière étape de l'entonnoir).
     track('register_complete', { plan: selectedPlan });
+
+    // Email de bienvenue : envoyé une fois l'adresse vérifiée (session ouverte).
+    // La fonction l'adresse au compte connecté, jamais à une adresse fournie ici.
+    supabase.functions.invoke('send-welcome-email', { body: { username, type: 'user' } }).catch(() => {});
 
     if (selectedPlan === 'premium') {
       try {
