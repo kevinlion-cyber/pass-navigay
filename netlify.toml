@@ -33,3 +33,20 @@
 [[edge_functions]]
   path = "/establishment/*"
   function = "seo"
+
+# Protections standard du navigateur (point M9 de l'audit, 24/11/2026).
+# Volontairement prudentes : rien qui puisse bloquer Google Maps, Supabase ou Stripe.
+#  - le site ne peut pas être affiché dans une page tierce (anti « clickjacking ») ;
+#  - le navigateur ne devine pas le type des fichiers ;
+#  - les adresses complètes ne fuitent pas vers les autres sites ;
+#  - caméra et micro désactivés, géolocalisation réservée au site (« autour de moi ») ;
+#  - HTTPS imposé.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self)"
+    Strict-Transport-Security = "max-age=31536000"
+    Content-Security-Policy = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
