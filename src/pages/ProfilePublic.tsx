@@ -155,14 +155,6 @@ export default function ProfilePublic() {
     <div className="max-w-xl mx-auto pb-28">
       {/* Hero header */}
       <div className="relative px-4 pt-8 pb-6">
-        {/* Signaler / Bloquer (E4) */}
-        <MemberSafetyMenu
-          memberId={profile.id}
-          memberName={firstName}
-          context="profil"
-          onBlocked={() => navigate('/membres')}
-          className="absolute top-3 right-3 z-10"
-        />
         <div className="flex flex-col items-center text-center">
           <div className="relative">
             <div
@@ -237,6 +229,16 @@ export default function ProfilePublic() {
               Envoyer un message
             </button>
           )}
+        </div>
+
+        {/* Signaler / Bloquer (E4) — en bas à droite de la vignette du profil (choix de Kévin) */}
+        <div className="flex justify-end mt-4">
+          <MemberSafetyMenu
+            memberId={profile.id}
+            memberName={firstName}
+            context="profil"
+            onBlocked={() => navigate('/membres')}
+          />
         </div>
       </div>
 
