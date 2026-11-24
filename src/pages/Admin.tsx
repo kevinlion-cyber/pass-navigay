@@ -2,6 +2,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import AdminLayout from '../components/admin/AdminLayout';
+import AdminMfaGate from '../components/admin/AdminMfaGate';
 
 export default function AdminRoot() {
   const { user, profile, loading, signOut } = useAuth();
@@ -54,5 +55,10 @@ export default function AdminRoot() {
     );
   }
 
-  return <AdminLayout />;
+  // Double authentification obligatoire avant d'entrer dans l'administration.
+  return (
+    <AdminMfaGate>
+      <AdminLayout />
+    </AdminMfaGate>
+  );
 }
