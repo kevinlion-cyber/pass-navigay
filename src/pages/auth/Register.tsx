@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { safeRedirect } from '../../lib/safeRedirect';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -23,7 +24,7 @@ const BOT_MESSAGES = {
   usernameOk: "Super pseudo !",
   askEmail: "Maintenant, quelle est ton adresse email ? On en aura besoin pour sécuriser ton compte.",
   emailOk: "Parfait !",
-  askPassword: "Dernière étape : choisis un mot de passe (6 caractères minimum).",
+  askPassword: "Dernière étape : choisis un mot de passe (8 caractères minimum).",
   creating: "C'est parti, je crée ton compte...",
   done: "Ton compte est créé ! Vérifie ton email pour activer ton accès.",
 };
@@ -119,8 +120,8 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
       await addBotMessage(BOT_MESSAGES.askPassword);
       setChatStep('password');
     } else if (chatStep === 'password') {
-      if (value.length < 6) {
-        toast.error('Le mot de passe doit contenir au moins 6 caractères.');
+      if (value.length < 8) {
+        toast.error('Le mot de passe doit contenir au moins 8 caractères.');
         return;
       }
       addUserMessage('\u2022'.repeat(value.length));
@@ -194,10 +195,10 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
         // Stripe not configured yet
       }
       toast.success('Bienvenue sur Pass Navigay ! Le paiement Premium sera disponible prochainement.');
-      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explorer');
+      navigate(safeRedirect(redirectTo));
     } else {
       toast.success('Bienvenue sur Pass Navigay !');
-      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/explorer');
+      navigate(safeRedirect(redirectTo));
     }
   };
 
@@ -205,7 +206,7 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
     switch (chatStep) {
       case 'username': return 'Ton pseudo...';
       case 'email': return 'ton@email.com';
-      case 'password': return '6 caractères minimum';
+      case 'password': return '8 caractères minimum';
       default: return '';
     }
   };

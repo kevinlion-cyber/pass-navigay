@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { safeRedirect } from '../../lib/safeRedirect';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, X, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,7 +31,7 @@ export default function Login() {
     } else {
       toast.success('Connexion reussie !');
       const redirect = searchParams.get('redirect');
-      navigate(redirect && redirect.startsWith('/') ? redirect : '/explorer');
+      navigate(safeRedirect(redirect));
     }
   };
 
