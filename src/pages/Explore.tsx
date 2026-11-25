@@ -27,6 +27,11 @@ const slugify = (s: string) =>
 /** Au-delà, on considère qu'aucune ville couverte n'est « autour » du visiteur. */
 const AROUND_ME_KM = 60;
 
+/** La ville suit la carte quand le centre de la carte est à moins de cette distance d'une ville couverte. */
+const VILLE_SUIVIE_KM = 15;
+/** Au-delà de cette diagonale visible (vue d'une région entière), la ville ne suit plus la carte. */
+const VUE_MAX_KM = 120;
+
 /** Distance à vol d'oiseau, en km. */
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371;
@@ -56,6 +61,17 @@ export default function Explore() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [citySlug, setCitySlug] = useState<string | null>(null);
+  /**
+   * Demande de cadrage de la carte sur une ville (« slug#numéro »). Séparé de `citySlug` :
+   * quand c'est la carte qui change de ville (on a glissé jusqu'à Béziers), il ne faut
+   * surtout pas la recadrer, sinon elle sauterait sous le doigt de l'utilisateur.
+   */
+  const [fitKey, setFitKey] = useState<string | null>(null);
+  const fitCountRef = useRef(0);
+  const demanderCadrage = (slug: string) => {
+    fitCountRef.current += 1;
+    setFitKey(`${slug}#${fitCountRef.current}`);
+  };
   const [aroundMe, setAroundMe] = useState(false);
   const [locating, setLocating] = useState(false);
   /** Renseigné quand aucune ville couverte n'est à portée du visiteur. */
@@ -101,7 +117,11 @@ export default function Explore() {
           .sort((a, b) => b.n - a.n);
         setCities(list);
         // Au premier chargement on ouvre sur la ville la mieux fournie.
-        setCitySlug((s) => s ?? list[0]?.slug ?? null);
+        setCitySlug((s) => {
+          const slug = s ?? list[0]?.slug ?? null;
+          if (!s && slug) demanderCadrage(slug);
+          return slug;
+        });
         if (list[0]) setUserLocation({ lat: list[0].lat, lng: list[0].lng });
       });
   }, []);
@@ -110,6 +130,7 @@ export default function Explore() {
     setAroundMe(false);
     setAroundInfo(null);
     setCitySlug(c.slug);
+    demanderCadrage(c.slug);
     setMapFlyTo({ lat: c.lat, lng: c.lng });
   };
 
@@ -142,6 +163,7 @@ export default function Explore() {
         if (nearest && nearest.km <= AROUND_ME_KM) {
           // Une ville couverte est à portée : on l'affiche entièrement.
           setCitySlug(nearest.c.slug);
+          demanderCadrage(nearest.c.slug);
           setAroundInfo(null);
         } else {
           // Rien à proximité : on l'annonce plutôt que de montrer un écran vide.
@@ -296,8 +318,36 @@ export default function Explore() {
     fetchEstablishments(true);
   }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug, aroundInfo]);
 
+  // Les valeurs courantes, lues au moment où la carte s'arrête de bouger.
+  const etatCarteRef = useRef({ cities, citySlug, search: debouncedSearch, aroundInfo });
+  etatCarteRef.current = { cities, citySlug, search: debouncedSearch, aroundInfo };
+
+  /**
+   * La ville suit la carte (demande de Kévin, 25/11/2026) : en glissant ou en zoomant
+   * jusqu'à Béziers, le choix de ville et la liste passent sur Béziers.
+   *
+   * Règle : la ville couverte la plus proche du CENTRE de la carte, si elle est à moins
+   * de VILLE_SUIVIE_KM et que la carte n'est pas dézoomée sur toute une région.
+   * Entre deux villes, ou en vue très large, on ne change rien.
+   * Calcul fait dans le navigateur : aucun appel en plus à Google ni à Supabase
+   * (hormis le chargement normal de la liste de la nouvelle ville).
+   */
   const handleBoundsChange = useCallback((newBounds: Bounds) => {
     setBounds(newBounds);
+    const { cities: villes, citySlug: actuelle, search: recherche, aroundInfo: horsZone } = etatCarteRef.current;
+    if (recherche.trim() || horsZone || villes.length === 0) return;
+    const centre = { lat: (newBounds.north + newBounds.south) / 2, lng: (newBounds.east + newBounds.west) / 2 };
+    const largeur = distanceKm(
+      { lat: newBounds.south, lng: newBounds.west },
+      { lat: newBounds.north, lng: newBounds.east },
+    );
+    if (largeur > VUE_MAX_KM) return;
+    const proche = villes
+      .map((c) => ({ c, km: distanceKm(centre, c) }))
+      .sort((a, b) => a.km - b.km)[0];
+    if (!proche || proche.km > VILLE_SUIVIE_KM || proche.c.slug === actuelle) return;
+    setAroundMe(false);
+    setCitySlug(proche.c.slug);
   }, []);
 
   useEffect(() => {
@@ -502,7 +552,7 @@ export default function Explore() {
               onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
-              fitToCity={citySlug}
+              fitToCity={fitKey}
               category={selectedCategory}
               subcategories={selectedSubcategories}
               selectedId={selectedPinId} highlightId={hoveredId}
@@ -528,7 +578,7 @@ export default function Explore() {
             onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
-            fitToCity={citySlug}
+            fitToCity={fitKey}
             category={selectedCategory}
             subcategories={selectedSubcategories}
             selectedId={selectedPinId} highlightId={hoveredId}
