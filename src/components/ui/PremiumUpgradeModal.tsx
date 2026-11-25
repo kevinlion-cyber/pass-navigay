@@ -147,12 +147,20 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
         </div>
 
         <ul className="space-y-2.5 mb-6">
-          {premiumFeatures.map((label) => (
-            <li key={label} className="flex items-start gap-2 text-[13px]">
-              <Check size={14} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} strokeWidth={2.5} />
-              <span className="font-medium" style={{ color: '#c084f5' }}>{label}</span>
-            </li>
-          ))}
+          {premiumFeatures.map((label) => {
+            // « Titre — détail » (Admin → Tarifs) : titre en avant, détail en dessous.
+            const [titre, ...reste] = label.split(' — ');
+            const detail = reste.join(' — ');
+            return (
+              <li key={label} className="flex items-start gap-2 text-[13px]">
+                <Check size={14} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} strokeWidth={2.5} />
+                <span>
+                  <span className="font-medium block" style={{ color: '#c084f5' }}>{titre}</span>
+                  {detail && <span className="block mt-0.5" style={{ color: '#a0a0b0' }}>{detail}</span>}
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         <button

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Calendar, Users } from 'lucide-react';
+import { MapPin, Calendar, Users, Check } from 'lucide-react';
 import { usePopupText } from '../lib/popups';
 
 /**
@@ -13,7 +13,12 @@ const FEATURES = [
   { icon: Users, title: 'Rejoignez la communauté', text: 'Échangez avec les autres membres et partagez vos coups de cœur.' },
 ];
 
-export default function BienvenueContenu({ titreId, intro }: { titreId?: string; intro?: string }) {
+/**
+ * `avantages` : liste à afficher à la place des trois atouts fixes (ex. les avantages de
+ * la formule Gratuite gérés dans Admin → Tarifs). « Titre — détail » est mis en forme
+ * sur deux lignes.
+ */
+export default function BienvenueContenu({ titreId, intro, avantages }: { titreId?: string; intro?: string; avantages?: string[] }) {
   const t = usePopupText('welcome');
   const [logoBroken, setLogoBroken] = useState(false);
   return (
@@ -39,19 +44,39 @@ export default function BienvenueContenu({ titreId, intro }: { titreId?: string;
           <p className="text-gray-600 dark:text-gray-400">{intro || t.body}</p>
         </div>
 
-        <div className="space-y-4">
-          {FEATURES.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="flex items-start gap-3 text-left">
-              <div className="w-9 h-9 rounded-card bg-primary/10 flex items-center justify-center shrink-0">
-                <Icon size={18} className="text-primary" />
+        {avantages && avantages.length > 0 ? (
+          <ul className="space-y-3">
+            {avantages.map((label) => {
+              const [titre, ...reste] = label.split(' — ');
+              const detail = reste.join(' — ');
+              return (
+                <li key={label} className="flex items-start gap-3 text-left">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check size={15} className="text-primary" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">{titre}</p>
+                    {detail && <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{detail}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="space-y-4">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="flex items-start gap-3 text-left">
+                <div className="w-9 h-9 rounded-card bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon size={18} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-white text-sm">{title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{text}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium text-gray-900 dark:text-white text-sm">{title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
     </>
   );
