@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Users, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import BienvenueContenu from './BienvenueContenu';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { markWelcomeNever, markWelcomeSeen, welcomeSeen } from '../lib/welcome';
+import { markWelcomeNever, markWelcomeSeen } from '../lib/welcome';
 import { usePopupText } from '../lib/popups';
 
 /**
@@ -19,11 +20,6 @@ import { usePopupText } from '../lib/popups';
  * site » reste toujours possible.
  */
 
-const FEATURES = [
-  { icon: MapPin, title: 'Trouvez votre lieu idéal', text: 'Des établissements inclusifs et bienveillants près de chez vous.' },
-  { icon: Calendar, title: 'Suivez les événements', text: 'Soirées, brunchs, expositions : restez informé de ce qui bouge.' },
-  { icon: Users, title: 'Rejoignez la communauté', text: 'Échangez avec les autres membres et partagez vos coups de cœur.' },
-];
 
 export default function WelcomeModal() {
   const navigate = useNavigate();
@@ -31,14 +27,17 @@ export default function WelcomeModal() {
   const [open, setOpen] = useState(false);
   const [requireSignup, setRequireSignup] = useState(true);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const [logoBroken, setLogoBroken] = useState(false);
   const t = usePopupText('welcome');
 
   // Un membre qui a demandé à ne plus voir ce message ne le revoit jamais ;
   // un visiteur qui l'a déjà écarté ne le revoit pas de la visite.
   useEffect(() => {
     if (user && profile && !profile.show_onboarding) { setOpen(false); return; }
-    if (!user && welcomeSeen()) { setOpen(false); return; }
+    // Visiteur sans compte : plus de fenêtre à l'arrivée (demande de Kévin, 25/11/2026).
+    // Il découvre d'abord les lieux ; l'invitation à créer un compte vient après
+    // 3 fiches ouvertes (InscriptionGateModal), et les prix seulement devant une
+    // fonction Premium (PremiumUpgradeModal).
+    if (!user) { setOpen(false); return; }
     setOpen(true);
   }, [user, profile]);
 
@@ -90,40 +89,7 @@ export default function WelcomeModal() {
           <X size={18} />
         </button>
 
-        <div className="text-center space-y-3">
-          {/* Logo : celui choisi dans l'administration, sinon celui du site. La
-              lettre « P » ne sert plus que si aucune image ne charge : c'était un
-              simple bouche-trou, et il n'y avait aucun moyen de le remplacer sans
-              toucher au code. */}
-          {logoBroken ? (
-            <div className="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center">
-              <span className="text-white text-2xl font-semibold">P</span>
-            </div>
-          ) : (
-            <img
-              src={t.logo_url || '/logo.png?v=2'}
-              alt=""
-              onError={() => setLogoBroken(true)}
-              className="w-16 h-16 mx-auto object-contain"
-            />
-          )}
-          <h1 id="welcome-title" className="text-2xl font-semibold text-gray-900 dark:text-white">{t.title}</h1>
-          <p className="text-gray-600 dark:text-gray-400">{t.body}</p>
-        </div>
-
-        <div className="space-y-4">
-          {FEATURES.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="flex items-start gap-3 text-left">
-              <div className="w-9 h-9 rounded-card bg-primary/10 flex items-center justify-center shrink-0">
-                <Icon size={18} className="text-primary" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900 dark:text-white text-sm">{title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <BienvenueContenu titreId="welcome-title" />
 
         <div className="space-y-3">
           {signupFirst ? (

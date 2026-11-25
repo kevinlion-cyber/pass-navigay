@@ -5,11 +5,11 @@ import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft, Lock } from 'luc
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import PlanSelection, { type PlanType, type BillingInterval } from '../../components/ui/PlanSelection';
+import type { PlanType, BillingInterval } from '../../components/ui/PlanSelection';
 import { track } from '../../lib/analytics';
 import { markWelcomeSeen } from '../../lib/welcome';
 
-type TunnelStep = 'plan' | 'chat' | 'verify';
+type TunnelStep = 'chat' | 'verify';
 type ChatStep = 'username' | 'email' | 'password' | 'submitting' | 'done';
 
 interface ChatMessage {
@@ -41,9 +41,15 @@ interface RegisterProps {
 }
 
 export default function Register({ onDismiss, intro }: RegisterProps = {}) {
-  const [tunnelStep, setTunnelStep] = useState<TunnelStep>('plan');
-  const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>('yearly');
+  // Plus d'étape « choix du plan » avec les prix en ouverture (demande de Kévin,
+  // 25/11/2026) : on crée d'abord un compte gratuit. Les prix ne sont montrés que
+  // quand la personne touche une fonction Premium (fenêtre PremiumUpgradeModal),
+  // qui renvoie ici avec ?plan=premium&billing=monthly|yearly : le paiement suit
+  // alors la création du compte.
+  const [searchParams] = useSearchParams();
+  const [tunnelStep, setTunnelStep] = useState<TunnelStep>('chat');
+  const [selectedPlan] = useState<PlanType>(() => (searchParams.get('plan') === 'premium' ? 'premium' : 'free'));
+  const [billingInterval] = useState<BillingInterval>(() => (searchParams.get('billing') === 'monthly' ? 'monthly' : 'yearly'));
 
   const [chatStep, setChatStep] = useState<ChatStep>('username');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -61,7 +67,6 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
 
   const { signUp, verifyOtp } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -236,11 +241,11 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
     if (e.target === e.currentTarget) handleClose();
   };
 
-  const stepIndex = tunnelStep === 'plan' ? 0 : tunnelStep === 'chat' ? 1 : 2;
+  const stepIndex = tunnelStep === 'chat' ? 0 : 1;
 
   const stepIndicator = (
     <div className="flex items-center justify-center gap-2 py-3 border-b border-light-border dark:border-dark-border shrink-0">
-      {['Plan', 'Infos', 'Verification'].map((label, i) => (
+      {['Infos', 'Vérification'].map((label, i) => (
         <div key={label} className="flex items-center gap-2">
           {i > 0 && <div className="w-6 h-px" style={{ background: i <= stepIndex ? '#7B2D8B' : '#2a2a3a' }} />}
           <div className="flex items-center gap-1.5">
@@ -290,38 +295,25 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
           créer de compte tout de suite. Sans ce lien, la seule issue visible
           était la petite croix, ce qui ressemble à une obligation de s'inscrire.
         */}
-        {tunnelStep === 'plan' && (
-          <div className="px-4 pt-3 shrink-0">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-input border border-primary/40 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/10 hover:border-primary transition-colors"
-            >
-              <ArrowLeft size={16} className="shrink-0" />
-              Pas maintenant, je veux d'abord voir le site
-            </button>
-          </div>
-        )}
-
-        {tunnelStep === 'plan' && (
-          <div className="overflow-y-auto flex-1 min-h-0">
+        {tunnelStep === 'chat' && chatStep === 'username' && (
+          <div className="px-4 pt-3 shrink-0 space-y-3">
             {intro && (
               <div
-                className="mx-6 mt-5 flex items-start gap-2.5 rounded-[10px] px-4 py-3"
+                className="flex items-start gap-2.5 rounded-[10px] px-4 py-3"
                 style={{ background: 'rgba(123,45,139,0.1)', border: '1px solid rgba(123,45,139,0.3)' }}
               >
                 <Lock size={16} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} />
                 <p className="text-[13px]" style={{ color: '#c084f5' }}>{intro}</p>
               </div>
             )}
-            <PlanSelection
-              selectedPlan={selectedPlan}
-              onSelect={setSelectedPlan}
-              onContinue={() => setTunnelStep('chat')}
-              onSwitchToLogin={() => navigate('/connexion')}
-              billingInterval={billingInterval}
-              onIntervalChange={setBillingInterval}
-            />
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-input border border-primary/40 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/10 hover:border-primary transition-colors"
+            >
+              <ArrowLeft size={16} className="shrink-0" />
+              Pas maintenant, je veux d'abord voir le site
+            </button>
           </div>
         )}
 
