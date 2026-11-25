@@ -7,6 +7,7 @@ import type { Promotion } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PromoValidateModal from '../components/ui/PromoValidateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import VisuelEntier from '../components/ui/VisuelEntier';
 
 export default function PromoDetail() {
   const { promoId } = useParams<{ promoId: string }>();
@@ -111,10 +112,11 @@ export default function PromoDetail() {
   return (
     <div className="max-w-3xl mx-auto pb-8">
       {promo.image_url && (
-        <img
+        <VisuelEntier
           src={promo.image_url}
           alt={promo.title}
-          className="w-full h-48 md:h-64 object-cover"
+          className="w-full"
+          style={{ aspectRatio: '4 / 3', maxHeight: 420 }}
         />
       )}
 

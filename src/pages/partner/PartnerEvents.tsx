@@ -10,6 +10,7 @@ import ProGate from '../../components/partner/ProGate';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
+import VisuelEntier from '../../components/ui/VisuelEntier';
 
 interface PartnerContext {
   establishment: Establishment;
@@ -435,7 +436,7 @@ function EventCard({
     <div className="rounded-card overflow-hidden" style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
       <div className="h-[120px] overflow-hidden relative">
         {event.image_url ? (
-          <img src={event.image_url} alt="" className="w-full h-full object-cover" />
+          <VisuelEntier src={event.image_url} className="w-full h-full" />
         ) : (
           <div className="w-full h-full flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #3d1550, #1a0828)' }}>

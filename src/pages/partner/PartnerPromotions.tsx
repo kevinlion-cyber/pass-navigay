@@ -10,6 +10,7 @@ import ConfirmModal from '../../components/admin/ConfirmModal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import PromoUsesSection from './PromoUsesSection';
+import VisuelEntier from '../../components/ui/VisuelEntier';
 
 interface PartnerContext {
   establishment: Establishment;
@@ -475,9 +476,7 @@ function PromoCard({
     <div className={`rounded-card overflow-hidden transition-opacity ${!isActive ? 'opacity-60' : ''}`}
       style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
       {promo.image_url ? (
-        <div className="h-[100px] overflow-hidden">
-          <img src={promo.image_url} alt="" className="w-full h-full object-cover" />
-        </div>
+        <VisuelEntier src={promo.image_url} className="h-[160px]" />
       ) : (
         <div className="h-[60px]" style={{ background: typeBg() }} />
       )}

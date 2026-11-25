@@ -4,6 +4,7 @@ import { Calendar, MapPin, Clock, ChevronLeft, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Event } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import VisuelEntier from '../components/ui/VisuelEntier';
 
 export default function EventDetail() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -64,10 +65,11 @@ export default function EventDetail() {
   return (
     <div className="max-w-3xl mx-auto pb-8">
       {event.image_url && (
-        <img
+        <VisuelEntier
           src={event.image_url}
           alt={event.title}
-          className="w-full h-48 md:h-64 object-cover"
+          className="w-full"
+          style={{ aspectRatio: '3 / 2', maxHeight: 420 }}
         />
       )}
 
