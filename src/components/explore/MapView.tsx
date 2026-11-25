@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { MarkerClusterer, MarkerUtils } from '@googlemaps/markerclusterer';
+import type { Renderer } from '@googlemaps/markerclusterer';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import { DEFAULT_CENTER } from '../../lib/constants';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -188,7 +189,7 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
   useEffect(() => {
     if (!map || !markerLib) return;
     if (!clustererRef.current) {
-      clustererRef.current = new MarkerClusterer({ map });
+      clustererRef.current = new MarkerClusterer({ map, renderer: rendusPastilles });
     }
 
     // On repart des points courants à chaque changement de cadrage ou de filtre.
@@ -369,6 +370,38 @@ function PopupContent({ est, extras, loading, onNavigate }: { est: Establishment
     </div>
   );
 }
+
+/**
+ * Dessin des pastilles de regroupement. Copie du rendu par défaut de la bibliothèque,
+ * sauf la couleur des grosses pastilles : bleu turquoise au lieu de rouge
+ * (demande de Kévin, 25/11/2026). Les petites restent bleues.
+ */
+const PASTILLE_GROSSE = '#12b5c9';
+const PASTILLE_PETITE = '#0000ff';
+const rendusPastilles: Renderer = {
+  render({ count, position }, stats, map) {
+    const couleur = count > Math.max(10, stats.clusters.markers.mean) ? PASTILLE_GROSSE : PASTILLE_PETITE;
+    const svg = `<svg fill="${couleur}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="50" height="50">
+<circle cx="120" cy="120" opacity=".6" r="70" />
+<circle cx="120" cy="120" opacity=".3" r="90" />
+<circle cx="120" cy="120" opacity=".2" r="110" />
+<text x="50%" y="50%" style="fill:#fff" text-anchor="middle" font-size="50" dominant-baseline="middle" font-family="roboto,arial,sans-serif">${count}</text>
+</svg>`;
+    const title = `${count} établissements`;
+    const zIndex = Number(google.maps.Marker.MAX_ZINDEX) + count;
+    if (MarkerUtils.isAdvancedMarkerAvailable(map)) {
+      const svgEl = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+      svgEl.setAttribute('transform', 'translate(0 25)');
+      return new google.maps.marker.AdvancedMarkerElement({ map, position, zIndex, title, content: svgEl });
+    }
+    return new google.maps.Marker({
+      position,
+      zIndex,
+      title,
+      icon: { url: `data:image/svg+xml;base64,${btoa(svg)}`, anchor: new google.maps.Point(25, 25) },
+    });
+  },
+};
 
 export default function MapView(props: MapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
