@@ -9,6 +9,7 @@ import type { Promotion, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import { useOuvertureAutoPremium } from '../lib/premiumAuto';
 import { usePopupText } from '../lib/popups';
 
 type PromoTypeFilter = 'all' | 'percentage' | 'fixed' | 'offer' | 'recurring';
@@ -38,6 +39,8 @@ export default function Promos() {
   const premiumText = usePopupText('promos_premium');
 
   const isPremium = profile?.is_premium === true;
+  // Seulement s'il y a des offres à convoiter (même logique que le bandeau).
+  useOuvertureAutoPremium('promotions', promos.length > 0, () => setUpgradeOpen(true));
 
   useEffect(() => {
     const load = async () => {
