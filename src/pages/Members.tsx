@@ -7,6 +7,7 @@ import type { Profile } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import { useOuvertureAutoPremium } from '../lib/premiumAuto';
 
 interface MemberWithMeta extends Profile {
   favorites_count: number;
@@ -37,6 +38,7 @@ export default function Members() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const isPremium = profile?.is_premium === true;
+  useOuvertureAutoPremium('membres', true, () => setUpgradeOpen(true));
 
   useEffect(() => {
     const load = async () => {

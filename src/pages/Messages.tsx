@@ -7,6 +7,7 @@ import type { ConversationPreview } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AuthGateModal from '../components/ui/AuthGateModal';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
+import { useOuvertureAutoPremium } from '../lib/premiumAuto';
 import { usePopupText } from '../lib/popups';
 
 export default function Messages() {
@@ -17,6 +18,8 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // Un visiteur n'a pas d'onglet Messages ; c'est le membre gratuit qui est concerné.
+  useOuvertureAutoPremium('messages', !!user, () => setUpgradeOpen(true));
 
   useEffect(() => {
     if (!user) {
