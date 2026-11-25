@@ -3,20 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { X, Check, Loader2, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useUserPlans } from '../../lib/userPlans';
 
 interface PremiumUpgradeModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const PREMIUM_FEATURES = [
-  'Profil avec nom, prenom, photo',
-  'Visualisation des evenements',
-  "Acces a l'annuaire des lieux",
-  'Acces aux promotions exclusives',
-  'Messagerie entre membres Premium',
-  'Profil enrichi et questionnaire',
-];
 
 export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeModalProps) {
   const { user } = useAuth();
@@ -24,16 +17,19 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
+  // Même liste que la page Tarifs, modifiable dans Admin → Tarifs (avant : une liste
+  // figée ici, sans accents, qui mélangeait des avantages gratuits).
+  const { premiumFeatures } = useUserPlans();
 
   if (!open) return null;
 
   const handleUpgrade = async () => {
-    // Sans compte, il n'y a rien à facturer : on envoyait la personne dans le vide
-    // (le bouton ne faisait rien, en silence). On l'emmène créer son compte, où le
-    // choix Gratuit / Premium est proposé, puis elle revient sur cette page.
+    // Sans compte, il n'y a rien à facturer : on l'emmène créer son compte en gardant
+    // la formule choisie ici (mensuelle ou annuelle) ; le paiement suit l'inscription,
+    // puis elle revient sur cette page.
     if (!user) {
       onClose();
-      navigate(`/inscription?redirect=${encodeURIComponent(location.pathname)}`);
+      navigate(`/inscription?plan=premium&billing=${billingInterval}&redirect=${encodeURIComponent(location.pathname)}`);
       return;
     }
     setLoading(true);
@@ -102,7 +98,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
 
         <h2 className="text-[20px] font-bold text-white text-center">Passe Premium</h2>
         <p className="text-[14px] text-center mt-2 mb-4" style={{ color: '#a0a0b0' }}>
-          Debloque toutes les fonctionnalites
+          Débloque toutes les fonctionnalités
         </p>
 
         {/* Billing interval toggle */}
@@ -151,7 +147,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
         </div>
 
         <ul className="space-y-2.5 mb-6">
-          {PREMIUM_FEATURES.map((label) => (
+          {premiumFeatures.map((label) => (
             <li key={label} className="flex items-start gap-2 text-[13px]">
               <Check size={14} className="mt-0.5 shrink-0" style={{ color: '#c084f5' }} strokeWidth={2.5} />
               <span className="font-medium" style={{ color: '#c084f5' }}>{label}</span>
@@ -169,12 +165,22 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC/an` : `${monthlyPrice.toFixed(2).replace('.', ',')}\u20AC/mois`}
         </button>
 
+        {!user && (
+          <button
+            onClick={() => { onClose(); navigate(`/inscription?redirect=${encodeURIComponent(location.pathname)}`); }}
+            className="w-full mt-3 py-2 text-[13px] font-medium underline-offset-2 hover:underline"
+            style={{ color: '#c084f5' }}
+          >
+            Créer d'abord mon compte, sans abonnement
+          </button>
+        )}
+
         <button
           onClick={onClose}
           className="w-full mt-3 py-2.5 rounded-[10px] text-[13px] font-medium transition-colors"
           style={{ color: '#606070' }}
         >
-          Peut-etre plus tard
+          Peut-être plus tard
         </button>
       </div>
     </div>

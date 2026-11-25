@@ -7,16 +7,22 @@ import ShieldRating from '../ui/ShieldRating';
 
 interface EstablishmentCardProps {
   establishment: Establishment;
+  /** Remplace l'ouverture directe de la fiche (ex. limite de fiches pour un visiteur). */
+  onOpen?: (path: string, establishment: Establishment) => void;
 }
 
-export default function EstablishmentCard({ establishment }: EstablishmentCardProps) {
+export default function EstablishmentCard({ establishment, onOpen }: EstablishmentCardProps) {
   const navigate = useNavigate();
   const { categories } = useCategories();
   const categoryLabel = categories[establishment.category as CategoryKey]?.label || establishment.category;
 
   return (
     <div
-      onClick={() => navigate(`/lieu/${establishment.slug || establishment.id}`)}
+      onClick={() => {
+        const path = `/lieu/${establishment.slug || establishment.id}`;
+        if (onOpen) onOpen(path, establishment);
+        else navigate(path);
+      }}
       className="card-hover p-4 flex gap-4"
     >
       <div className="w-14 h-14 rounded-card bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">

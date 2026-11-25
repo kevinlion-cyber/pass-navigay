@@ -7,7 +7,6 @@ import type { Profile } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import PremiumUpgradeModal from '../components/ui/PremiumUpgradeModal';
-import Register from './auth/Register';
 
 interface MemberWithMeta extends Profile {
   favorites_count: number;
@@ -33,11 +32,10 @@ export default function Members() {
   const [pronounsFilter, setPronounsFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  // Visiteur sans compte : on lui ouvre la modale d'inscription (choix des deux
-  // formules) au lieu de l'écran d'abonnement, qui n'a rien à facturer sans compte.
-  const [registerOpen, setRegisterOpen] = useState(false);
+  // Visiteur sans compte : même fenêtre Premium (mensuel / annuel) que pour un membre
+  // gratuit ; son bouton l'emmène créer son compte puis payer (choix de Kévin, 25/11/2026).
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const isPremium = profile?.is_premium === true;
 
   useEffect(() => {
@@ -118,12 +116,12 @@ export default function Members() {
             </p>
           </div>
           <button
-            onClick={() => (user ? setUpgradeOpen(true) : setRegisterOpen(true))}
+            onClick={() => setUpgradeOpen(true)}
             className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
             style={{ background: '#7B2D8B' }}
           >
             <Crown size={15} />
-            {user ? 'Passer Premium' : 'Créer mon compte'}
+            Passer Premium
           </button>
         </div>
       )}
@@ -185,12 +183,12 @@ export default function Members() {
             </p>
           </div>
           <button
-            onClick={() => (user ? setUpgradeOpen(true) : setRegisterOpen(true))}
+            onClick={() => setUpgradeOpen(true)}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[14px] font-semibold text-white transition-all hover:opacity-90"
             style={{ background: '#7B2D8B' }}
           >
             <Crown size={16} />
-            {user ? 'Passer Premium' : 'Créer mon compte'}
+            Passer Premium
           </button>
         </div>
       )}
@@ -287,14 +285,6 @@ export default function Members() {
 
       <PremiumUpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
 
-      {/* Visiteur sans compte : la modale d'inscription (choix Gratuit / Premium),
-          précédée du motif pour qu'il sache pourquoi on lui demande de s'inscrire. */}
-      {registerOpen && (
-        <Register
-          intro="L'espace membres est réservé aux membres Premium."
-          onDismiss={() => setRegisterOpen(false)}
-        />
-      )}
     </div>
   );
 }

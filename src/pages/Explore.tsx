@@ -10,6 +10,8 @@ import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
 import CategoryFilters from '../components/explore/CategoryFilters';
 import CityFilter, { type CityOption } from '../components/explore/CityFilter';
 import EstablishmentCard from '../components/explore/EstablishmentCard';
+import InscriptionGateModal from '../components/ui/InscriptionGateModal';
+import { FICHES_GRATUITES, ouvrirFicheGratuite } from '../lib/fichesGratuites';
 import FeaturedEvents from '../components/explore/FeaturedEvents';
 import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
@@ -45,7 +47,7 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 
 export default function Explore() {
   const navigate = useNavigate();
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [questionnaireOpen, setQuestionnaireOpen] = useState(false);
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
@@ -408,6 +410,17 @@ export default function Explore() {
     }
   }, []);
 
+  /**
+   * Ouverture d'une fiche depuis la carte ou la liste. Un visiteur sans compte en ouvre
+   * FICHES_GRATUITES librement ; au-delà, l'invitation à créer un compte s'ouvre et la
+   * fiche reste fermée (règle décidée par Kévin le 25/11/2026).
+   */
+  const [gateFiche, setGateFiche] = useState<string | null>(null);
+  const ouvrirFiche = useCallback((id: string, path: string) => {
+    if (user || ouvrirFicheGratuite(id)) { navigate(path); return; }
+    setGateFiche(path);
+  }, [user, navigate]);
+
   const handleCardClick = useCallback((est: Establishment) => {
     setSelectedPinId(est.id);
     setMapFlyTo({ lng: est.longitude, lat: est.latitude });
@@ -449,7 +462,7 @@ export default function Explore() {
                 : ''
           }`}
         >
-          <EstablishmentCard establishment={est} />
+          <EstablishmentCard establishment={est} onOpen={(path) => ouvrirFiche(est.id, path)} />
         </div>
       ))}
 
@@ -549,7 +562,7 @@ export default function Explore() {
               establishments={establishments}
               userLocation={userLocation}
               onBoundsChange={handleBoundsChange}
-              onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
+              onEstablishmentClick={(id) => ouvrirFiche(id, `/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
               fitToCity={fitKey}
@@ -575,7 +588,7 @@ export default function Explore() {
             establishments={establishments}
             userLocation={userLocation}
             onBoundsChange={handleBoundsChange}
-            onEstablishmentClick={(id) => navigate(`/establishment/${id}`)}
+            onEstablishmentClick={(id) => ouvrirFiche(id, `/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
             fitToCity={fitKey}
@@ -589,6 +602,13 @@ export default function Explore() {
           {establishmentList}
         </div>
       </div>
+
+      <InscriptionGateModal
+        open={gateFiche !== null}
+        onClose={() => setGateFiche(null)}
+        redirect={gateFiche ?? undefined}
+        intro={`Tu as découvert ${FICHES_GRATUITES} lieux. Crée ton compte pour voir toutes les fiches, enregistrer tes favoris et laisser des avis.`}
+      />
 
       {questionnaireOpen && profile?.is_premium && (
         <PremiumQuestionnaireModal

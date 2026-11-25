@@ -360,6 +360,22 @@ export default function EstablishmentDetail() {
       </div>
 
       <div className="p-4 space-y-6">
+        {/* Visiteur sans compte (souvent arrivé depuis Google) : la fiche reste entière
+            pour le référencement, avec une invitation discrète à rejoindre la communauté. */}
+        {!user && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-card px-4 py-3 bg-primary/10 border border-primary/30">
+            <p className="flex-1 text-sm text-gray-700 dark:text-gray-200">
+              Rejoins la communauté Pass Navigay : enregistre tes lieux favoris, laisse des avis et découvre les bons plans inclusifs près de chez toi.
+            </p>
+            <button
+              onClick={() => navigate(`/inscription?redirect=${encodeURIComponent(window.location.pathname)}`)}
+              className="btn-primary text-sm shrink-0"
+            >
+              Créer mon compte
+            </button>
+          </div>
+        )}
+
         {(avgRating > 0 || avgSafety > 0) && (
           <div className="flex items-center gap-4">
             {avgRating > 0 && (

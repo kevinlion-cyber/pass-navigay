@@ -8,7 +8,7 @@ import { useCoveredCities, slugifyCity } from '../lib/cities';
 import type { Event, CategoryKey } from '../lib/types';
 import FilterDropdown from '../components/ui/FilterDropdown';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import Register from './auth/Register';
+import InscriptionGateModal from '../components/ui/InscriptionGateModal';
 
 const THEME_FILTERS = [
   'Tous',
@@ -288,12 +288,9 @@ export default function Events() {
         </div>
       </div>
 
-      {/* Le choix des deux formules (gratuit / Premium) est celui de l'inscription :
-          on réutilise la même modale plutôt que d'en entretenir une deuxième, avec
-          ses propres textes et ses propres prix qui finiraient par diverger.
-          Elle garde sa sortie « Pas maintenant », qui referme et laisse le visiteur
-          sur l'agenda. */}
-      {showProPopup && <Register onDismiss={closeProPopup} />}
+      {/* Invitation à créer un compte, sans prix (choix de Kévin, 25/11/2026) : les prix
+          ne sont montrés que devant une fonction Premium. */}
+      <InscriptionGateModal open={showProPopup} onClose={closeProPopup} redirect="/agenda" />
     </div>
   );
 }
