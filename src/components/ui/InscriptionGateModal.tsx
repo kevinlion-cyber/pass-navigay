@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import BienvenueContenu from '../BienvenueContenu';
+import { useUserPlans } from '../../lib/userPlans';
 
 interface InscriptionGateModalProps {
   open: boolean;
@@ -19,6 +20,9 @@ interface InscriptionGateModalProps {
  */
 export default function InscriptionGateModal({ open, onClose, redirect, intro }: InscriptionGateModalProps) {
   const navigate = useNavigate();
+  // Les avantages de la formule Gratuite cochés « inclus » dans Admin → Tarifs.
+  const { freeFeatures } = useUserPlans();
+  const avantages = freeFeatures.filter((f) => f.included).map((f) => f.label);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +55,7 @@ export default function InscriptionGateModal({ open, onClose, redirect, intro }:
           <X size={18} />
         </button>
 
-        <BienvenueContenu titreId="gate-title" intro={intro} />
+        <BienvenueContenu titreId="gate-title" intro={intro} avantages={avantages} />
 
         <div className="space-y-3">
           <button onClick={() => { onClose(); navigate(`/inscription${suite}`); }} className="btn-primary w-full py-3">
