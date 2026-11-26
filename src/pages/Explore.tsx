@@ -118,6 +118,8 @@ export default function Explore() {
   // l'étaient, l'une cachée par le CSS : deux cartes Google chargées (quota compté
   // double), deux fois les points et la liste (optimisation du 26/11/2026).
   const ordinateur = useEcranLarge();
+  const ordinateurRef = useRef(ordinateur);
+  ordinateurRef.current = ordinateur;
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -437,7 +439,9 @@ export default function Explore() {
     const { data } = await supabase.from('establishments').select('*').eq('id', id).maybeSingle();
     if (data) setLieuEpingle(data as Establishment);
     // Le temps que la fiche soit posée par React.
-    setTimeout(() => carteDuLieu(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    // Sur téléphone (page qui défile en entier), « nearest » amène la fiche sans faire
+    // disparaître la carte quand elle est déjà visible juste en dessous.
+    setTimeout(() => carteDuLieu(id)?.scrollIntoView({ behavior: 'smooth', block: ordinateurRef.current ? 'start' : 'nearest' }), 150);
   }, []);
 
   const registerCardRef = useCallback((id: string, el: HTMLDivElement | null) => {
@@ -548,7 +552,14 @@ export default function Explore() {
   );
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100dvh - 3.5rem - 4rem)' }}>
+    // Sur téléphone, toute la page défile (demande de Kévin, 26/11/2026) : en faisant
+    // glisser la liste vers le haut, la carte remonte et la liste prend l'écran entier,
+    // quelle que soit la taille du téléphone. Sur ordinateur, carte et liste restent
+    // côte à côte, chacune dans sa colonne.
+    <div
+      className={`flex flex-col ${ordinateur ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
+      style={{ height: 'calc(100dvh - 3.5rem - 4rem)' }}
+    >
       <DisclaimerModal />
 
       <FeaturedEvents />
@@ -621,7 +632,7 @@ export default function Explore() {
         </div>
       </div>
       ) : (
-      <div className="lg:hidden flex flex-col flex-1 min-h-0">
+      <div className="lg:hidden flex flex-col shrink-0">
         <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '30dvh' }}>
           <MapView
             establishments={establishments}
@@ -638,7 +649,7 @@ export default function Explore() {
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-4 p-4" style={{ minHeight: '200px' }}>
+        <div className="space-y-4 p-4">
           {establishmentList}
         </div>
       </div>
