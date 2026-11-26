@@ -24,6 +24,12 @@ interface MapViewProps {
   /** Filtres de l'annuaire, pour que la carte montre la même chose que la liste. */
   category?: string | null;
   subcategories?: string[];
+  /**
+   * Hauteur minimale de la carte (300 px par défaut). Sur téléphone on passe 0 : le
+   * cadre fait 30 % de l'écran, et 300 px faisaient déborder la carte par-dessus le
+   * haut de la liste (bug du 26/11/2026).
+   */
+  hauteurMin?: number;
 }
 
 interface PopupData {
@@ -432,13 +438,13 @@ export default function MapView(props: MapViewProps) {
   if (!apiKey) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-dark-surface rounded-card text-gray-500 text-sm">
-        Cle Google Maps non configuree
+        Clé Google Maps non configurée
       </div>
     );
   }
 
   return (
-    <div className="rounded-card overflow-hidden" style={{ width: '100%', height: '100%', minHeight: 300 }}>
+    <div className="rounded-card overflow-hidden" style={{ width: '100%', height: '100%', minHeight: props.hauteurMin ?? 300 }}>
       <APIProvider apiKey={apiKey}>
         <MapInner {...props} />
       </APIProvider>

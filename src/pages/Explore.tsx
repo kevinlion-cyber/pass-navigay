@@ -633,7 +633,7 @@ export default function Explore() {
       </div>
       ) : (
       <div className="lg:hidden flex flex-col shrink-0">
-        <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '30dvh' }}>
+        <div className="shrink-0 overflow-hidden border-b border-light-border dark:border-dark-border" style={{ height: '30dvh' }}>
           <MapView
             establishments={establishments}
             userLocation={userLocation}
@@ -646,6 +646,7 @@ export default function Explore() {
             category={selectedCategory}
             subcategories={selectedSubcategories}
             selectedId={selectedPinId} highlightId={hoveredId}
+            hauteurMin={0}
           />
         </div>
 
