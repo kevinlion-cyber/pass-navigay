@@ -121,3 +121,17 @@ _Dernière mise à jour : 2026-11-24._
 | Q15 | Points faibles — bandeau statistiques, redirection après connexion, mots de passe 8 caractères | ✅ #12 |
 | Q16 | Double authentification admin, relecture juridique, AIPD, comptes inactifs | ⬜ à faire |
 
+
+## R. Évolutions demandées par Kévin (25-26/11/2026)
+
+| # | Évolution | État |
+|---|-----------|------|
+| R1 | Visuels promo / événement affichés en entier (plus rognés) | ✅ #16 |
+| R2 | Pastilles de regroupement de la carte en bleu turquoise | ✅ #17 |
+| R3 | La ville et la liste suivent la carte (centre à moins de 15 km d'une ville) | ✅ #18 |
+| R4 | Inscription progressive : plus de prix à l'arrivée, 3 fiches libres puis invitation, prix devant les fonctions Premium | ✅ #19, #20, #21 |
+| R5 | Icône de catégorie sur la carte | ✅ #22 + #24 (fichier oublié, build Netlify en échec 25 min) |
+| R6 | Menu admin rangé par rubriques | ✅ #23 |
+| R7 | Événements à valider : collecte hebdomadaire (tâche planifiée Claude, Hérault), import, validation avant publication | migration 71 + demande en cours |
+
+Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie propre de la branche avant d'ouvrir une demande.
