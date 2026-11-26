@@ -16,6 +16,8 @@ interface MapViewProps {
   onEstablishmentClick: (id: string) => void;
   onPinSelect?: (id: string | null) => void;
   flyTo?: { lng: number; lat: number } | null;
+  /** Repère d'un événement ouvert depuis sa fiche (« Voir sur la carte »). */
+  repere?: { lat: number; lng: number; titre: string } | null;
   selectedId?: string | null;
   highlightId?: string | null;
   fitToCity?: string | null;
@@ -77,7 +79,7 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
   return result;
 }
 
-function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, selectedId, highlightId, fitToCity, category, subcategories }: MapViewProps) {
+function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, repere, selectedId, highlightId, fitToCity, category, subcategories }: MapViewProps) {
   const map = useMap();
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<PopupData>({});
@@ -249,6 +251,23 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
             dizaines de lieux, un marqueur React par lieu sature la carte.
             On garde toutefois un marqueur mis en avant pour le lieu survolé dans
             la liste, sinon le lien entre la liste et la carte serait perdu. */}
+        {repere && (
+          <AdvancedMarker position={{ lat: repere.lat, lng: repere.lng }} zIndex={1000} title={repere.titre || 'Événement'}>
+            <div className="flex flex-col items-center pointer-events-none">
+              {repere.titre && (
+                <span className="mb-1 max-w-[180px] truncate rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-md" style={{ background: '#7B2D8B' }}>
+                  {repere.titre}
+                </span>
+              )}
+              <svg width="30" height="40" viewBox="0 0 24 32" aria-hidden="true">
+                <path d="M12 0C5.4 0 0 5.2 0 11.7 0 20.4 12 32 12 32s12-11.6 12-20.3C24 5.2 18.6 0 12 0Z" fill="#d4a017" stroke="#fff" strokeWidth="1.5" />
+                <rect x="7" y="7.5" width="10" height="9" rx="1.5" fill="none" stroke="#fff" strokeWidth="1.6" />
+                <path d="M7 10.5h10M9.5 6v3M14.5 6v3" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </div>
+          </AdvancedMarker>
+        )}
+
         {highlightId && (() => {
           const h = establishments.find((e) => e.id === highlightId) || pins.find((p) => p.id === highlightId);
           if (!h || (Math.abs(h.latitude) < 0.0001 && Math.abs(h.longitude) < 0.0001)) return null;
