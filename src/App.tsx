@@ -1,71 +1,74 @@
+import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazyAvecRelance } from './lib/lazyAvecRelance';
+import LoadingSpinner from './components/ui/LoadingSpinner';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
 import AppLayout from './components/layout/AppLayout';
 import WelcomeModal from './components/WelcomeModal';
-import Survey from './pages/Survey';
+const Survey = lazyAvecRelance(() => import('./pages/Survey'));
 import Register from './pages/auth/Register';
 import Login from './pages/auth/Login';
 import Verify from './pages/auth/Verify';
 import ResetPassword from './pages/auth/ResetPassword';
-import Revendiquer from './pages/Revendiquer';
+const Revendiquer = lazyAvecRelance(() => import('./pages/Revendiquer'));
 import Explore from './pages/Explore';
 import EstablishmentDetail from './pages/EstablishmentDetail';
-import EstablishmentForm from './pages/EstablishmentForm';
+const EstablishmentForm = lazyAvecRelance(() => import('./pages/EstablishmentForm'));
 import Favorites from './pages/Favorites';
 import Messages from './pages/Messages';
 import Conversation from './pages/Conversation';
 import ProfilePublic from './pages/ProfilePublic';
-import ProfileSettings from './pages/ProfileSettings';
+const ProfileSettings = lazyAvecRelance(() => import('./pages/ProfileSettings'));
 import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
 import Promos from './pages/Promos';
 import PromoDetail from './pages/PromoDetail';
-import Pricing from './pages/Pricing';
+const Pricing = lazyAvecRelance(() => import('./pages/Pricing'));
 import Members from './pages/Members';
 
-import AdminRoot from './pages/Admin';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminSeo from './pages/admin/AdminSeo';
-import AdminEstablishments from './pages/admin/AdminEstablishments';
-import AdminDrafts from './pages/admin/AdminDrafts';
-import AdminSurvey from './pages/admin/AdminSurvey';
-import AdminCities from './pages/admin/AdminCities';
-import AdminSocial from './pages/admin/AdminSocial';
-import AdminClaims from './pages/admin/AdminClaims';
-import AdminReports from './pages/admin/AdminReports';
-import AdminEvents from './pages/admin/AdminEvents';
-import AdminEventDrafts from './pages/admin/AdminEventDrafts';
-import AdminPromotions from './pages/admin/AdminPromotions';
-import AdminMembers from './pages/admin/AdminMembers';
-import AdminPartners from './pages/admin/AdminPartners';
-import AdminGifts from './pages/admin/AdminGifts';
-import AdminSettings from './pages/admin/AdminSettings';
-import AdminCategories from './pages/admin/AdminCategories';
-import AdminProsLanding from './pages/admin/AdminProsLanding';
-import AdminPopups from './pages/admin/AdminPopups';
-import AdminTarifs from './pages/admin/AdminTarifs';
-import AdminAccount from './pages/admin/AdminAccount';
+const AdminRoot = lazyAvecRelance(() => import('./pages/Admin'));
+const AdminDashboard = lazyAvecRelance(() => import('./pages/admin/AdminDashboard'));
+const AdminAnalytics = lazyAvecRelance(() => import('./pages/admin/AdminAnalytics'));
+const AdminUsers = lazyAvecRelance(() => import('./pages/admin/AdminUsers'));
+const AdminSeo = lazyAvecRelance(() => import('./pages/admin/AdminSeo'));
+const AdminEstablishments = lazyAvecRelance(() => import('./pages/admin/AdminEstablishments'));
+const AdminDrafts = lazyAvecRelance(() => import('./pages/admin/AdminDrafts'));
+const AdminSurvey = lazyAvecRelance(() => import('./pages/admin/AdminSurvey'));
+const AdminCities = lazyAvecRelance(() => import('./pages/admin/AdminCities'));
+const AdminSocial = lazyAvecRelance(() => import('./pages/admin/AdminSocial'));
+const AdminClaims = lazyAvecRelance(() => import('./pages/admin/AdminClaims'));
+const AdminReports = lazyAvecRelance(() => import('./pages/admin/AdminReports'));
+const AdminEvents = lazyAvecRelance(() => import('./pages/admin/AdminEvents'));
+const AdminEventDrafts = lazyAvecRelance(() => import('./pages/admin/AdminEventDrafts'));
+const AdminPromotions = lazyAvecRelance(() => import('./pages/admin/AdminPromotions'));
+const AdminMembers = lazyAvecRelance(() => import('./pages/admin/AdminMembers'));
+const AdminPartners = lazyAvecRelance(() => import('./pages/admin/AdminPartners'));
+const AdminGifts = lazyAvecRelance(() => import('./pages/admin/AdminGifts'));
+const AdminSettings = lazyAvecRelance(() => import('./pages/admin/AdminSettings'));
+const AdminCategories = lazyAvecRelance(() => import('./pages/admin/AdminCategories'));
+const AdminProsLanding = lazyAvecRelance(() => import('./pages/admin/AdminProsLanding'));
+const AdminPopups = lazyAvecRelance(() => import('./pages/admin/AdminPopups'));
+const AdminTarifs = lazyAvecRelance(() => import('./pages/admin/AdminTarifs'));
+const AdminAccount = lazyAvecRelance(() => import('./pages/admin/AdminAccount'));
 
-import ProsLanding from './pages/pros/ProsLanding';
-import LegalLayout from './pages/legal/LegalLayout';
-import LegalMentions from './pages/legal/LegalMentions';
-import LegalCgu from './pages/legal/LegalCgu';
-import LegalConfidentialite from './pages/legal/LegalConfidentialite';
-import LegalContact from './pages/legal/LegalContact';
-import LegalCustomPage from './pages/legal/LegalCustomPage';
-import AdminLegal from './pages/admin/AdminLegal';
-import PartnerLayout from './components/partner/PartnerLayout';
-import PartnerDashboard from './pages/partner/PartnerDashboard';
-import PartnerEstablishment from './pages/partner/PartnerEstablishment';
-import PartnerEvents from './pages/partner/PartnerEvents';
-import PartnerPromotions from './pages/partner/PartnerPromotions';
-import PartnerReviews from './pages/partner/PartnerReviews';
-import PartnerSubscription from './pages/partner/PartnerSubscription';
+const ProsLanding = lazyAvecRelance(() => import('./pages/pros/ProsLanding'));
+const LegalLayout = lazyAvecRelance(() => import('./pages/legal/LegalLayout'));
+const LegalMentions = lazyAvecRelance(() => import('./pages/legal/LegalMentions'));
+const LegalCgu = lazyAvecRelance(() => import('./pages/legal/LegalCgu'));
+const LegalConfidentialite = lazyAvecRelance(() => import('./pages/legal/LegalConfidentialite'));
+const LegalContact = lazyAvecRelance(() => import('./pages/legal/LegalContact'));
+const LegalCustomPage = lazyAvecRelance(() => import('./pages/legal/LegalCustomPage'));
+const AdminLegal = lazyAvecRelance(() => import('./pages/admin/AdminLegal'));
+const PartnerLayout = lazyAvecRelance(() => import('./components/partner/PartnerLayout'));
+const PartnerDashboard = lazyAvecRelance(() => import('./pages/partner/PartnerDashboard'));
+const PartnerEstablishment = lazyAvecRelance(() => import('./pages/partner/PartnerEstablishment'));
+const PartnerEvents = lazyAvecRelance(() => import('./pages/partner/PartnerEvents'));
+const PartnerPromotions = lazyAvecRelance(() => import('./pages/partner/PartnerPromotions'));
+const PartnerReviews = lazyAvecRelance(() => import('./pages/partner/PartnerReviews'));
+const PartnerSubscription = lazyAvecRelance(() => import('./pages/partner/PartnerSubscription'));
 import PwaInstallPrompt from './components/ui/PwaInstallPrompt';
 import RouteTracker from './components/analytics/RouteTracker';
 import ConsentBanner from './components/ui/ConsentBanner';
@@ -90,6 +93,15 @@ export default function App() {
               },
             }}
           />
+          {/* Pages rarement visitées (admin, espace pro, légal…) chargées à la demande :
+              le premier chargement du site est bien plus léger (optimisation du 26/11/2026). */}
+          <Suspense
+            fallback={
+              <div className="min-h-[50vh] flex items-center justify-center">
+                <LoadingSpinner size={32} />
+              </div>
+            }
+          >
           <Routes>
             <Route path="/auth/verify" element={<Verify />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
@@ -233,6 +245,7 @@ export default function App() {
               <Route path="/pros/abonnement" element={<PartnerSubscription />} />
             </Route>
           </Routes>
+          </Suspense>
           <PwaInstallPrompt />
           <ConsentBanner />
         </CategoriesProvider>

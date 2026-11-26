@@ -12,6 +12,7 @@ import CityFilter, { type CityOption } from '../components/explore/CityFilter';
 import EstablishmentCard from '../components/explore/EstablishmentCard';
 import InscriptionGateModal from '../components/ui/InscriptionGateModal';
 import { FICHES_GRATUITES, ouvrirFicheGratuite } from '../lib/fichesGratuites';
+import { useEcranLarge } from '../lib/useEcranLarge';
 import FeaturedEvents from '../components/explore/FeaturedEvents';
 import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
@@ -108,6 +109,10 @@ export default function Explore() {
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const listContainerRef = useRef<HTMLDivElement>(null);
+  // Une seule mise en page construite (ordinateur OU téléphone). Avant, les deux
+  // l'étaient, l'une cachée par le CSS : deux cartes Google chargées (quota compté
+  // double), deux fois les points et la liste (optimisation du 26/11/2026).
+  const ordinateur = useEcranLarge();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
@@ -286,25 +291,29 @@ export default function Explore() {
     const { data } = await query;
 
     if (data) {
-      const withRatings = await Promise.all(
-        data.map(async (est) => {
-          const { data: reviews } = await supabase
-            .from('reviews')
-            .select('rating, safety_rating')
-            .eq('establishment_id', est.id);
-
-          const ratings = reviews || [];
-          const avg = ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-            : 0;
-          const safety = ratings.filter((r) => r.safety_rating && r.safety_rating > 0);
-          const avgSafety = safety.length > 0
-            ? safety.reduce((sum, r) => sum + (r.safety_rating || 0), 0) / safety.length
-            : 0;
-
-          return { ...est, avg_rating: avg, review_count: ratings.length, avg_safety_rating: avgSafety };
-        })
-      );
+      // Notes de toute la page en UNE demande (avant : une demande par lieu, soit
+      // 21 allers-retours pour 20 lieux).
+      const ids = data.map((e) => e.id);
+      const { data: avis } = ids.length
+        ? await supabase.from('reviews').select('establishment_id, rating, safety_rating').in('establishment_id', ids)
+        : { data: [] as { establishment_id: string; rating: number; safety_rating: number | null }[] };
+      const parLieu = new Map<string, { rating: number; safety_rating: number | null }[]>();
+      for (const a of avis || []) {
+        const l = parLieu.get(a.establishment_id) || [];
+        l.push(a);
+        parLieu.set(a.establishment_id, l);
+      }
+      const withRatings = data.map((est) => {
+        const ratings = parLieu.get(est.id) || [];
+        const avg = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 0;
+        const safety = ratings.filter((r) => r.safety_rating && r.safety_rating > 0);
+        const avgSafety = safety.length > 0
+          ? safety.reduce((sum, r) => sum + (r.safety_rating || 0), 0) / safety.length
+          : 0;
+        return { ...est, avg_rating: avg, review_count: ratings.length, avg_safety_rating: avgSafety };
+      });
 
       if (reset) {
         setEstablishments(withRatings);
@@ -372,8 +381,11 @@ export default function Explore() {
     setCitySlug(proche.c.slug);
   }, []);
 
+  // Le cadrage ne compte que sans ville choisie (« Autour de moi ») : avec une ville,
+  // la liste contient tous ses lieux quel que soit le cadrage, la recharger à chaque
+  // mouvement de carte ne faisait que refaire la même demande.
   useEffect(() => {
-    if (bounds && !debouncedSearch.trim()) {
+    if (bounds && !debouncedSearch.trim() && !citySlug) {
       fetchEstablishments(true);
     }
   }, [bounds]);
@@ -575,6 +587,7 @@ export default function Explore() {
         </div>
       </div>
 
+      {ordinateur ? (
       <div className="hidden lg:flex flex-1 min-h-0 gap-0">
         <div className="shrink-0 h-full" style={{ width: '55%' }}>
           <div className="h-full px-2 pb-2">
@@ -602,7 +615,7 @@ export default function Explore() {
           {establishmentList}
         </div>
       </div>
-
+      ) : (
       <div className="lg:hidden flex flex-col flex-1 min-h-0">
         <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '40dvh' }}>
           <MapView
@@ -624,6 +637,7 @@ export default function Explore() {
           {establishmentList}
         </div>
       </div>
+      )}
 
       <InscriptionGateModal
         open={gateFiche !== null}
