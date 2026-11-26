@@ -60,7 +60,22 @@ export default function Explore() {
   // On arrive sur la ville la mieux fournie (voir plus bas), pas sur la position
   // du visiteur : ouvrir la carte sur une zone sans aucun lieu ne sert à rien.
   // « Autour de moi » redonne la main à sa position quand il la demande.
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(DEFAULT_CENTER);
+  /**
+   * Point à montrer, venu d'une fiche événement (« Voir sur la carte », demande de Kévin,
+   * 26/11/2026) : /explorer?lat=…&lng=…&repere=Titre. La carte s'ouvre centrée dessus,
+   * avec un repère, au lieu de la ville la mieux fournie ; la ville et la liste suivent
+   * ensuite la carte comme d'habitude.
+   */
+  const [pointCible] = useState<{ lat: number; lng: number; titre: string } | null>(() => {
+    const lat = Number(searchParams.get('lat'));
+    const lng = Number(searchParams.get('lng'));
+    if (!searchParams.get('lat') || !searchParams.get('lng')) return null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+    return { lat, lng, titre: (searchParams.get('repere') || '').slice(0, 120) };
+  });
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() =>
+    pointCible ? { lat: pointCible.lat, lng: pointCible.lng } : DEFAULT_CENTER,
+  );
   const [cities, setCities] = useState<CityOption[]>([]);
   const [citySlug, setCitySlug] = useState<string | null>(null);
   /**
@@ -85,7 +100,10 @@ export default function Explore() {
   /** Le lieu touché sur la carte, montré en tête de liste même s'il n'est pas dans la page chargée. */
   const [lieuEpingle, setLieuEpingle] = useState<Establishment | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(null);
+  const [mapFlyTo, setMapFlyTo] = useState<{ lng: number; lat: number } | null>(() =>
+    pointCible ? { lat: pointCible.lat, lng: pointCible.lng } : null,
+  );
+  const pointCibleRef = useRef(pointCible);
   const [emptyText, setEmptyText] = useState('');
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -121,10 +139,12 @@ export default function Explore() {
         // Au premier chargement on ouvre sur la ville la mieux fournie.
         setCitySlug((s) => {
           const slug = s ?? list[0]?.slug ?? null;
-          if (!s && slug) demanderCadrage(slug);
+          // Arrivée depuis un événement : pas de recadrage sur la ville, la carte reste
+          // sur le point demandé (la ville suivra la carte toute seule).
+          if (!s && slug && !pointCibleRef.current) demanderCadrage(slug);
           return slug;
         });
-        if (list[0]) setUserLocation({ lat: list[0].lat, lng: list[0].lng });
+        if (list[0] && !pointCibleRef.current) setUserLocation({ lat: list[0].lat, lng: list[0].lng });
       });
   }, []);
 
@@ -565,6 +585,7 @@ export default function Explore() {
               onEstablishmentClick={(id) => ouvrirFiche(id, `/establishment/${id}`)}
               onPinSelect={handlePinSelect}
               flyTo={mapFlyTo}
+              repere={pointCible}
               fitToCity={fitKey}
               category={selectedCategory}
               subcategories={selectedSubcategories}
@@ -591,6 +612,7 @@ export default function Explore() {
             onEstablishmentClick={(id) => ouvrirFiche(id, `/establishment/${id}`)}
             onPinSelect={handlePinSelect}
             flyTo={mapFlyTo}
+            repere={pointCible}
             fitToCity={fitKey}
             category={selectedCategory}
             subcategories={selectedSubcategories}
