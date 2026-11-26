@@ -1,34 +1,75 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare, ClipboardList, Flag,
+  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare, ClipboardList, Flag, Presentation,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const NAV_ITEMS = [
-  { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
-  { to: '/admin/statistiques', icon: LineChart, label: 'Analytics' },
-  { to: '/admin/utilisateurs', icon: UserSearch, label: 'Utilisateurs' },
-  { to: '/admin/referencement', icon: Network, label: 'SEO' },
-  { to: '/admin/etablissements', icon: Building2, label: 'Établissements' },
-  { to: '/admin/fiches-auto', icon: Sparkles, label: 'Fiches auto' },
-  { to: '/admin/villes', icon: MapPin, label: 'Villes' },
-  { to: '/admin/questionnaire', icon: ClipboardList, label: 'Questionnaire' },
-  { to: '/admin/reseaux-sociaux', icon: Megaphone, label: 'Social' },
-  { to: '/admin/signalements', icon: Flag, label: 'Signalements' },
-  { to: '/admin/revendications', icon: BadgeCheck, label: 'Revendications' },
-  { to: '/admin/evenements', icon: CalendarDays, label: 'Événements' },
-  { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
-  { to: '/admin/membres', icon: Users, label: 'Membres' },
-  { to: '/admin/partenaires', icon: Handshake, label: 'Partenaires' },
-  { to: '/admin/cadeaux', icon: Gift, label: 'Cadeaux offerts' },
-  { to: '/admin/categories', icon: Layers, label: 'Catégories' },
-  { to: '/admin/page-pros', icon: Megaphone, label: 'Landing Pros' },
-  { to: '/admin/fenetres', icon: MessageSquare, label: 'Pop-ups' },
-  { to: '/admin/tarifs', icon: CreditCard, label: 'Tarifs' },
-  { to: '/admin/parametres', icon: Settings, label: 'Paramètres' },
-  { to: '/admin/contenu-legal', icon: FileText, label: 'Contenu légal' },
-  { to: '/admin/mon-compte', icon: UserCog, label: 'Mon compte' },
+/**
+ * Menu de l'admin rangé par rubriques (demande de Kévin, 26/11/2026 : « c'est un peu le
+ * foutoir »). Mêmes pages et mêmes adresses qu'avant, seuls l'ordre, les titres de
+ * rubrique et quelques intitulés changent.
+ */
+type NavItem = { to: string; icon: typeof BarChart3; label: string; end?: boolean };
+const NAV_GROUPS: { titre: string; items: NavItem[] }[] = [
+  {
+    titre: "Vue d'ensemble",
+    items: [
+      { to: '/admin', icon: BarChart3, label: 'Tableau de bord', end: true },
+      { to: '/admin/statistiques', icon: LineChart, label: 'Statistiques' },
+      { to: '/admin/utilisateurs', icon: UserSearch, label: 'Parcours des visiteurs' },
+    ],
+  },
+  {
+    titre: 'À traiter',
+    items: [
+      { to: '/admin/signalements', icon: Flag, label: 'Signalements' },
+      { to: '/admin/revendications', icon: BadgeCheck, label: 'Revendications' },
+    ],
+  },
+  {
+    titre: 'Annuaire',
+    items: [
+      { to: '/admin/etablissements', icon: Building2, label: 'Établissements' },
+      { to: '/admin/partenaires', icon: Handshake, label: 'Partenaires' },
+      { to: '/admin/fiches-auto', icon: Sparkles, label: 'Fiches auto' },
+      { to: '/admin/villes', icon: MapPin, label: 'Villes' },
+      { to: '/admin/categories', icon: Layers, label: 'Catégories' },
+    ],
+  },
+  {
+    titre: 'Agenda et offres',
+    items: [
+      { to: '/admin/evenements', icon: CalendarDays, label: 'Événements' },
+      { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
+    ],
+  },
+  {
+    titre: 'Communauté',
+    items: [
+      { to: '/admin/membres', icon: Users, label: 'Membres' },
+      { to: '/admin/cadeaux', icon: Gift, label: 'Cadeaux offerts' },
+      { to: '/admin/questionnaire', icon: ClipboardList, label: 'Questionnaire' },
+    ],
+  },
+  {
+    titre: 'Communication',
+    items: [
+      { to: '/admin/fenetres', icon: MessageSquare, label: 'Pop-ups' },
+      { to: '/admin/tarifs', icon: CreditCard, label: 'Tarifs' },
+      { to: '/admin/page-pros', icon: Presentation, label: 'Page Pros' },
+      { to: '/admin/reseaux-sociaux', icon: Megaphone, label: 'Réseaux sociaux' },
+      { to: '/admin/referencement', icon: Network, label: 'Référencement (SEO)' },
+    ],
+  },
+  {
+    titre: 'Réglages',
+    items: [
+      { to: '/admin/parametres', icon: Settings, label: 'Paramètres' },
+      { to: '/admin/contenu-legal', icon: FileText, label: 'Contenu légal' },
+      { to: '/admin/mon-compte', icon: UserCog, label: 'Mon compte' },
+    ],
+  },
 ];
 
 export default function AdminLayout() {
@@ -41,7 +82,7 @@ export default function AdminLayout() {
   };
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-input text-sm font-medium transition-colors ${
+    `flex items-center gap-3 px-4 py-2 rounded-input text-sm font-medium transition-colors ${
       isActive
         ? 'bg-primary/10 text-primary'
         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-surface'
@@ -62,7 +103,7 @@ export default function AdminLayout() {
           <span className="text-gray-500 font-normal"> · Admin</span>
         </span>
         <div className="flex-1" />
-        <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mr-2" title={theme === 'dark' ? 'Theme clair' : 'Theme sombre'}>
+        <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mr-2" title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}>
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
         </button>
         <button onClick={handleQuit} className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -76,18 +117,25 @@ export default function AdminLayout() {
       )}
 
       <aside className={`fixed top-14 bottom-0 left-0 z-40 w-60 bg-light-surface dark:bg-dark-surface border-r border-light-border dark:border-dark-border overflow-y-auto transition-transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <nav className="p-3 space-y-1">
-          {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={linkClass}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Icon size={18} />
-              {label}
-            </NavLink>
+        <nav className="p-3 space-y-4">
+          {NAV_GROUPS.map(({ titre, items }) => (
+            <div key={titre} className="space-y-0.5">
+              <p className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                {titre}
+              </p>
+              {items.map(({ to, icon: Icon, label, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={linkClass}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Icon size={18} />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
       </aside>
