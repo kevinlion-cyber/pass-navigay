@@ -45,7 +45,7 @@ export default function CityFilter({
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-1.5 px-3 rounded-input border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-xs font-medium text-gray-900 dark:text-white hover:border-primary transition-colors max-w-[9.5rem]"
+        className="flex items-center gap-1.5 px-3 rounded-input border border-light-border dark:border-dark-border bg-light-surface dark:bg-dark-surface text-xs font-medium text-gray-900 dark:text-white hover:border-primary transition-colors max-w-[6.5rem] sm:max-w-[9.5rem]"
         style={{ height: 36 }}
       >
         {aroundMe ? <LocateFixed size={14} className="text-primary shrink-0" /> : <MapPin size={14} className="text-primary shrink-0" />}

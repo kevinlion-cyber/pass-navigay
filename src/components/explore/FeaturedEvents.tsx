@@ -47,7 +47,7 @@ export default function FeaturedEvents() {
 
   return (
     <div className="shrink-0">
-      <div className="flex items-center gap-1.5 px-4 pt-2 pb-1.5">
+      <div className="flex items-center gap-1.5 px-4 pt-1.5 pb-1 lg:pt-2 lg:pb-1.5">
         <Sparkles size={13} className="text-primary" />
         <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           A ne pas manquer
@@ -55,7 +55,7 @@ export default function FeaturedEvents() {
       </div>
       <div
         ref={scrollRef}
-        className="flex gap-3 px-4 pb-3 overflow-x-auto"
+        className="flex gap-2.5 lg:gap-3 px-4 pb-2 lg:pb-3 overflow-x-auto"
         style={{ scrollbarWidth: 'none' }}
         onMouseEnter={() => { pausedRef.current = true; }}
         onMouseLeave={() => { pausedRef.current = false; }}
@@ -64,8 +64,7 @@ export default function FeaturedEvents() {
           <div
             key={event.id}
             onClick={() => navigate(`/agenda/${event.id}`)}
-            className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group w-[200px] lg:w-[230px]"
-            style={{ height: 120 }}
+            className="shrink-0 cursor-pointer relative overflow-hidden rounded-xl group w-[170px] h-[88px] lg:w-[230px] lg:h-[120px]"
           >
             {event.image_url ? (
               <img
@@ -79,7 +78,7 @@ export default function FeaturedEvents() {
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="absolute bottom-0 left-0 right-0 p-2 lg:p-3">
               <h4 className="text-[13px] font-semibold text-white leading-tight truncate">
                 {event.title}
               </h4>

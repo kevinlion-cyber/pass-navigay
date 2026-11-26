@@ -33,9 +33,10 @@ export default function CategoryFilters({
   const currentSub = selectedSubcategories.length === 1 ? selectedSubcategories[0] : 'all';
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-1.5 sm:gap-2">
       <FilterDropdown
         align="right"
+        compactMobile
         label="Catégorie"
         value={selectedCategory ?? 'all'}
         options={categoryOptions}
@@ -44,6 +45,7 @@ export default function CategoryFilters({
       {subcategories.length > 0 && (
         <FilterDropdown
         align="right"
+        compactMobile
           label="Type"
           value={currentSub}
           options={subOptions}

@@ -553,13 +553,12 @@ export default function Explore() {
 
       <FeaturedEvents />
 
-      <div className="shrink-0 px-4 pt-2 pb-2">
-        {/* Sur téléphone, les trois commandes tenaient sur une seule ligne : la ville et la
-            catégorie prenaient toute la largeur et la recherche tombait à la taille de ses
-            propres marges. On tapait sans rien voir. Elle a donc sa ligne, les deux filtres
-            la suivante ; à partir de la tablette, tout revient sur une ligne. */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="relative sm:flex-1 sm:min-w-0">
+      <div className="shrink-0 px-4 pt-0.5 pb-1.5 lg:pt-2 lg:pb-2">
+        {/* Une seule ligne quand la place le permet (filtres compacts sur téléphone, pour
+            remonter la carte et la liste) ; si la recherche devait descendre sous 120 px
+            (une sous-catégorie choisie, très petit écran), les filtres passent à la ligne. */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <div className="relative flex-1 min-w-[120px]">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             {searchLoading && (
               <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" />
@@ -574,7 +573,7 @@ export default function Explore() {
               style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
             />
           </div>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 ml-auto">
             <CityFilter
               cities={cities}
               value={citySlug}
