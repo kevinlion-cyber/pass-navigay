@@ -5,6 +5,7 @@ import type { Renderer } from '@googlemaps/markerclusterer';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import { DEFAULT_CENTER } from '../../lib/constants';
 import { useCategories } from '../../contexts/CategoriesContext';
+import { COULEUR_LIEU, COULEUR_SPONSOR, creerPastilleLieu, svgPictoCategorie } from '../../lib/pictosCategories';
 import { supabase } from '../../lib/supabase';
 import { useMapPins, type MapPin, type PinBounds } from '../../lib/mapPins';
 
@@ -202,11 +203,8 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     const created = pins
       .filter((p) => Math.abs(p.latitude) > 0.0001 || Math.abs(p.longitude) > 0.0001)
       .map((p) => {
-        const dot = document.createElement('div');
-        dot.className = 'w-5 h-5 rounded-full border-2 border-white cursor-pointer shadow-md';
-        dot.style.backgroundColor = p.is_sponsor ? '#d4a017' : '#7B2D8B';
-        dot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
-        dot.title = p.name;
+        // Icône de la catégorie dans une pastille violette (dorée pour un sponsor).
+        const dot = creerPastilleLieu(p.category, p.is_sponsor, p.name);
 
         // Sans `gmpClickable`, Google ne rend pas le point interactif : au doigt, rien ne
         // se passait et la fiche ne s'ouvrait jamais sur téléphone. À la souris le clic
@@ -262,12 +260,14 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
               onClick={() => handleMarkerClick(h)}
             >
               <div
-                className="w-5 h-5 rounded-full border-2 border-white cursor-pointer"
+                className="w-[30px] h-[30px] rounded-full border-2 border-white cursor-pointer flex items-center justify-center"
                 style={{
-                  backgroundColor: h.is_sponsor ? '#d4a017' : '#7B2D8B',
+                  backgroundColor: h.is_sponsor ? COULEUR_SPONSOR : COULEUR_LIEU,
                   boxShadow: '0 0 0 4px rgba(123,45,139,0.45)',
-                  transform: 'scale(1.4)',
+                  transform: 'scale(1.3)',
                 }}
+                // Tracé constant (pictosCategories), jamais du texte venu de la base.
+                dangerouslySetInnerHTML={{ __html: svgPictoCategorie(h.category) }}
               />
             </AdvancedMarker>
           );
