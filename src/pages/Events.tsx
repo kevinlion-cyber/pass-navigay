@@ -119,15 +119,66 @@ export default function Events() {
 
   if (loading) return <LoadingSpinner />;
 
-  // Version téléphone : sans l'intitulé « Ville : » et avec « Ville » au lieu de
-  // « Toutes les villes », pour tenir sur la même ligne que les deux dates.
+  type Cote = 'left' | 'right' | 'center';
+  // Version téléphone de la ville : « Ville » quand aucune n'est choisie, bouton pleine
+  // largeur dans la grille, menu ouvert vers la droite (colonne de gauche).
   const filtreVilleMobile = (
     <FilterDropdown
       label="Ville"
       compactMobile
+      pleineLargeur
+      align="left"
       value={cityFilter}
-      options={[{ value: 'all', label: 'Ville' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
+      options={[{ value: 'all', label: 'Toutes les villes' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
       onChange={setCityFilter}
+    />
+  );
+  const filtreTheme = (align: Cote = 'center', mobile = false) => (
+    <FilterDropdown
+      label="Thème"
+      align={align}
+      compactMobile={mobile}
+      pleineLargeur={mobile}
+      value={themeFilter}
+      options={THEME_FILTERS.map((t) => ({ value: t, label: mobile && t === 'Tous' ? 'Tous les thèmes' : t }))}
+      onChange={setThemeFilter}
+    />
+  );
+  const filtrePrix = (align: Cote = 'center', mobile = false) => (
+    <FilterDropdown
+      label="Prix"
+      align={align}
+      compactMobile={mobile}
+      pleineLargeur={mobile}
+      value={priceFilter}
+      options={[
+        { value: 'all' as PriceFilter, label: 'Tous les prix' },
+        { value: 'free' as PriceFilter, label: 'Gratuit' },
+        { value: 'paid' as PriceFilter, label: 'Payant' },
+      ]}
+      onChange={setPriceFilter}
+    />
+  );
+  const filtreCategorie = (align: Cote = 'center', mobile = false) => (
+    <FilterDropdown
+      label="Catégorie"
+      align={align}
+      compactMobile={mobile}
+      pleineLargeur={mobile}
+      value={catFilter}
+      options={[{ value: 'all', label: 'Toutes les catégories' }, ...categoryKeys.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
+      onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
+    />
+  );
+  const filtreSousCategorie = (align: Cote = 'center', mobile = false) => (
+    <FilterDropdown
+      label="Sous-catégorie"
+      align={align}
+      compactMobile={mobile}
+      pleineLargeur={mobile}
+      value={subcatFilter}
+      options={[{ value: 'all', label: 'Toutes les sous-catégories' }, ...subcats.map((s) => ({ value: s, label: s }))]}
+      onChange={setSubcatFilter}
     />
   );
   const filtreVille = (
@@ -149,7 +200,7 @@ export default function Events() {
      * celle de la barre d'onglets (4rem), qui n'existe pas sur grand écran.
      */
     <div className="flex flex-col overflow-hidden h-[calc(100dvh-3.5rem-4rem)] md:h-[calc(100dvh-3.5rem)]">
-      <div className="shrink-0 w-full max-w-4xl mx-auto px-4 pt-6 pb-3 space-y-4">
+      <div className="shrink-0 w-full max-w-4xl mx-auto px-4 pt-4 sm:pt-6 pb-3 space-y-3 sm:space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Événements</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -157,8 +208,12 @@ export default function Events() {
         </p>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
+      {/* Téléphone : recherche sur toute la largeur, puis les filtres rangés en grille de
+          deux colonnes (Ville | Catégorie, Thème | Prix, Du | Au) — tout est visible sans
+          défiler de côté, et chaque menu s'ouvre du bon côté de l'écran (26/11/2026).
+          Ordinateur : la mise en page d'origine, sur une ligne. */}
+      <div className="sm:hidden space-y-2">
+        <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -177,60 +232,70 @@ export default function Events() {
             </button>
           )}
         </div>
-        <FilterDropdown
-          label="Thème"
-          value={themeFilter}
-          options={THEME_FILTERS.map((t) => ({ value: t, label: t }))}
-          onChange={setThemeFilter}
-        />
-        <FilterDropdown
-          label="Prix"
-          value={priceFilter}
-          options={[
-            { value: 'all' as PriceFilter, label: 'Tous les prix' },
-            { value: 'free' as PriceFilter, label: 'Gratuit' },
-            { value: 'paid' as PriceFilter, label: 'Payant' },
-          ]}
-          onChange={setPriceFilter}
-        />
-        {coveredCities.length > 0 && (
-          <div className="hidden sm:block">{filtreVille}</div>
-        )}
-        {categoryKeys.length > 0 && (
-          <FilterDropdown
-            label="Catégorie"
-            value={catFilter}
-            options={[{ value: 'all', label: 'Toutes les catégories' }, ...categoryKeys.map((c) => ({ value: c, label: categories[c as CategoryKey]?.label || c }))]}
-            onChange={(v) => { setCatFilter(v); setSubcatFilter('all'); }}
-          />
-        )}
-        {subcats.length > 0 && (
-          <FilterDropdown
-            label="Sous-catégorie"
-            value={subcatFilter}
-            options={[{ value: 'all', label: 'Toutes les sous-catégories' }, ...subcats.map((s) => ({ value: s, label: s }))]}
-            onChange={setSubcatFilter}
-          />
-        )}
+        <div className="grid grid-cols-2 gap-2">
+          {coveredCities.length > 0 && filtreVilleMobile}
+          {categoryKeys.length > 0 && filtreCategorie('right', true)}
+          {filtreTheme('left', true)}
+          {filtrePrix('right', true)}
+          {subcats.length > 0 && <div className="col-span-2">{filtreSousCategorie('left', true)}</div>}
+          <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+            Du
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+              className="input-field text-xs w-full min-w-0" style={{ height: 34, padding: '4px 6px' }} />
+          </label>
+          <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+            Au
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+              className="input-field text-xs w-full min-w-0" style={{ height: 34, padding: '4px 6px' }} />
+          </label>
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+              className="col-span-2 justify-self-start text-xs text-primary hover:underline">Réinitialiser les dates</button>
+          )}
+        </div>
       </div>
 
-      {/* Sur téléphone, la ville se place juste avant les dates, sur une seule ligne
-          (demande de Kévin, 26/11/2026) ; les deux dates se partagent la place restante. */}
-      <div className={`grid ${coveredCities.length > 0 ? 'grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]' : 'grid-cols-2'} items-center gap-2 sm:flex sm:flex-wrap`}>
-        {coveredCities.length > 0 && <div className="sm:hidden">{filtreVilleMobile}</div>}
-        <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+      <div className="hidden sm:flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un événement..."
+            className="input-field pl-9 text-xs w-full"
+            style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        {filtreTheme()}
+        {filtrePrix()}
+        {coveredCities.length > 0 && filtreVille}
+        {categoryKeys.length > 0 && filtreCategorie()}
+        {subcats.length > 0 && filtreSousCategorie()}
+      </div>
+
+      <div className="hidden sm:flex items-center gap-2 flex-wrap">
+        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           Du
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-            className="input-field text-xs w-full min-w-0 sm:w-auto" style={{ height: 32, padding: '4px 6px' }} />
+            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
         </label>
-        <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           Au
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-            className="input-field text-xs w-full min-w-0 sm:w-auto" style={{ height: 32, padding: '4px 6px' }} />
+            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
         </label>
         {(dateFrom || dateTo) && (
           <button onClick={() => { setDateFrom(''); setDateTo(''); }}
-            className="col-span-full justify-self-start text-xs text-primary hover:underline">Réinitialiser les dates</button>
+            className="text-xs text-primary hover:underline">Réinitialiser les dates</button>
         )}
       </div>
       </div>

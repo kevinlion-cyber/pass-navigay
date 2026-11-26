@@ -7,9 +7,11 @@ interface FilterDropdownProps<T extends string> {
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
   /** « right » : le menu s'aligne sur le bord droit du bouton (bouton collé à droite de l'écran). */
-  align?: 'center' | 'right';
+  align?: 'center' | 'right' | 'left';
   /** Sur téléphone, n'affiche que la valeur (« Tout ▾ ») sans l'intitulé, pour gagner de la place. */
   compactMobile?: boolean;
+  /** Le bouton occupe toute la largeur de sa case (grille de filtres sur téléphone). */
+  pleineLargeur?: boolean;
 }
 
 export default function FilterDropdown<T extends string>({
@@ -19,6 +21,7 @@ export default function FilterDropdown<T extends string>({
   onChange,
   align = 'center',
   compactMobile = false,
+  pleineLargeur = false,
 }: FilterDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -36,17 +39,17 @@ export default function FilterDropdown<T extends string>({
   const selected = options.find((o) => o.value === value);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={`relative ${pleineLargeur ? 'w-full min-w-0' : ''}`}>
       <button
         onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-1.5 px-3 h-9 text-xs font-medium
+        className={`flex items-center gap-1.5 px-3 h-9 text-xs font-medium ${pleineLargeur ? 'w-full min-w-0' : ''}
                    border border-light-border dark:border-dark-border rounded-lg
                    bg-light-surface dark:bg-dark-surface
                    text-gray-700 dark:text-gray-300
-                   hover:border-primary transition-colors whitespace-nowrap"
+                   hover:border-primary transition-colors whitespace-nowrap`}
       >
         <span className={`text-gray-400 dark:text-gray-500 ${compactMobile ? 'hidden sm:inline' : ''}`}>{label}:</span>
-        <span>{selected?.label ?? label}</span>
+        <span className={pleineLargeur ? 'flex-1 min-w-0 truncate text-left' : ''}>{selected?.label ?? label}</span>
         <ChevronDown
           size={14}
           className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
@@ -55,7 +58,7 @@ export default function FilterDropdown<T extends string>({
 
       {open && (
         <div
-          className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'} mt-1 z-50 min-w-[160px] max-w-[calc(100vw-2rem)]
+          className={`absolute top-full ${align === 'right' ? 'right-0' : align === 'left' ? 'left-0' : 'left-1/2 -translate-x-1/2'} mt-1 z-50 min-w-[160px] max-w-[calc(100vw-2rem)]
                       border border-light-border dark:border-dark-border rounded-lg
                       bg-light-surface dark:bg-dark-surface shadow-lg
                       py-1 animate-in fade-in slide-in-from-top-1`}
