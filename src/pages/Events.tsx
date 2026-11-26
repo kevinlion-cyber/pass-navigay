@@ -119,6 +119,26 @@ export default function Events() {
 
   if (loading) return <LoadingSpinner />;
 
+  // Version téléphone : sans l'intitulé « Ville : » et avec « Ville » au lieu de
+  // « Toutes les villes », pour tenir sur la même ligne que les deux dates.
+  const filtreVilleMobile = (
+    <FilterDropdown
+      label="Ville"
+      compactMobile
+      value={cityFilter}
+      options={[{ value: 'all', label: 'Ville' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
+      onChange={setCityFilter}
+    />
+  );
+  const filtreVille = (
+    <FilterDropdown
+      label="Ville"
+      value={cityFilter}
+      options={[{ value: 'all', label: 'Toutes les villes' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
+      onChange={setCityFilter}
+    />
+  );
+
   return (
     /*
      * Cadre à hauteur fixe, la liste défile à l'intérieur (même principe que la
@@ -158,7 +178,7 @@ export default function Events() {
           )}
         </div>
         <FilterDropdown
-          label="Theme"
+          label="Thème"
           value={themeFilter}
           options={THEME_FILTERS.map((t) => ({ value: t, label: t }))}
           onChange={setThemeFilter}
@@ -174,12 +194,7 @@ export default function Events() {
           onChange={setPriceFilter}
         />
         {coveredCities.length > 0 && (
-          <FilterDropdown
-            label="Ville"
-            value={cityFilter}
-            options={[{ value: 'all', label: 'Toutes les villes' }, ...coveredCities.map((c) => ({ value: c.slug, label: c.name }))]}
-            onChange={setCityFilter}
-          />
+          <div className="hidden sm:block">{filtreVille}</div>
         )}
         {categoryKeys.length > 0 && (
           <FilterDropdown
@@ -199,20 +214,23 @@ export default function Events() {
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+      {/* Sur téléphone, la ville se place juste avant les dates, sur une seule ligne
+          (demande de Kévin, 26/11/2026) ; les deux dates se partagent la place restante. */}
+      <div className={`grid ${coveredCities.length > 0 ? 'grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]' : 'grid-cols-2'} items-center gap-2 sm:flex sm:flex-wrap`}>
+        {coveredCities.length > 0 && <div className="sm:hidden">{filtreVilleMobile}</div>}
+        <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
           Du
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
+            className="input-field text-xs w-full min-w-0 sm:w-auto" style={{ height: 32, padding: '4px 6px' }} />
         </label>
-        <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <label className="flex items-center gap-1.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
           Au
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-            className="input-field text-xs" style={{ height: 32, padding: '4px 8px' }} />
+            className="input-field text-xs w-full min-w-0 sm:w-auto" style={{ height: 32, padding: '4px 6px' }} />
         </label>
         {(dateFrom || dateTo) && (
           <button onClick={() => { setDateFrom(''); setDateTo(''); }}
-            className="text-xs text-primary hover:underline">Réinitialiser les dates</button>
+            className="col-span-full justify-self-start text-xs text-primary hover:underline">Réinitialiser les dates</button>
         )}
       </div>
       </div>
