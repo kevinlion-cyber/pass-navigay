@@ -18,7 +18,7 @@ const PROMO_FILTERS: { value: PromoTypeFilter; label: string }[] = [
   { value: 'all', label: 'Toutes' },
   { value: 'percentage', label: 'Reduction %' },
   { value: 'fixed', label: 'Montant fixe' },
-  { value: 'offer', label: 'Offre speciale' },
+  { value: 'offer', label: 'Offre spéciale' },
   { value: 'recurring', label: 'Recurrente' },
 ];
 
@@ -107,7 +107,7 @@ export default function Promos() {
   const promoLabel = (p: Promotion) => {
     if (p.promo_type === 'percentage' && p.value) return `-${p.value}%`;
     if (p.promo_type === 'fixed' && p.value) return `-${p.value} EUR`;
-    return 'Offre speciale';
+    return 'Offre spéciale';
   };
 
   const promoTypeLabel = (type: string) => {
@@ -201,22 +201,27 @@ export default function Promos() {
           pas, donc rien ne poussait à s'inscrire. */}
       {!isPremium && filtered.length > 0 && (
         <div
-          className="flex items-start gap-3 rounded-card p-4"
+          className="rounded-card p-3 sm:p-4"
           style={{ background: 'rgba(123,45,139,0.08)', border: '1px solid rgba(123,45,139,0.25)' }}
         >
-          <Lock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{premiumText.title}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{premiumText.body}</p>
+          {/* Sur téléphone, le texte passait en colonne étroite (presque vertical) à côté du
+              bouton : il passe désormais en dessous, sur toute la largeur. */}
+          <div className="flex items-center sm:items-start gap-3">
+            <Lock size={18} className="sm:mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{premiumText.title}</p>
+              <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mt-0.5">{premiumText.body}</p>
+            </div>
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#7B2D8B' }}
+            >
+              <Crown size={15} />
+              {premiumText.cta}
+            </button>
           </div>
-          <button
-            onClick={() => setUpgradeOpen(true)}
-            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: '#7B2D8B' }}
-          >
-            <Crown size={15} />
-            {premiumText.cta}
-          </button>
+          <p className="sm:hidden text-[13px] text-gray-500 dark:text-gray-400 mt-2">{premiumText.body}</p>
         </div>
       )}
 

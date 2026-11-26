@@ -105,26 +105,33 @@ export default function Members() {
           occuper toute la page. */}
       {!isPremium && (
         <div
-          className="flex items-start gap-3 rounded-card p-4"
+          className="rounded-card p-3 sm:p-4"
           style={{ background: 'rgba(123,45,139,0.08)', border: '1px solid rgba(123,45,139,0.25)' }}
         >
-          <Lock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              Réservé aux membres Premium
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Le pass Premium donne accès aux profils, à la messagerie et aux promotions.
-            </p>
+          {/* Sur téléphone, le texte passait en colonne étroite (presque vertical) à côté du
+              bouton : il passe désormais en dessous, sur toute la largeur. */}
+          <div className="flex items-center sm:items-start gap-3">
+            <Lock size={18} className="sm:mt-0.5 shrink-0" style={{ color: '#7B2D8B' }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Réservé aux membres Premium
+              </p>
+              <p className="hidden sm:block text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Le pass Premium donne accès aux profils, à la messagerie et aux promotions.
+              </p>
+            </div>
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#7B2D8B' }}
+            >
+              <Crown size={15} />
+              Passer Premium
+            </button>
           </div>
-          <button
-            onClick={() => setUpgradeOpen(true)}
-            className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-semibold text-white transition-all hover:opacity-90"
-            style={{ background: '#7B2D8B' }}
-          >
-            <Crown size={15} />
-            Passer Premium
-          </button>
+          <p className="sm:hidden text-[13px] text-gray-500 dark:text-gray-400 mt-2">
+                Le pass Premium donne accès aux profils, à la messagerie et aux promotions.
+              </p>
         </div>
       )}
 
