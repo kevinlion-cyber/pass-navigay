@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, ChevronLeft, Tag, Ticket, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Clock, ChevronLeft, Tag, Ticket, ExternalLink, Map as MapIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Event } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -18,7 +18,7 @@ export default function EventDetail() {
       setLoading(true);
       const { data } = await supabase
         .from('events')
-        .select('*, establishment:establishments(id, name, logo_url, city, address)')
+        .select('*, establishment:establishments(id, name, logo_url, city, address, latitude, longitude)')
         .eq('id', eventId)
         .maybeSingle();
       if (data) setEvent(data as unknown as Event);
@@ -47,6 +47,18 @@ export default function EventDetail() {
   }
 
   const est = event.establishment;
+
+  // « Voir sur la carte » (demande de Kévin, 26/11/2026) : ouvre Google Maps sur le lieu
+  // (l'application Maps sur téléphone). Simple lien : aucun appel facturé à Google.
+  // Coordonnées de l'événement, sinon celles de l'établissement, sinon l'adresse en texte.
+  const adresse = event.address || est?.address || '';
+  const lat = event.latitude ?? est?.latitude ?? null;
+  const lng = event.longitude ?? est?.longitude ?? null;
+  const lienCarte = lat != null && lng != null
+    ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+    : adresse
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}`
+      : null;
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('fr-FR', {
@@ -99,10 +111,20 @@ export default function EventDetail() {
             </div>
           )}
 
-          {event.address && (
-            <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+          {adresse && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
               <MapPin size={16} className="shrink-0 text-primary" />
-              <span>{event.address}</span>
+              <span className="flex-1 min-w-0">{adresse}</span>
+              {lienCarte && (
+                <a
+                  href={lienCarte}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <MapIcon size={14} /> Voir sur la carte
+                </a>
+              )}
             </div>
           )}
 
