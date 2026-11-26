@@ -80,14 +80,14 @@ export default function PromoDetail() {
   const promoLabel = () => {
     if (promo.promo_type === 'percentage' && promo.value) return `-${promo.value}%`;
     if (promo.promo_type === 'fixed' && promo.value) return `-${promo.value} EUR`;
-    return 'Offre speciale';
+    return 'Offre spéciale';
   };
 
   const promoTypeLabel = () => {
     if (promo.promo_type === 'percentage') return 'Reduction en pourcentage';
     if (promo.promo_type === 'fixed') return 'Reduction montant fixe';
     if (promo.is_recurring) return 'Offre recurrente';
-    return 'Offre speciale';
+    return 'Offre spéciale';
   };
 
   const formatDate = (dateStr: string) =>
