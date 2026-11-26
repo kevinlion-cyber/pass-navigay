@@ -86,7 +86,12 @@ export default function Explore() {
    */
   const [fitKey, setFitKey] = useState<string | null>(null);
   const fitCountRef = useRef(0);
+  // Après un choix explicite (menu, « Autour de moi »), la carte se déplace puis se
+  // recadre : pendant ce temps, la ville ne doit pas « suivre » la carte, sinon une
+  // position intermédiaire la ramenait sur l'ancienne ville.
+  const suiviBloqueJusquaRef = useRef(0);
   const demanderCadrage = (slug: string) => {
+    suiviBloqueJusquaRef.current = Date.now() + 3000;
     fitCountRef.current += 1;
     setFitKey(`${slug}#${fitCountRef.current}`);
   };
@@ -367,6 +372,7 @@ export default function Explore() {
     setBounds(newBounds);
     const { cities: villes, citySlug: actuelle, search: recherche, aroundInfo: horsZone } = etatCarteRef.current;
     if (recherche.trim() || horsZone || villes.length === 0) return;
+    if (Date.now() < suiviBloqueJusquaRef.current) return;
     const centre = { lat: (newBounds.north + newBounds.south) / 2, lng: (newBounds.east + newBounds.west) / 2 };
     const largeur = distanceKm(
       { lat: newBounds.south, lng: newBounds.west },
@@ -568,7 +574,7 @@ export default function Explore() {
               style={{ height: 36, paddingTop: 6, paddingBottom: 6 }}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <CityFilter
               cities={cities}
               value={citySlug}
@@ -617,7 +623,7 @@ export default function Explore() {
       </div>
       ) : (
       <div className="lg:hidden flex flex-col flex-1 min-h-0">
-        <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '40dvh' }}>
+        <div className="shrink-0 border-b border-light-border dark:border-dark-border" style={{ height: '30dvh' }}>
           <MapView
             establishments={establishments}
             userLocation={userLocation}

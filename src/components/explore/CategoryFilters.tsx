@@ -35,6 +35,7 @@ export default function CategoryFilters({
   return (
     <div className="flex gap-2">
       <FilterDropdown
+        align="right"
         label="Catégorie"
         value={selectedCategory ?? 'all'}
         options={categoryOptions}
@@ -42,6 +43,7 @@ export default function CategoryFilters({
       />
       {subcategories.length > 0 && (
         <FilterDropdown
+        align="right"
           label="Type"
           value={currentSub}
           options={subOptions}

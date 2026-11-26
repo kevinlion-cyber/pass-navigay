@@ -6,6 +6,8 @@ interface FilterDropdownProps<T extends string> {
   value: T;
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
+  /** « right » : le menu s'aligne sur le bord droit du bouton (bouton collé à droite de l'écran). */
+  align?: 'center' | 'right';
 }
 
 export default function FilterDropdown<T extends string>({
@@ -13,6 +15,7 @@ export default function FilterDropdown<T extends string>({
   value,
   options,
   onChange,
+  align = 'center',
 }: FilterDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -49,10 +52,10 @@ export default function FilterDropdown<T extends string>({
 
       {open && (
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 min-w-[160px]
+          className={`absolute top-full ${align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'} mt-1 z-50 min-w-[160px] max-w-[calc(100vw-2rem)]
                       border border-light-border dark:border-dark-border rounded-lg
                       bg-light-surface dark:bg-dark-surface shadow-lg
-                      py-1 animate-in fade-in slide-in-from-top-1"
+                      py-1 animate-in fade-in slide-in-from-top-1`}
         >
           {options.map((opt) => (
             <button

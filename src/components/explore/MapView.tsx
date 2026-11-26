@@ -133,8 +133,12 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
   // sur le centre-ville et les lieux des communes rattachées tombent hors champ.
   useEffect(() => {
     if (!map || !fitToCity || fitToCity === lastFitRef.current) return;
+    // fitToCity vaut « slug#numéro ». On attend que la liste soit bien celle de CETTE
+    // ville : juste après un choix, elle contient encore les lieux de l'ancienne, et
+    // cadrer dessus ramenait la carte (puis la ville) sur Montpellier (bug du 26/11).
+    const slug = fitToCity.split('#')[0];
     const valid = establishments.filter(
-      (e) => Math.abs(e.latitude) > 0.0001 && Math.abs(e.longitude) > 0.0001
+      (e) => e.city_slug === slug && Math.abs(e.latitude) > 0.0001 && Math.abs(e.longitude) > 0.0001
     );
     if (valid.length === 0) return;
     lastFitRef.current = fitToCity;
