@@ -128,6 +128,10 @@ export interface Event {
   max_capacity: number | null;
   image_url: string | null;
   is_featured: boolean;
+  /** Annonce d'origine d'un événement importé (migration 71) : mention de la source. */
+  source_url?: string | null;
+  source_name?: string | null;
+  ticket_url?: string | null;
   created_at: string;
   establishment?: Establishment;
 }

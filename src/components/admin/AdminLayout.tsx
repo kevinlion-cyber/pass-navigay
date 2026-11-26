@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare, ClipboardList, Flag, Presentation,
+  BarChart3, Building2, CalendarDays, Tag, Users, Handshake, Settings, FileText, Menu, X, LogOut, Gift, Sun, Moon, Layers, Megaphone, CreditCard, UserCog, Sparkles, BadgeCheck, LineChart, UserSearch, Network, MapPin, MessageSquare, ClipboardList, Flag, Presentation, CalendarCheck,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -41,6 +41,7 @@ const NAV_GROUPS: { titre: string; items: NavItem[] }[] = [
     titre: 'Agenda et offres',
     items: [
       { to: '/admin/evenements', icon: CalendarDays, label: 'Événements' },
+      { to: '/admin/evenements-a-valider', icon: CalendarCheck, label: 'Événements à valider' },
       { to: '/admin/promotions', icon: Tag, label: 'Promotions' },
     ],
   },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Clock, ChevronLeft, Tag } from 'lucide-react';
+import { Calendar, MapPin, Clock, ChevronLeft, Tag, Ticket, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Event } from '../lib/types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -89,13 +89,13 @@ export default function EventDetail() {
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
             <Calendar size={16} className="shrink-0 text-primary" />
-            <span>{formatDate(event.event_date)} a {formatTime(event.event_date)}</span>
+            <span>{formatDate(event.event_date)} à {formatTime(event.event_date)}</span>
           </div>
 
           {event.end_date && (
             <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
               <Clock size={16} className="shrink-0 text-primary" />
-              <span>Fin : {formatDate(event.end_date)} a {formatTime(event.end_date)}</span>
+              <span>Fin : {formatDate(event.end_date)} à {formatTime(event.end_date)}</span>
             </div>
           )}
 
@@ -115,6 +115,21 @@ export default function EventDetail() {
             )}
           </div>
         </div>
+
+        {(event.ticket_url || event.source_url) && (
+          <div className="flex flex-wrap gap-3">
+            {event.ticket_url && (
+              <a href={event.ticket_url} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm inline-flex items-center gap-2">
+                <Ticket size={16} /> Billetterie
+              </a>
+            )}
+            {event.source_url && (
+              <a href={event.source_url} target="_blank" rel="noopener noreferrer" className="text-sm inline-flex items-center gap-1.5 text-primary hover:underline self-center">
+                <ExternalLink size={14} /> Voir l'annonce{event.source_name ? ` (source : ${event.source_name})` : ''}
+              </a>
+            )}
+          </div>
+        )}
 
         {event.description && (
           <div>

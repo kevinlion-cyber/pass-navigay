@@ -39,6 +39,7 @@ import AdminSocial from './pages/admin/AdminSocial';
 import AdminClaims from './pages/admin/AdminClaims';
 import AdminReports from './pages/admin/AdminReports';
 import AdminEvents from './pages/admin/AdminEvents';
+import AdminEventDrafts from './pages/admin/AdminEventDrafts';
 import AdminPromotions from './pages/admin/AdminPromotions';
 import AdminMembers from './pages/admin/AdminMembers';
 import AdminPartners from './pages/admin/AdminPartners';
@@ -181,6 +182,7 @@ export default function App() {
               <Route path="revendications" element={<AdminClaims />} />
               <Route path="signalements" element={<AdminReports />} />
               <Route path="evenements" element={<AdminEvents />} />
+              <Route path="evenements-a-valider" element={<AdminEventDrafts />} />
               <Route path="promotions" element={<AdminPromotions />} />
               <Route path="membres" element={<AdminMembers />} />
               <Route path="partenaires" element={<AdminPartners />} />
