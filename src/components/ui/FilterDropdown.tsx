@@ -8,6 +8,8 @@ interface FilterDropdownProps<T extends string> {
   onChange: (value: T) => void;
   /** « right » : le menu s'aligne sur le bord droit du bouton (bouton collé à droite de l'écran). */
   align?: 'center' | 'right';
+  /** Sur téléphone, n'affiche que la valeur (« Tout ▾ ») sans l'intitulé, pour gagner de la place. */
+  compactMobile?: boolean;
 }
 
 export default function FilterDropdown<T extends string>({
@@ -16,6 +18,7 @@ export default function FilterDropdown<T extends string>({
   options,
   onChange,
   align = 'center',
+  compactMobile = false,
 }: FilterDropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,7 +45,7 @@ export default function FilterDropdown<T extends string>({
                    text-gray-700 dark:text-gray-300
                    hover:border-primary transition-colors whitespace-nowrap"
       >
-        <span className="text-gray-400 dark:text-gray-500">{label}:</span>
+        <span className={`text-gray-400 dark:text-gray-500 ${compactMobile ? 'hidden sm:inline' : ''}`}>{label}:</span>
         <span>{selected?.label ?? label}</span>
         <ChevronDown
           size={14}
