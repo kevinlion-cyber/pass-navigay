@@ -49,7 +49,7 @@ export default function PwaInstallPrompt() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 dark:text-white">Installer Pass Navigay</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Acces rapide depuis ton ecran d'accueil</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Accès rapide depuis ton écran d'accueil</p>
         </div>
         <button
           onClick={handleInstall}
