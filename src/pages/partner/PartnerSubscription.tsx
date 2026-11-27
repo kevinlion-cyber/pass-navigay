@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
 import toast from 'react-hot-toast';
+import CaseConsentement from '../../components/ui/CaseConsentement';
 // Prix : même source que la landing Pros (app_settings.pros_landing, éditable dans
 // /admin/tarifs). Ils étaient écrits en dur ici, donc les deux écrans pouvaient
 // annoncer des tarifs différents — et la remise « -20 % » affichée était fausse.
@@ -206,6 +207,7 @@ function DeleteAccountSection() {
 function FreeView({ establishment }: { establishment: Establishment }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [accepteCgv, setAccepteCgv] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
   const { content } = useProsContent();
 
@@ -218,6 +220,10 @@ function FreeView({ establishment }: { establishment: Establishment }) {
 
   const handleSubscribe = async () => {
     if (!user) return;
+    if (!accepteCgv) {
+      toast.error('Merci d\'accepter les conditions de vente pour continuer.');
+      return;
+    }
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -232,6 +238,7 @@ function FreeView({ establishment }: { establishment: Establishment }) {
         body: JSON.stringify({
           establishmentId: establishment.id,
           billingInterval,
+          cgvAcceptees: true,
         }),
       });
       const data = await res.json();
@@ -282,12 +289,12 @@ function FreeView({ establishment }: { establishment: Establishment }) {
           {billingInterval === 'yearly' ? (
             <>
               <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>{fmtEur(proYearly)}</span>
-              <span className="text-xl text-gray-500">/an</span>
+              <span className="text-xl text-gray-500">/an TTC</span>
             </>
           ) : (
             <>
               <span className="text-[56px] font-bold" style={{ color: '#7B2D8B' }}>{fmtEur(proMonthly)}</span>
-              <span className="text-xl text-gray-500">/mois</span>
+              <span className="text-xl text-gray-500">/mois TTC</span>
             </>
           )}
         </div>
@@ -297,10 +304,14 @@ function FreeView({ establishment }: { establishment: Establishment }) {
             : 'Sans engagement \u00B7 r\u00E9siliable \u00E0 tout moment'}
         </p>
 
+        <div className="flex justify-center mb-4">
+          <CaseConsentement type="paiement_pro" coche={accepteCgv} onChange={setAccepteCgv} className="max-w-sm" />
+        </div>
+
         <button
           onClick={handleSubscribe}
-          disabled={loading}
-          className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4 inline-flex items-center gap-2"
+          disabled={loading || !accepteCgv}
+          className="py-4 px-10 rounded-card text-base font-bold transition-all hover:opacity-90 mb-4 inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: '#fff', color: '#7B2D8B' }}
         >
           {loading && <Loader2 size={18} className="animate-spin" />}

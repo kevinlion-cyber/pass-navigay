@@ -151,3 +151,14 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Serveur `create-premium-checkout` : refuse (409) si le client Stripe du membre a déjà un abonnement en cours. Version autonome à coller dans Supabase : `audit/autonomes/create-premium-checkout.ts`.
 - Tests : fonction serveur avec faux Stripe (abonnement actif → refus ; résilié / aucun / sans client → paiement) ; écrans Premium et gratuit (captures, clic → espace Stripe ou paiement) ; typecheck, lint, build.
 - Retour arrière : annuler le commit ; recoller l'ancienne version de la fonction (historique Git).
+
+### R10 — Cases légales à l'inscription et au paiement, prix TTC (27/11/2026)
+- `src/components/ui/CaseConsentement.tsx` + `src/lib/conditions.ts` (version des textes).
+- Inscription membres (`Register`) et pros (`RegisterStep1`) : case obligatoire « J'ai 18 ans ou plus et j'accepte les Conditions d'utilisation et la Politique de confidentialité ». Preuve : `majeur_declare`, `cgu_acceptees_le`, `cgu_version` dans les métadonnées du compte (aucune migration).
+- Paiement Premium (Tarifs, fenêtre Premium, tunnel d'inscription Premium) : case « Je demande à profiter du Premium tout de suite. Si je me rétracte dans les 14 jours, je paierai seulement la période déjà utilisée. » (art. L221-25 : un service ne permet pas de « renoncer » à la rétractation).
+- Paiement Pro (`PartnerSubscription`) : case « J'accepte les Conditions de vente ».
+- Fonctions `create-premium-checkout` / `create-pro-checkout` : accord enregistré dans les métadonnées de l'abonnement Stripe (`execution_immediate_demandee` / `cgv_acceptees`, version, date). Non bloquant côté serveur (pas de risque de casser les paiements pendant la mise à jour).
+- Prix affichés « TTC » (confirmé par Kévin).
+- Projet de conditions de vente fourni à part (relecture juridique), à coller à la fin des CGU.
+- Tests : fonctions avec faux Stripe (métadonnées envoyées) ; tunnel d'inscription Premium (bouton bloqué tant que les cases ne sont pas cochées) ; formulaire Pros ; typecheck, lint, build.
+- Retour arrière : annuler le commit ; recoller la version précédente des deux fonctions.

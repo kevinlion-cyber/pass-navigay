@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { billingInterval } = await req.json().catch(() => ({}));
+    const { billingInterval, executionImmediate } = await req.json().catch(() => ({}));
 
     const appUrl = Deno.env.get("APP_URL") || "https://passnavigay.com";
 
@@ -101,6 +101,17 @@ Deno.serve(async (req: Request) => {
       success_url: `${appUrl}/explorer?premium=success`,
       cancel_url: `${appUrl}/explorer?premium=cancelled`,
       metadata: { userId: user.id, billingInterval: billingInterval || "yearly" },
+      // Preuve (27/11/2026) : le membre a demandé expressément à profiter du Premium tout
+      // de suite. En cas de rétractation sous 14 jours, seule la période utilisée est due
+      // (art. L221-25 Code conso). Enregistré sur l'abonnement Stripe.
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+          execution_immediate_demandee: executionImmediate === true ? "oui" : "non",
+          conditions_version: "2026-11-27",
+          accord_le: new Date().toISOString(),
+        },
+      },
     });
 
     return jsonResponse({ url: session.url });

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { translateAuthError } from '../../lib/authErrors';
 import RegisterStep1, { type Step1Data } from './RegisterStep1';
+import { VERSION_CONDITIONS } from '../../lib/conditions';
 import RegisterStep2, { type Step2Data } from './RegisterStep2';
 import RegisterStep3, { type Step3Data } from './RegisterStep3';
 
@@ -72,6 +73,8 @@ export default function ProsRegisterModal({ onClose, onSwitchToLogin }: ProsRegi
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: step1.email,
         password: step1.password,
+        // Preuve de l'accord donné à l'inscription (âge + CGU), datée et versionnée.
+        options: { data: { majeur_declare: true, cgu_acceptees_le: new Date().toISOString(), cgu_version: VERSION_CONDITIONS } },
       });
       if (authError) throw new Error(translateAuthError(authError));
       if (!authData.user) throw new Error('Erreur lors de la création du compte.');

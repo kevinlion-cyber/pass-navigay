@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
+import { VERSION_CONDITIONS } from '../lib/conditions';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import { translateAuthError } from '../lib/authErrors';
@@ -95,7 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { username },
+        // Preuve de l'accord donné à l'inscription (âge + CGU), datée et versionnée.
+        data: { username, majeur_declare: true, cgu_acceptees_le: new Date().toISOString(), cgu_version: VERSION_CONDITIONS },
       },
     });
 

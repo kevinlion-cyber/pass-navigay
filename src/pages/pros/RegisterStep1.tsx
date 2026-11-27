@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import CaseConsentement from '../../components/ui/CaseConsentement';
 
 export interface Step1Data {
   prenom: string;
@@ -10,6 +11,8 @@ export interface Step1Data {
   email: string;
   phone: string;
   password: string;
+  /** Âge + CGU + confidentialité acceptés (case obligatoire). */
+  accepteCgu?: boolean;
 }
 
 interface RegisterStep1Props {
@@ -60,6 +63,7 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
     else if (data.password.length < 8) errs.password = 'Au moins 8 caract\u00e8res requis.';
     if (!confirmPw) errs.confirm = 'Ce champ est requis.';
     else if (data.password !== confirmPw) errs.confirm = 'Les mots de passe ne correspondent pas.';
+    if (!data.accepteCgu) errs.cgu = 'Merci de cocher cette case pour continuer.';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -220,6 +224,16 @@ export default function RegisterStep1({ data, onChange, onNext }: RegisterStep1P
           </button>
         </div>
         {errors.confirm && <p className="text-[12px] text-red-500 mt-1">{errors.confirm}</p>}
+      </div>
+
+      <div>
+        <CaseConsentement
+          type="inscription"
+          sombre
+          coche={!!data.accepteCgu}
+          onChange={(v) => { onChange({ ...data, accepteCgu: v }); if (v) setErrors((prev) => ({ ...prev, cgu: '' })); }}
+        />
+        {errors.cgu && <p className="text-[12px] text-red-500 mt-1">{errors.cgu}</p>}
       </div>
 
       <button

@@ -3,6 +3,7 @@ import { safeRedirect } from '../../lib/safeRedirect';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Send, Eye, EyeOff, CheckCircle, Loader2, X, ArrowLeft, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import CaseConsentement from '../../components/ui/CaseConsentement';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import type { PlanType, BillingInterval } from '../../components/ui/PlanSelection';
@@ -60,6 +61,8 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [accepteCgu, setAccepteCgu] = useState(false);
+  const [demarrageImmediat, setDemarrageImmediat] = useState(false);
   const [animatingBot, setAnimatingBot] = useState(false);
 
   const [verifyCode, setVerifyCode] = useState('');
@@ -129,6 +132,16 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
         toast.error('Le mot de passe doit contenir au moins 8 caractères.');
         return;
       }
+      if (!accepteCgu) {
+        toast.error("Coche la case pour confirmer que tu as 18 ans ou plus et accepter les conditions.");
+        setInput(value);
+        return;
+      }
+      if (selectedPlan === 'premium' && !demarrageImmediat) {
+        toast.error('Coche la case pour démarrer ton Premium tout de suite.');
+        setInput(value);
+        return;
+      }
       addUserMessage('\u2022'.repeat(value.length));
       setChatStep('submitting');
       await addBotMessage(BOT_MESSAGES.creating);
@@ -189,7 +202,7 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${session?.access_token ?? ''}`,
           },
-          body: JSON.stringify({ billingInterval }),
+          body: JSON.stringify({ billingInterval, executionImmediate: demarrageImmediat }),
         });
         const data = await res.json();
         if (data?.url) {
@@ -391,6 +404,14 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
 
             {chatStep !== 'done' && (
               <form onSubmit={handleChatSubmit} className="p-4 border-t border-light-border dark:border-dark-border shrink-0">
+                {chatStep === 'password' && (
+                  <div className="space-y-2 mb-3">
+                    <CaseConsentement type="inscription" coche={accepteCgu} onChange={setAccepteCgu} />
+                    {selectedPlan === 'premium' && (
+                      <CaseConsentement type="paiement_premium" coche={demarrageImmediat} onChange={setDemarrageImmediat} />
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-2 items-center">
                   <div className="relative flex-1">
                     <input
@@ -416,7 +437,7 @@ export default function Register({ onDismiss, intro }: RegisterProps = {}) {
                   </div>
                   <button
                     type="submit"
-                    disabled={isInputDisabled || !input.trim()}
+                    disabled={isInputDisabled || !input.trim() || (chatStep === 'password' && (!accepteCgu || (selectedPlan === 'premium' && !demarrageImmediat)))}
                     aria-label="Envoyer"
                     className="btn-primary p-3 shrink-0"
                   >
