@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -18,7 +18,9 @@ import FeaturedEvents from '../components/explore/FeaturedEvents';
 import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import PremiumQuestionnaireModal from '../components/ui/PremiumQuestionnaireModal';
+import { lazyAvecRelance } from '../lib/lazyAvecRelance';
+// Questionnaire Premium : ouvert rarement, chargé seulement quand il s'affiche.
+const PremiumQuestionnaireModal = lazyAvecRelance(() => import('../components/ui/PremiumQuestionnaireModal'));
 import { trackSearch } from '../lib/analytics';
 
 type Bounds = { north: number; south: number; east: number; west: number };
@@ -667,12 +669,14 @@ export default function Explore() {
       />
 
       {questionnaireOpen && profile?.is_premium && (
-        <PremiumQuestionnaireModal
-          onClose={() => {
-            setQuestionnaireOpen(false);
-            refreshProfile();
-          }}
-        />
+        <Suspense fallback={null}>
+          <PremiumQuestionnaireModal
+            onClose={() => {
+              setQuestionnaireOpen(false);
+              refreshProfile();
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

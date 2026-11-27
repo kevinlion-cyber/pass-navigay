@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Users, Crown, Heart, Clock, Lock } from 'lucide-react';
+import { Search, X, Users, Crown, Heart, Clock, Lock, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Profile } from '../lib/types';
@@ -26,10 +27,20 @@ function timeAgo(dateStr: string): string {
   return `Actif il y a ${weeks} sem`;
 }
 
+const PAR_PAGE = 30;
+
+/** Texte de recherche nettoyé pour le filtre « or » de la base (virgules, parenthèses… retirées). */
+function nettoyerRecherche(q: string): string {
+  return q.replace(/[,()*%\\"'.:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+
 export default function Members() {
   const [members, setMembers] = useState<MemberWithMeta[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState('');
+  const [rechercheEnvoyee, setRechercheEnvoyee] = useState('');
   const [pronounsFilter, setPronounsFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -40,28 +51,85 @@ export default function Members() {
   const isPremium = profile?.is_premium === true;
   useOuvertureAutoPremium('membres', true, () => setUpgradeOpen(true));
 
+  // Recherche envoyée à la base 300 ms après la dernière frappe.
   useEffect(() => {
+    const t = setTimeout(() => setRechercheEnvoyee(nettoyerRecherche(search)), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Avant (27/11/2026) : TOUS les profils et TOUS les favoris de la base étaient
+  // téléchargés à chaque visite, même par un visiteur qui ne voit aucun profil.
+  // Désormais : un visiteur ou un membre gratuit ne reçoit que le nombre de membres ;
+  // un Premium reçoit les profils 30 par 30, filtrés par la base, et le nombre de
+  // favoris de ces 30 seulement (fonction member_favorites_counts).
+  const chargerPage = useCallback(async (depart: number) => {
+    let q = supabase
+      .from('public_profiles')
+      .select('*', { count: 'exact' })
+      .neq('account_type', 'pro')
+      .order('created_at', { ascending: false })
+      .range(depart, depart + PAR_PAGE - 1);
+    if (pronounsFilter !== 'all') q = q.eq('pronouns', pronounsFilter);
+    if (cityFilter !== 'all') q = q.eq('city', cityFilter);
+    if (rechercheEnvoyee) {
+      const m = `%${rechercheEnvoyee}%`;
+      q = q.or(`prenom.ilike.${m},username.ilike.${m},bio.ilike.${m},city.ilike.${m}`);
+    }
+    const { data, count, error } = await q;
+    if (error) throw error;
+    const profils = (data ?? []) as Profile[];
+
+    const favMap = new Map<string, number>();
+    if (profils.length > 0) {
+      const { data: comptes } = await supabase.rpc('member_favorites_counts', { p_ids: profils.map((p) => p.id) });
+      (comptes as { user_id: string; n: number }[] | null)?.forEach((c) => favMap.set(c.user_id, c.n));
+    }
+    return {
+      liste: profils.map((p) => ({ ...p, favorites_count: favMap.get(p.id) ?? 0 })),
+      count: count ?? 0,
+    };
+  }, [pronounsFilter, cityFilter, rechercheEnvoyee]);
+
+  useEffect(() => {
+    let annule = false;
     const load = async () => {
-      const [profilesRes, favCountsRes] = await Promise.all([
-        supabase.from('public_profiles').select('*').neq('account_type', 'pro').order('created_at', { ascending: false }),
-        supabase.from('favorites').select('user_id'),
-      ]);
-
-      const favMap = new Map<string, number>();
-      favCountsRes.data?.forEach((f: { user_id: string }) => {
-        favMap.set(f.user_id, (favMap.get(f.user_id) ?? 0) + 1);
-      });
-
-      const enriched: MemberWithMeta[] = (profilesRes.data ?? []).map((p) => ({
-        ...(p as Profile),
-        favorites_count: favMap.get(p.id) ?? 0,
-      }));
-
-      setMembers(enriched);
-      setLoading(false);
+      setLoading(true);
+      try {
+        if (!isPremium) {
+          const { count } = await supabase
+            .from('public_profiles')
+            .select('id', { count: 'exact', head: true })
+            .neq('account_type', 'pro');
+          if (!annule) { setMembers([]); setTotal(count ?? 0); }
+          return;
+        }
+        const { liste, count } = await chargerPage(0);
+        if (!annule) { setMembers(liste); setTotal(count); }
+      } catch {
+        if (!annule) toast.error('Les membres n\'ont pas pu être chargés. Réessaie dans un instant.');
+      } finally {
+        if (!annule) setLoading(false);
+      }
     };
     load();
-  }, []);
+    return () => { annule = true; };
+  }, [isPremium, chargerPage]);
+
+  const voirPlus = async () => {
+    setLoadingMore(true);
+    try {
+      const { liste, count } = await chargerPage(members.length);
+      setMembers((prev) => {
+        const vus = new Set(prev.map((m) => m.id));
+        return [...prev, ...liste.filter((m) => !vus.has(m.id))];
+      });
+      setTotal(count);
+    } catch {
+      toast.error('Erreur de chargement. Réessaie.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const displayName = (m: MemberWithMeta) => {
     if (m.prenom) {
@@ -71,23 +139,19 @@ export default function Members() {
     return m.username;
   };
 
+  // Choix proposés dans les filtres : tirés des membres déjà affichés (le filtrage
+  // lui-même est fait par la base, sur tous les membres).
   const pronounsList = Array.from(
-    new Set(members.map((m) => m.pronouns).filter(Boolean))
+    new Set([...members.map((m) => m.pronouns), pronounsFilter !== 'all' ? pronounsFilter : null].filter(Boolean))
   ).sort() as string[];
   const cities = Array.from(
-    new Set(members.map((m) => m.city).filter(Boolean))
+    new Set([...members.map((m) => m.city), cityFilter !== 'all' ? cityFilter : null].filter(Boolean))
   ).sort() as string[];
 
-  const filtered = members.filter((m) => {
-    if (pronounsFilter !== 'all' && m.pronouns !== pronounsFilter) return false;
-    if (cityFilter !== 'all' && m.city !== cityFilter) return false;
-    if (!search) return true;
-    const q = search.toLowerCase();
-    const name = displayName(m).toLowerCase();
-    return name.includes(q) || m.username.toLowerCase().includes(q) || m.bio?.toLowerCase().includes(q);
-  });
+  const filtered = members;
+  const resteAcharger = isPremium && total !== null && members.length < total;
 
-  if (loading) return <LoadingSpinner />;
+  if (loading && members.length === 0 && total === null) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
@@ -97,7 +161,7 @@ export default function Members() {
           Membres
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {filtered.length} membre{filtered.length !== 1 ? 's' : ''} inscrits
+          {total ?? 0} membre{(total ?? 0) !== 1 ? 's' : ''} {isPremium && (rechercheEnvoyee || pronounsFilter !== 'all' || cityFilter !== 'all') ? 'trouvé' + ((total ?? 0) !== 1 ? 's' : '') : 'inscrit' + ((total ?? 0) !== 1 ? 's' : '')}
         </p>
       </div>
 
@@ -135,6 +199,9 @@ export default function Members() {
         </div>
       )}
 
+      {/* Recherche et filtres : réservés aux Premium (avant, un visiteur voyait dans les
+          menus la liste des villes et des pronoms des membres). */}
+      {isPremium && (
       <div className="flex items-center gap-2">
         <div className="relative flex-1 min-w-0">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -172,6 +239,7 @@ export default function Members() {
           />
         )}
       </div>
+      )}
 
       {/* Sans Premium : on n'affiche AUCUN profil. La vie privée des membres d'un
           annuaire LGBT n'est pas une vitrine, même floutée : une image floue reste
@@ -289,6 +357,18 @@ export default function Members() {
             </button>
           ))}
         </div>
+        {resteAcharger && (
+          <div className="flex justify-center pt-5">
+            <button
+              onClick={voirPlus}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[13px] font-semibold border border-light-border dark:border-dark-border text-gray-700 dark:text-gray-200 hover:border-primary/50 disabled:opacity-60"
+            >
+              {loadingMore && <Loader2 size={15} className="animate-spin" />}
+              Voir plus de membres
+            </button>
+          </div>
+        )}
         </div>
       ) : null}
 

@@ -10,7 +10,8 @@ import { lazy, type ComponentType } from 'react';
  */
 const CLE = 'pn_relance_chunk';
 
-export function lazyAvecRelance<T extends ComponentType<object>>(charger: () => Promise<{ default: T }>) {
+// P : propriétés du composant (pages sans propriétés, ou fenêtres comme le questionnaire).
+export function lazyAvecRelance<P extends object = object>(charger: () => Promise<{ default: ComponentType<P> }>) {
   return lazy(async () => {
     try {
       const mod = await charger();
@@ -22,7 +23,7 @@ export function lazyAvecRelance<T extends ComponentType<object>>(charger: () => 
       if (!dejaRelance) {
         try { sessionStorage.setItem(CLE, '1'); } catch { /* indisponible */ }
         window.location.reload();
-        return new Promise<{ default: T }>(() => {});
+        return new Promise<{ default: ComponentType<P> }>(() => {});
       }
       throw err;
     }

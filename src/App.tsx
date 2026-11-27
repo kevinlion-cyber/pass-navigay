@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazyAvecRelance } from './lib/lazyAvecRelance';
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -9,25 +9,30 @@ import { CategoriesProvider } from './contexts/CategoriesContext';
 import AppLayout from './components/layout/AppLayout';
 import WelcomeModal from './components/WelcomeModal';
 const Survey = lazyAvecRelance(() => import('./pages/Survey'));
-import Register from './pages/auth/Register';
-import Login from './pages/auth/Login';
-import Verify from './pages/auth/Verify';
-import ResetPassword from './pages/auth/ResetPassword';
 const Revendiquer = lazyAvecRelance(() => import('./pages/Revendiquer'));
 import Explore from './pages/Explore';
-import EstablishmentDetail from './pages/EstablishmentDetail';
+import { prechargerPagesCourantes } from './lib/prechargement';
+// Pages courantes de l'appli (27/11/2026) : elles ne sont plus dans le premier
+// téléchargement. L'annuaire (Explore) s'affiche donc plus vite ; les autres onglets
+// sont téléchargés juste après, en arrière-plan (voir lib/prechargement.ts), pour que
+// passer d'un onglet à l'autre reste instantané.
+const Register = lazyAvecRelance(() => import('./pages/auth/Register'));
+const Login = lazyAvecRelance(() => import('./pages/auth/Login'));
+const Verify = lazyAvecRelance(() => import('./pages/auth/Verify'));
+const ResetPassword = lazyAvecRelance(() => import('./pages/auth/ResetPassword'));
+const EstablishmentDetail = lazyAvecRelance(() => import('./pages/EstablishmentDetail'));
+const Favorites = lazyAvecRelance(() => import('./pages/Favorites'));
+const Messages = lazyAvecRelance(() => import('./pages/Messages'));
+const Conversation = lazyAvecRelance(() => import('./pages/Conversation'));
+const ProfilePublic = lazyAvecRelance(() => import('./pages/ProfilePublic'));
+const Events = lazyAvecRelance(() => import('./pages/Events'));
+const EventDetail = lazyAvecRelance(() => import('./pages/EventDetail'));
+const Promos = lazyAvecRelance(() => import('./pages/Promos'));
+const PromoDetail = lazyAvecRelance(() => import('./pages/PromoDetail'));
+const Members = lazyAvecRelance(() => import('./pages/Members'));
 const EstablishmentForm = lazyAvecRelance(() => import('./pages/EstablishmentForm'));
-import Favorites from './pages/Favorites';
-import Messages from './pages/Messages';
-import Conversation from './pages/Conversation';
-import ProfilePublic from './pages/ProfilePublic';
 const ProfileSettings = lazyAvecRelance(() => import('./pages/ProfileSettings'));
-import Events from './pages/Events';
-import EventDetail from './pages/EventDetail';
-import Promos from './pages/Promos';
-import PromoDetail from './pages/PromoDetail';
 const Pricing = lazyAvecRelance(() => import('./pages/Pricing'));
-import Members from './pages/Members';
 
 const AdminRoot = lazyAvecRelance(() => import('./pages/Admin'));
 const AdminDashboard = lazyAvecRelance(() => import('./pages/admin/AdminDashboard'));
@@ -75,6 +80,7 @@ import ConsentBanner from './components/ui/ConsentBanner';
 import LegacyRedirect from './components/LegacyRedirect';
 
 export default function App() {
+  useEffect(() => { prechargerPagesCourantes(); }, []);
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -121,8 +127,9 @@ export default function App() {
                 donc le site pour un formulaire plein écran. Ici on reste dedans,
                 et fermer la modale rend simplement la main à l'annuaire.
               */}
-              <Route path="/inscription" element={<><Explore /><Register /></>} />
-              <Route path="/connexion" element={<><Explore /><Login /></>} />
+              {/* Suspense local : l'annuaire reste affiché derrière pendant le court chargement de la fenêtre. */}
+              <Route path="/inscription" element={<><Explore /><Suspense fallback={null}><Register /></Suspense></>} />
+              <Route path="/connexion" element={<><Explore /><Suspense fallback={null}><Login /></Suspense></>} />
               <Route path="/explorer" element={<Explore />} />
               <Route path="/agenda" element={<Events />} />
               <Route path="/agenda/:eventId" element={<EventDetail />} />
