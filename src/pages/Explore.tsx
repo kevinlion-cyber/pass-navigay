@@ -10,6 +10,7 @@ import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
 import CategoryFilters from '../components/explore/CategoryFilters';
 import CityFilter, { type CityOption } from '../components/explore/CityFilter';
 import EstablishmentCard from '../components/explore/EstablishmentCard';
+import LiensLegaux from '../components/layout/LiensLegaux';
 import InscriptionGateModal from '../components/ui/InscriptionGateModal';
 import { FICHES_GRATUITES, ouvrirFicheGratuite } from '../lib/fichesGratuites';
 import { useEcranLarge } from '../lib/useEcranLarge';
@@ -629,6 +630,7 @@ export default function Explore() {
           ref={listContainerRef}
         >
           {establishmentList}
+          <LiensLegaux className="pt-2" />
         </div>
       </div>
       ) : (
@@ -652,6 +654,7 @@ export default function Explore() {
 
         <div className="space-y-4 p-4">
           {establishmentList}
+          <LiensLegaux className="pt-2" />
         </div>
       </div>
       )}

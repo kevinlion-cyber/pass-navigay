@@ -2,6 +2,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from './Header';
 import BottomNav from './BottomNav';
+import LiensLegaux from './LiensLegaux';
 import { SensitiveConsentPrompt } from '../ui/SensitiveConsent';
 
 /**
@@ -17,6 +18,8 @@ import { SensitiveConsentPrompt } from '../ui/SensitiveConsent';
  * concerné. La mise en avant de l'inscription passe par le mot de bienvenue
  * (`WelcomeModal`), qui lit toujours le réglage `require_signup`.
  */
+const SANS_PIED = new Set(['/', '/explorer', '/inscription', '/connexion']);
+
 export default function AppLayout({ requireAuth = false }: { requireAuth?: boolean }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -35,6 +38,11 @@ export default function AppLayout({ requireAuth = false }: { requireAuth?: boole
       <Header />
       <main className="pt-14 pb-16 md:pb-0">
         <Outlet />
+        {/* Liens légaux pour tous. La page Lieux (hauteur fixe) les place au bas de sa
+            liste, et la conversation (plein écran) n'en a pas besoin. */}
+        {!SANS_PIED.has(location.pathname) && !location.pathname.startsWith('/messages/') && (
+          <LiensLegaux className="px-4 pt-6 pb-4" />
+        )}
       </main>
       <BottomNav />
       {/* RGPD : accord demandé aux membres qui avaient répondu sans case de consentement */}
