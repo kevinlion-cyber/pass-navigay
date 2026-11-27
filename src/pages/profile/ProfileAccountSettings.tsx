@@ -9,6 +9,7 @@ import { enablePush, disablePush } from '../../lib/push';
 import type { Profile } from '../../lib/types';
 import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
 import BlockedMembersModal from '../../components/ui/BlockedMembersModal';
+import RetractationPremium from '../../components/ui/RetractationPremium';
 import { ouvrirGestionAbonnementPremium, dateFinPremium } from '../../lib/abonnementPremium';
 
 interface ProfileAccountSettingsProps {
@@ -119,6 +120,9 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
             )}
           </span>
         </button>
+
+        {/* « Renoncer au contrat ici » : 14 jours après la souscription (art. L221-21). */}
+        <RetractationPremium />
 
         <div className="border-t border-light-border dark:border-dark-border" />
 

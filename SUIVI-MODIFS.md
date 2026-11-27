@@ -162,3 +162,10 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Projet de conditions de vente fourni à part (relecture juridique), à coller à la fin des CGU.
 - Tests : fonctions avec faux Stripe (métadonnées envoyées) ; tunnel d'inscription Premium (bouton bloqué tant que les cases ne sont pas cochées) ; formulaire Pros ; typecheck, lint, build.
 - Retour arrière : annuler le commit ; recoller la version précédente des deux fonctions.
+
+### R11 — « Renoncer au contrat ici » pour le Premium (27/11/2026)
+- Obligation : art. L221-21 Code conso (depuis le 19/06/2026), fonction de rétractation en ligne pendant 14 jours, accusé de réception sur support durable.
+- Migration `76_retractations.sql` : table `retractations` (preuve, montants, statut), RLS (membre : lecture de ses demandes ; admin : lecture + mise à jour ; écriture par la fonction seulement), purge à 5 ans (`pn-purge-retractations`). Retour arrière : `audit/correctifs/76_retour_arriere.sql`.
+- Fonction `retractation-premium` (autonome, JWT activé) : `statut` (éligible ? jusqu'à quand ?) / `confirmer` (preuve enregistrée, abonnement Stripe arrêté immédiatement, Premium coupé, accusé au membre, alerte à l'équipe avec le montant au prorata — art. L221-25). Remboursement manuel dans Stripe.
+- `src/components/ui/RetractationPremium.tsx` dans Profil → Paramètres, sous « Gérer ou résilier ».
+- Tests : SQL local (droits, doublon refusé, purge) ; fonction avec faux Stripe / Resend (5 jours : 69 € payés, 0,95 € dus, 68,05 € à rembourser ; 20 jours : refus, rien arrêté) ; écran (bouton, fenêtre, confirmation) ; typecheck, lint, build.
