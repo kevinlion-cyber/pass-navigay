@@ -9,36 +9,61 @@
 // => Les `queries` restent GÉNÉRIQUES et on filtre sur la qualité (note + nb d'avis).
 // NE PAS les remplacer par « bar gay », « sauna gay »… : ça détruirait la diversité
 // (et c'est aussi pour ça que DataForSEO / le détecteur gay-friendly a été abandonné).
+// Refonte du 27/11/2026 (Kévin) : mêmes catégories que src/lib/constants.ts. Les requêtes
+// Google restent les mêmes qu'avant (pas de coût en plus), sauf « Communauté & santé »
+// (2 recherches de plus par ville). Pros safe, Sport et Coquin 18+ : pas de recherche
+// automatique (fiches ajoutées à la main ou par les pros). « sex-shop » est désormais
+// rangé dans Coquin 18+ ; « bar à vins » dans Sortir.
 export const PN_CATEGORIES: Record<string, { label: string; subcategories: string[]; queries: string[] }> = {
   se_loger: {
-    label: "Se loger",
-    subcategories: ["Maison d'hotes", "Hotel", "Location particuliere"],
+    label: "Dormir safe",
+    subcategories: ["Maison d'hôtes", "Hôtel", "Location entre particuliers", "Gîte", "Camping", "Auberge de jeunesse"],
     queries: ["hôtels", "maisons d'hôtes", "chambres d'hôtes"],
   },
-  shopping: {
-    label: "Shopping",
-    subcategories: ["Vetements", "Deco", "Art", "Chaussures", "Sex-shop", "Jeux"],
-    queries: ["boutique de vêtements", "concept store", "boutique déco", "sex-shop", "galerie d'art"],
-  },
   manger: {
-    label: "Manger",
-    subcategories: ["Restaurant", "Fast-food", "Brunch", "Salon de the", "Bar a vins"],
-    queries: ["restaurants", "brunch", "salon de thé", "bar à vins"],
+    label: "Se régaler",
+    subcategories: ["Restaurant", "Brunch", "Café", "Salon de thé", "Fast-food", "Boulangerie & pâtisserie", "Traiteur"],
+    queries: ["restaurants", "brunch", "salon de thé"],
   },
   soiree: {
-    label: "Soiree",
-    subcategories: ["Bar tranquille", "Bar musical", "Boite de nuit"],
-    queries: ["bars", "bar à cocktails", "boîte de nuit"],
+    label: "Sortir & faire la fête",
+    subcategories: ["Bar gay", "Bar lesbien", "Bar queer & inclusif", "Bar chill", "Bar musical", "Bar à cocktails", "Bar à vins", "Club & boîte de nuit", "Cabaret & drag", "Karaoké"],
+    queries: ["bars", "bar à cocktails", "bar à vins", "boîte de nuit"],
+  },
+  shopping: {
+    label: "Shopping & pépites",
+    subcategories: ["Mode & vêtements", "Friperie & seconde main", "Chaussures", "Bijoux & accessoires", "Déco & maison", "Art & créateurs", "Librairie", "Fleuriste", "Jeux"],
+    queries: ["boutique de vêtements", "concept store", "boutique déco", "galerie d'art"],
   },
   bien_etre: {
-    label: "Bien-etre",
-    subcategories: ["Sauna", "Massage", "Esthetique"],
+    label: "Prendre soin de soi",
+    subcategories: ["Spa & hammam", "Sauna", "Massage", "Esthétique", "Coiffure & barbier"],
     queries: ["sauna", "spa", "institut de massage", "institut de beauté"],
   },
   culture: {
-    label: "Culture",
-    subcategories: ["Musee", "Visite guidee", "Concert", "Cinema", "Autres"],
+    label: "Culture & spectacles",
+    subcategories: ["Musée", "Galerie d'art", "Théâtre", "Cinéma", "Concert & spectacle", "Visite guidée", "Festival", "Autres"],
     queries: ["cinéma", "salle de concert", "théâtre", "galerie d'art"],
+  },
+  communaute: {
+    label: "Communauté & santé",
+    subcategories: ["Centre LGBT", "Association", "Santé sexuelle & dépistage", "Écoute & soutien"],
+    queries: ["centre LGBT", "association LGBT"],
+  },
+  services: {
+    label: "Pros safe",
+    subcategories: ["Tatouage & piercing", "Photographe", "Avocat & juriste", "Psy & thérapeute", "Agence voyage & mariage", "Autres services"],
+    queries: [],
+  },
+  sport: {
+    label: "Sport & plein air",
+    subcategories: ["Club sportif LGBT", "Salle de sport", "Danse", "Yoga", "Escalade", "Plage", "Plage naturiste", "Rando & nature"],
+    queries: [],
+  },
+  adulte: {
+    label: "Coquin 18+",
+    subcategories: ["Sauna gay", "Sex-shop & lingerie", "Bar cruising & fetish", "Club sexe & backroom", "Club libertin", "Cinéma adulte"],
+    queries: ["sex-shop"],
   },
 };
 

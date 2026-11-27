@@ -23,6 +23,8 @@ const MIN_CAT = 3;        // pilier catégorie indexable à partir de N lieux
 const CAT_LABEL: Record<string, string> = {
   se_loger: "Hébergements", shopping: "Shopping", manger: "Restaurants",
   soiree: "Bars & soirées", bien_etre: "Bien-être", culture: "Culture & sorties",
+  communaute: "Communauté & santé", services: "Pros LGBT-friendly", sport: "Sport & plein air",
+  adulte: "Lieux coquins",
 };
 // Synonymes intégrés à la copy (couverture de mots-clés sans pages dupliquées).
 const CAT_SYN: Record<string, string> = {
@@ -32,12 +34,18 @@ const CAT_SYN: Record<string, string> = {
   soiree: "bars gays, boîtes et soirées LGBT",
   bien_etre: "saunas, spas et bien-être gay-friendly",
   culture: "lieux culturels et sorties LGBT",
+  communaute: "centres LGBT, associations et santé sexuelle",
+  services: "professionnels gay-friendly : tatoueurs, photographes, avocats, psys",
+  sport: "clubs sportifs LGBT, salles de sport et plages",
+  adulte: "saunas gays, sex-shops et bars cruising",
 };
 // Requête « tête » réellement tapée par catégorie (intention transactionnelle) —
 // utilisée dans les titres/H1/metas des pages ville×catégorie et piliers catégorie.
 const CAT_KW: Record<string, string> = {
   se_loger: "Hôtels gay-friendly", shopping: "Boutiques gay-friendly", manger: "Restaurants gay-friendly",
-  soiree: "Bars gays", bien_etre: "Saunas gays", culture: "Sorties LGBT",
+  soiree: "Bars gays", bien_etre: "Spas & bien-être gay-friendly", culture: "Sorties LGBT",
+  communaute: "Centres et associations LGBT", services: "Pros gay-friendly", sport: "Sport LGBT",
+  adulte: "Saunas gays et lieux coquins",
 };
 const catLabel = (k: string) => CAT_LABEL[k] || k.replace(/_/g, " ");
 const catKw = (k: string) => CAT_KW[k] || (catLabel(k) + " gay-friendly");

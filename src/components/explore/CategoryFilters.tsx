@@ -26,7 +26,7 @@ export default function CategoryFilters({
   const subcategories = selectedCategory ? categories[selectedCategory].subcategories : [];
 
   const subOptions: { value: string; label: string }[] = [
-    { value: 'all', label: 'Tous les types' },
+    { value: 'all', label: 'Tous types' },
     ...subcategories.map((s) => ({ value: s, label: s })),
   ];
 

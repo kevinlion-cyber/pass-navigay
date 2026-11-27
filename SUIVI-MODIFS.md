@@ -203,3 +203,11 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - `PiedDePageOrdinateur` (dans `LiensLegaux.tsx`) : bande fine pleine largeur sur écran ≥ 1024 px, « © année Pass Navigay » à gauche, liens légaux + « Gérer mes cookies » à droite.
 - Page Lieux : placé dans la bande libre sous la carte et la liste (hauteur ajustée : rien ne défile). Autres pages : en bas de page. Téléphone : inchangé (ligne de liens en bas des listes).
 - Tests : rendu ordinateur thème sombre et clair, pied de page collé au bas de l'écran sur Lieux sans défilement ; téléphone : pied de page ordinateur masqué, ligne de liens conservée ; typecheck, lint, build.
+
+### R17 — Refonte des catégories (27/11/2026)
+- 10 catégories (6 renommées + Communauté & santé, Pros safe, Sport & plein air, Coquin 18+), sous-catégories claires et accentuées. Clés inchangées (adresses, icônes, référencement).
+- Migration `79_categories_lgbt.sql` : nouvelle liste dans `categories_config` (ancienne gardée dans `categories_config_avant_79`), reclassement des fiches et brouillons par table de correspondance (sex-shops → Coquin 18+, bars à vins → Sortir…), sauvegarde `categories_avant_79`, liste de contrôle finale (fiches à reclasser, saunas à vérifier). Retour arrière : `audit/correctifs/79_retour_arriere.sql`.
+- Appli : `constants.ts` (secours), `types.ts`, icônes carte (cœur, ciseaux, haltère, flamme). Filtres téléphone : noms longs abrégés, « Tous types ».
+- Fiches automatiques (`_shared/fiches.ts` → city-worker, fiches-search/enrich/publish/reviews) : nouvelles listes ; mêmes requêtes Google qu'avant + 2 pour Communauté ; « sex-shop » → Coquin 18+.
+- Référencement (`seo.ts`) : libellés des 4 nouvelles catégories ; « Saunas gays » passe de Bien-être à Coquin 18+.
+- Tests : migration sur base locale (11 fiches fictives avec/sans accents, nom inconnu signalé, sauna signalé, brouillons, 10 catégories) + retour arrière ; menus Catégorie et Type sur téléphone ; typecheck, lint, build.
