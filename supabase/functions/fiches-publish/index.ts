@@ -64,6 +64,8 @@ Deno.serve(async (req: Request) => {
       price_level: d.price_level,
       amenities: d.amenities || [],
       google_reviews: d.google_reviews || [],   // on garde les avis Google sur la fiche publiée
+      // Logo fourni lors d'un entretien avec le gérant (migration 74), sinon aucun.
+      logo_url: d.logo_url || null,
     }).select("id").single();
     if (eErr) return jsonResponse({ error: eErr.message }, 500);
     const estId = est.id;

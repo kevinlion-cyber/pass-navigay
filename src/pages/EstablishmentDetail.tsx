@@ -23,6 +23,18 @@ const AMENITY_ICONS: Record<string, LucideIcon> = {
   'Parking': Car, 'CB acceptée': Wallet,
 };
 
+/**
+ * Adresse affichée sans doublon : les fiches importées de Google contiennent souvent
+ * déjà « 34000 Montpellier » dans l'adresse ; on n'ajoute le code postal et la ville
+ * que s'ils n'y figurent pas (bug « 34000 Montpellier, 34000 Montpellier », 27/11/2026).
+ */
+function adresseComplete(adresse: string | null, cp: string | null, ville: string | null): string {
+  const a = (adresse || '').trim();
+  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const suite = [cp, ville].filter((x) => x && !norm(a).includes(norm(x))).join(' ');
+  return [a, suite].filter(Boolean).join(', ');
+}
+
 function OpeningHoursDisplay({ hours }: { hours: OpeningHours }) {
   const today = DAYS_ORDER[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
   const hasHours = DAYS_ORDER.some((d) => hours[d] !== undefined);
@@ -396,7 +408,7 @@ export default function EstablishmentDetail() {
         <div className="flex items-center gap-3">
           <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400 flex-1">
             <MapPin size={16} className="shrink-0 mt-0.5" />
-            <span>{establishment.address}, {establishment.postal_code} {establishment.city}</span>
+            <span>{adresseComplete(establishment.address, establishment.postal_code, establishment.city)}</span>
           </div>
           <button
             onClick={openMap}
