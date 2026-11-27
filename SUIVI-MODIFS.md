@@ -135,3 +135,11 @@ _Dernière mise à jour : 2026-11-24._
 | R7 | Événements à valider : collecte hebdomadaire (tâche planifiée Claude, Hérault), import, validation avant publication | migration 71 + demande en cours |
 
 Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie propre de la branche avant d'ouvrir une demande.
+
+### R8 — Liens légaux pour tous + « Gérer mes cookies » (27/11/2026)
+- Nouveau `src/components/layout/LiensLegaux.tsx` : Mentions légales · CGU · Confidentialité · Contact · Gérer mes cookies.
+- Affiché en bas des onglets (`AppLayout`), au bas de la liste des lieux (`Explore`, page à hauteur fixe), pas dans une conversation.
+- Pages légales : bouton « Gérer mes cookies » dans le menu ; « Retour » ramène à la page précédente (avant : toujours vers /pros).
+- Pourquoi : mentions légales facilement accessibles (LCEN) ; retrait du consentement aussi simple que l'accord (CNIL).
+- Tests : typecheck, lint (0 erreur), build, captures mobile (Lieux, Promos, bandeau rouvert). Aucun coût, poids négligeable.
+- Retour arrière : annuler le commit de cette PR.

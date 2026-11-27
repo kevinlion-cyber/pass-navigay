@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { openAnalyticsConsent } from '../../lib/analytics';
 import { LEGAL_CUSTOM_KEY, parseLegalPages } from './legalPages';
 
 const BASE_TABS = [
@@ -13,6 +14,12 @@ const BASE_TABS = [
 
 export default function LegalLayout() {
   const [tabs, setTabs] = useState(BASE_TABS);
+  const navigate = useNavigate();
+  // « Retour » : page précédente si on vient du site, sinon l'annuaire.
+  const retour = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) navigate(-1); else navigate('/explorer');
+  };
 
   useEffect(() => {
     supabase.from('app_settings').select('value').eq('key', LEGAL_CUSTOM_KEY).maybeSingle()
@@ -30,10 +37,10 @@ export default function LegalLayout() {
             <span className="text-white">Pass</span>{' '}
             <span className="text-[#7B2D8B]">Navigay</span>
           </Link>
-          <Link to="/pros" className="flex items-center gap-1.5 text-[13px] text-[#a0a0b0] hover:text-white transition-colors">
+          <button type="button" onClick={retour} className="flex items-center gap-1.5 text-[13px] text-[#a0a0b0] hover:text-white transition-colors">
             <ArrowLeft size={14} />
             Retour
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -55,6 +62,13 @@ export default function LegalLayout() {
               {t.label}
             </NavLink>
           ))}
+          <button
+            type="button"
+            onClick={openAnalyticsConsent}
+            className="whitespace-nowrap text-[13px] font-medium transition-colors pb-2.5 border-b-2 border-transparent text-[#606070] hover:text-[#a0a0b0]"
+          >
+            Gérer mes cookies
+          </button>
         </div>
       </nav>
 
