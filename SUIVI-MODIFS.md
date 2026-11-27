@@ -143,3 +143,11 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Pourquoi : mentions légales facilement accessibles (LCEN) ; retrait du consentement aussi simple que l'accord (CNIL).
 - Tests : typecheck, lint (0 erreur), build, captures mobile (Lieux, Promos, bandeau rouvert). Aucun coût, poids négligeable.
 - Retour arrière : annuler le commit de cette PR.
+
+### R9 — Résiliation Premium en ligne + plus de double abonnement (27/11/2026)
+- Problème : « Gérer mon abonnement Premium » menait à la page Tarifs, qui proposait « Souscrire Premium » (2e paiement) et aucune résiliation. Obligation légale (art. L215-1-1 Code conso, depuis le 01/06/2023) non respectée.
+- `src/lib/abonnementPremium.ts` : ouvre l'espace Stripe du membre (fonction existante `create-portal-session`, client Stripe retrouvé côté serveur). Premium offert (sans paiement) : message explicatif.
+- Profil : bouton « Gérer ou résilier mon abonnement Premium » + date de fin d'accès. Tarifs : « Tu es déjà Premium » + bouton de gestion à la place de « Souscrire ». Fenêtre Premium : ouvre la gestion si déjà Premium.
+- Serveur `create-premium-checkout` : refuse (409) si le client Stripe du membre a déjà un abonnement en cours. Version autonome à coller dans Supabase : `audit/autonomes/create-premium-checkout.ts`.
+- Tests : fonction serveur avec faux Stripe (abonnement actif → refus ; résilié / aucun / sans client → paiement) ; écrans Premium et gratuit (captures, clic → espace Stripe ou paiement) ; typecheck, lint, build.
+- Retour arrière : annuler le commit ; recoller l'ancienne version de la fonction (historique Git).

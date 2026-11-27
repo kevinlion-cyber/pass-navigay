@@ -1,5 +1,5 @@
 import Stripe from "npm:stripe@14.14.0";
-import { corsHeaders, jsonResponse, getAuthenticatedUser } from "../_shared/auth.ts";
+import { corsHeaders, jsonResponse, getAuthenticatedUser, serviceClient } from "../_shared/auth.ts";
 
 const PREMIUM_YEARLY_PRICE_ID = "price_1Th1iL18e2LOhPJqAlgcaEJ9";
 const MONTHLY_AMOUNT = 669;
@@ -22,6 +22,31 @@ Deno.serve(async (req: Request) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+    // Jamais deux abonnements Premium pour le même membre (27/11/2026) : si son
+    // client Stripe a déjà un abonnement en cours, on refuse et l'appli propose
+    // la gestion / résiliation à la place. Vérifié ici, pas seulement à l'écran.
+    const { data: profil } = await serviceClient()
+      .from("profiles").select("stripe_customer_id").eq("id", user.id).maybeSingle();
+    if (profil?.stripe_customer_id) {
+      try {
+        const subs = await stripe.subscriptions.list({
+          customer: profil.stripe_customer_id, status: "all", limit: 20,
+        });
+        const enCours = subs.data.some((s) =>
+          ["active", "trialing", "past_due", "unpaid", "incomplete"].includes(s.status)
+        );
+        if (enCours) {
+          return jsonResponse({
+            error: "Tu as déjà un abonnement Premium. Tu peux le gérer ou le résilier depuis ton profil.",
+            code: "deja_abonne",
+          }, 409);
+        }
+      } catch (e) {
+        // Client Stripe supprimé ou introuvable : rien à protéger, on continue.
+        console.warn("Vérification abonnement existant impossible:", e instanceof Error ? e.message : e);
+      }
+    }
 
     const { billingInterval } = await req.json().catch(() => ({}));
 
