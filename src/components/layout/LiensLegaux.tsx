@@ -28,3 +28,19 @@ export default function LiensLegaux({ sombre = false, className = '' }: { sombre
     </nav>
   );
 }
+
+/**
+ * Pied de page pour ordinateur (écran ≥ 1024 px), demandé par Kévin le 27/11/2026 :
+ * bande fine sur toute la largeur, nom du site à gauche, liens légaux à droite.
+ * Sur téléphone, la ligne de liens simple reste en bas des listes.
+ */
+export function PiedDePageOrdinateur({ className = '' }: { className?: string }) {
+  return (
+    <footer
+      className={`hidden lg:flex items-center justify-between gap-6 px-6 h-12 border-t border-light-border dark:border-dark-border bg-light-bg dark:bg-dark-bg text-[11px] text-gray-500 dark:text-gray-400 ${className}`}
+    >
+      <span className="whitespace-nowrap">© {new Date().getFullYear()} Pass Navigay</span>
+      <LiensLegaux className="!justify-end" />
+    </footer>
+  );
+}

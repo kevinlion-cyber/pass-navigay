@@ -10,7 +10,7 @@ import { DEFAULT_CENTER, PAGE_SIZE } from '../lib/constants';
 import CategoryFilters from '../components/explore/CategoryFilters';
 import CityFilter, { type CityOption } from '../components/explore/CityFilter';
 import EstablishmentCard from '../components/explore/EstablishmentCard';
-import LiensLegaux from '../components/layout/LiensLegaux';
+import LiensLegaux, { PiedDePageOrdinateur } from '../components/layout/LiensLegaux';
 import InscriptionGateModal from '../components/ui/InscriptionGateModal';
 import { FICHES_GRATUITES, ouvrirFicheGratuite } from '../lib/fichesGratuites';
 import { useEcranLarge } from '../lib/useEcranLarge';
@@ -566,13 +566,15 @@ export default function Explore() {
   );
 
   return (
-    // Sur téléphone, toute la page défile (demande de Kévin, 26/11/2026) : en faisant
-    // glisser la liste vers le haut, la carte remonte et la liste prend l'écran entier,
-    // quelle que soit la taille du téléphone. Sur ordinateur, carte et liste restent
-    // côte à côte, chacune dans sa colonne.
+    <>
+    {/* Sur téléphone, toute la page défile (demande de Kévin, 26/11/2026) : en faisant
+        glisser la liste vers le haut, la carte remonte et la liste prend l'écran entier,
+        quelle que soit la taille du téléphone. Sur ordinateur, carte et liste restent
+        côte à côte, chacune dans sa colonne. */}
     <div
       className={`flex flex-col ${ordinateur ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain'}`}
-      style={{ height: 'calc(100dvh - 3.5rem - 4rem)' }}
+      // Bas de l'écran : barre d'onglets (4 rem) sur téléphone, pied de page (3 rem) sur ordinateur.
+      style={{ height: ordinateur ? 'calc(100dvh - 3.5rem - 3rem)' : 'calc(100dvh - 3.5rem - 4rem)' }}
     >
       <DisclaimerModal />
 
@@ -643,7 +645,6 @@ export default function Explore() {
           ref={listContainerRef}
         >
           {establishmentList}
-          <LiensLegaux className="pt-2" />
         </div>
       </div>
       ) : (
@@ -690,5 +691,8 @@ export default function Explore() {
         </Suspense>
       )}
     </div>
+    {/* Ordinateur : pied de page dans la bande laissée libre sous la carte et la liste. */}
+    {ordinateur && <PiedDePageOrdinateur />}
+    </>
   );
 }

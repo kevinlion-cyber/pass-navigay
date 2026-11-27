@@ -2,7 +2,7 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from './Header';
 import BottomNav from './BottomNav';
-import LiensLegaux from './LiensLegaux';
+import LiensLegaux, { PiedDePageOrdinateur } from './LiensLegaux';
 import { SensitiveConsentPrompt } from '../ui/SensitiveConsent';
 
 /**
@@ -41,7 +41,11 @@ export default function AppLayout({ requireAuth = false }: { requireAuth?: boole
         {/* Liens légaux pour tous. La page Lieux (hauteur fixe) les place au bas de sa
             liste, et la conversation (plein écran) n'en a pas besoin. */}
         {!SANS_PIED.has(location.pathname) && !location.pathname.startsWith('/messages/') && (
-          <LiensLegaux className="px-4 pt-6 pb-4" />
+          <>
+            {/* Téléphone : ligne de liens en bas de la liste. Ordinateur : vrai pied de page. */}
+            <LiensLegaux className="px-4 pt-6 pb-4 lg:hidden" />
+            <PiedDePageOrdinateur className="mt-8" />
+          </>
         )}
       </main>
       <BottomNav />

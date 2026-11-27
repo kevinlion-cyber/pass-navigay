@@ -198,3 +198,8 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - `eslint.config.js` : crochets `useAuth`, `useTheme`, `useCategories` autorisés à côté de leur fournisseur (motif standard).
 - Contrôle GitHub : désormais tout nouvel avertissement se voit (0 au départ).
 - Tests : 22 pages parcourues (membre Premium + administrateur) — aucune requête en boucle, aucune erreur JS ; recherche Admin → Établissements comparée à la version en ligne : identique ; typecheck, lint, build.
+
+### R16 — Pied de page sur ordinateur (27/11/2026)
+- `PiedDePageOrdinateur` (dans `LiensLegaux.tsx`) : bande fine pleine largeur sur écran ≥ 1024 px, « © année Pass Navigay » à gauche, liens légaux + « Gérer mes cookies » à droite.
+- Page Lieux : placé dans la bande libre sous la carte et la liste (hauteur ajustée : rien ne défile). Autres pages : en bas de page. Téléphone : inchangé (ligne de liens en bas des listes).
+- Tests : rendu ordinateur thème sombre et clair, pied de page collé au bas de l'écran sur Lieux sans défilement ; téléphone : pied de page ordinateur masqué, ligne de liens conservée ; typecheck, lint, build.
