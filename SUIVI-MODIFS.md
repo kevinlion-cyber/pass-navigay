@@ -216,3 +216,7 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - `pictosCategories.ts` : `COULEURS_CATEGORIES` + `couleurCategorie()` (bleu, orange, violet PassNavigay pour Sortir, rose, vert d'eau, ocre, rouge, ardoise, vert pomme, noir pour Coquin 18+). Turquoise (groupes) et doré (sponsors) évités. Catégorie inconnue : violet.
 - Carte (pastilles et repère mis en avant) et liste (petite pastille devant la catégorie, liseré pour rester visible en mode sombre).
 - Tests : liste avec 10 fiches de test (10 couleurs vérifiées), typecheck, lint, build. Pastilles de la carte non vues ici (pas de clé Google Maps en test) : même fonction de couleur que la liste.
+
+### R19 — Boutons de la carte réduits sur téléphone (27/11/2026)
+- `MapView.tsx` : sur écran < 1024 px, boutons Google à 28 px (au lieu de 40), sans Plan/Satellite, Street View ni boutons de zoom (pincement) ; plein écran conservé. Ordinateur inchangé.
+- Tests : typecheck (options reconnues par la bibliothèque), lint, build. Rendu non visible en test (pas de clé Google Maps) : à vérifier sur téléphone après fusion.

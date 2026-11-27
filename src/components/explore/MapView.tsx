@@ -8,6 +8,7 @@ import { useCategories } from '../../contexts/CategoriesContext';
 import { COULEUR_SPONSOR, couleurCategorie, creerPastilleLieu, svgPictoCategorie } from '../../lib/pictosCategories';
 import { supabase } from '../../lib/supabase';
 import { useMapPins, type MapPin, type PinBounds } from '../../lib/mapPins';
+import { useEcranLarge } from '../../lib/useEcranLarge';
 
 interface MapViewProps {
   establishments: Establishment[];
@@ -86,6 +87,7 @@ async function fetchPopupExtras(estId: string): Promise<PopupData> {
 }
 
 function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmentClick, onPinSelect, flyTo, repere, selectedId, highlightId, fitToCity, category, subcategories }: MapViewProps) {
+  const ordinateur = useEcranLarge();
   const map = useMap();
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [popupData, setPopupData] = useState<PopupData>({});
@@ -258,6 +260,15 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
         defaultZoom={13}
         gestureHandling="greedy"
         disableDefaultUI={false}
+        // Téléphone (27/11/2026, demande de Kévin) : la carte est petite, les boutons
+        // Google standard (40 px) prenaient trop de place. Boutons réduits à 28 px, et on
+        // retire Plan/Satellite, le bonhomme Street View et le zoom (le pincement suffit) ;
+        // on garde le plein écran pour agrandir la carte. Ordinateur : inchangé.
+        controlSize={ordinateur ? undefined : 28}
+        mapTypeControl={ordinateur}
+        streetViewControl={ordinateur}
+        cameraControl={ordinateur}
+        fullscreenControl
         mapId="pass-navigay-map"
         onClick={handleMapClick}
         style={{ width: '100%', height: '100%' }}
