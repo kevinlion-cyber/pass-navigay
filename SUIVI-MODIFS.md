@@ -176,3 +176,10 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - `netlify.toml` : cache d'un an pour `/assets/*` (noms à empreinte) et `/fonts/*`.
 - Tests : police chargée (Inter 100-900, 0 appel Google), rendu vérifié, typecheck, lint, build, netlify.toml valide.
 - Retour arrière : annuler le commit.
+
+### R13 — Premier chargement allégé, page Membres, favoris privés, contrôle GitHub (27/11/2026)
+- Chargement : 14 pages courantes (Agenda, Promos, Membres, fiches, inscription, connexion…) sorties du premier téléchargement et préchargées en arrière-plan une fois la page affichée (`src/lib/prechargement.ts`, désactivé si économiseur de données). Questionnaire Premium chargé à l'ouverture. Premier téléchargement : 167 → 133 Ko compressés (−21 %). `lazyAvecRelance` accepte des composants avec propriétés.
+- Membres : 30 profils par page + « Voir plus », recherche/filtres faits par la base, recherche nettoyée ; visiteur et gratuit : seulement le total (plus aucun profil téléchargé, et plus de liste des villes/pronoms dans les filtres).
+- SÉCURITÉ — migration `77_favoris_prives.sql` : la règle « Anonymous users can view favorites count » (13/04/2026) permettait à tout visiteur de lire qui a mis quel lieu en favori. Supprimée. Fonction `member_favorites_counts` (nombres seulement). Retour arrière : `audit/correctifs/77_retour_arriere.sql` (recrée la faille).
+- `.github/workflows/verification.yml` : typecheck, ESLint (erreurs), build sur chaque pull request et sur main.
+- Tests : SQL local (visiteur 8 → 0 favori lisible, comptage refusé au visiteur, nombres corrects pour un membre) ; page Membres simulée (30 → 47 avec « Voir plus », recherche « Sète » → 16, visiteur : total seul) ; typecheck, lint --quiet, build.

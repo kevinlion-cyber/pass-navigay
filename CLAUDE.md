@@ -555,6 +555,13 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
   preuve dans `retractations`, accusé de réception au membre, alerte à `ADMIN_ALERT_EMAIL` avec le montant
   au prorata. Remboursement fait à la main dans Stripe, puis statut `rembourse`. Purge à 5 ans.
 
+* **Favoris privés** (migration 77, 27/11/2026) : suppression de la règle qui laissait tout visiteur lire
+  la table `favorites`. Comptage pour la page Membres via `member_favorites_counts(uuid[])` (nombres seuls,
+  100 ids max, membres connectés). La page Membres charge 30 profils à la fois, filtrés par la base, et rien
+  pour un visiteur ou un membre gratuit (seulement le total).
+* **Contrôle automatique** : `.github/workflows/verification.yml` (types, ESLint erreurs, construction) sur
+  chaque pull request. Ne pas fusionner une demande marquée d'une croix rouge.
+
 Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC).
 
 Restent à traiter : double authentification des admins, relecture juridique de la politique de

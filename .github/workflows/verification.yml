@@ -1,0 +1,37 @@
+# Contrôle automatique (27/11/2026) : à chaque demande de modification (pull request)
+# et à chaque mise à jour de main, GitHub vérifie que le site se construit.
+# Si une étape échoue, une croix rouge apparaît sur la demande : ne pas fusionner.
+# Gratuit (dépôt public). Aucun secret utilisé : rien n'est publié ni déployé ici.
+name: Vérification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Types, règles et construction
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Installation
+        run: npm ci
+      - name: Vérification des types (TypeScript)
+        run: npm run typecheck
+      - name: Règles de code (ESLint, erreurs seulement)
+        run: npm run lint -- --quiet
+      - name: Construction du site
+        run: npm run build
