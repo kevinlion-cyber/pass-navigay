@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { couleurCategorie } from '../../lib/pictosCategories';
 import { MapPin } from 'lucide-react';
 import { useCategories } from '../../contexts/CategoriesContext';
 import type { Establishment, CategoryKey } from '../../lib/types';
@@ -44,8 +45,10 @@ export default function EstablishmentCard({ establishment, onOpen }: Establishme
           {establishment.is_sponsor && <span className="badge-sponsor">Sponsor</span>}
         </div>
 
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          {categoryLabel} &middot; {establishment.subcategory}
+        <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          {/* Même couleur que la pastille de la carte (repère visuel). */}
+          <span aria-hidden="true" className="w-2 h-2 rounded-full shrink-0 ring-1 ring-black/10 dark:ring-white/50" style={{ backgroundColor: couleurCategorie(establishment.category) }} />
+          <span className="truncate">{categoryLabel} &middot; {establishment.subcategory}</span>
         </p>
 
         <div className="flex items-center gap-1 mt-1 text-xs text-gray-400 dark:text-gray-500">

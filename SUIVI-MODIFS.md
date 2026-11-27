@@ -211,3 +211,8 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Fiches automatiques (`_shared/fiches.ts` → city-worker, fiches-search/enrich/publish/reviews) : nouvelles listes ; mêmes requêtes Google qu'avant + 2 pour Communauté ; « sex-shop » → Coquin 18+.
 - Référencement (`seo.ts`) : libellés des 4 nouvelles catégories ; « Saunas gays » passe de Bien-être à Coquin 18+.
 - Tests : migration sur base locale (11 fiches fictives avec/sans accents, nom inconnu signalé, sauna signalé, brouillons, 10 catégories) + retour arrière ; menus Catégorie et Type sur téléphone ; typecheck, lint, build.
+
+### R18 — Une couleur par catégorie (27/11/2026)
+- `pictosCategories.ts` : `COULEURS_CATEGORIES` + `couleurCategorie()` (bleu, orange, violet PassNavigay pour Sortir, rose, vert d'eau, ocre, rouge, ardoise, vert pomme, noir pour Coquin 18+). Turquoise (groupes) et doré (sponsors) évités. Catégorie inconnue : violet.
+- Carte (pastilles et repère mis en avant) et liste (petite pastille devant la catégorie, liseré pour rester visible en mode sombre).
+- Tests : liste avec 10 fiches de test (10 couleurs vérifiées), typecheck, lint, build. Pastilles de la carte non vues ici (pas de clé Google Maps en test) : même fonction de couleur que la liste.

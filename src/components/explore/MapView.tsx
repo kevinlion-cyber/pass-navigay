@@ -5,7 +5,7 @@ import type { Renderer } from '@googlemaps/markerclusterer';
 import type { Establishment, CategoryKey } from '../../lib/types';
 import { DEFAULT_CENTER } from '../../lib/constants';
 import { useCategories } from '../../contexts/CategoriesContext';
-import { COULEUR_LIEU, COULEUR_SPONSOR, creerPastilleLieu, svgPictoCategorie } from '../../lib/pictosCategories';
+import { COULEUR_SPONSOR, couleurCategorie, creerPastilleLieu, svgPictoCategorie } from '../../lib/pictosCategories';
 import { supabase } from '../../lib/supabase';
 import { useMapPins, type MapPin, type PinBounds } from '../../lib/mapPins';
 
@@ -298,7 +298,7 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
               <div
                 className="w-[30px] h-[30px] rounded-full border-2 border-white cursor-pointer flex items-center justify-center"
                 style={{
-                  backgroundColor: h.is_sponsor ? COULEUR_SPONSOR : COULEUR_LIEU,
+                  backgroundColor: h.is_sponsor ? COULEUR_SPONSOR : couleurCategorie(h.category),
                   boxShadow: '0 0 0 4px rgba(123,45,139,0.45)',
                   transform: 'scale(1.3)',
                 }}
