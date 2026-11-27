@@ -149,7 +149,7 @@ export default function AdminPromotions() {
                     <tr key={p.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
                         <div className="w-10 h-10 rounded bg-dark-border overflow-hidden">
-                          {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
+                          {p.image_url ? <img loading="lazy" decoding="async" src={p.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{p.title}</td>

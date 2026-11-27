@@ -149,7 +149,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
               {photos.map(photo => (
                 <div key={photo.id} className="relative group rounded-[8px] overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                  <img src={photo.url} alt={photo.caption} className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={photo.url} alt={photo.caption} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
                     <button onClick={() => setDeleteTarget(photo)}
                       className="w-9 h-9 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
@@ -175,7 +175,7 @@ export default function EstablishmentGallerySection({ establishmentId, pendingPh
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {pendingPhotos.map((p, i) => (
                   <div key={i} className="relative rounded-[8px] overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                    <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={p.preview} alt="" className="w-full h-full object-cover" />
                     <button onClick={() => removePending(i)}
                       className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
                       <span className="text-sm font-bold">&times;</span>

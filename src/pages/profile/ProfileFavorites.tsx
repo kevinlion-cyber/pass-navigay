@@ -81,7 +81,7 @@ export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
               >
                 <div className="aspect-[4/3] bg-gray-100 dark:bg-dark-border overflow-hidden">
                   {est.banner_url || est.logo_url ? (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={est.banner_url || est.logo_url || ''}
                       alt={est.name}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"

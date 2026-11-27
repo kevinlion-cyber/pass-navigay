@@ -177,7 +177,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
                 <div className="flex items-center gap-4 mt-4">
                   <div className="w-[72px] h-[72px] rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: profile.avatar_url ? undefined : '#2d0d3d' }}>
                     {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-[#c084f5] text-2xl font-bold">
                         {profile.username?.charAt(0).toUpperCase()}
@@ -263,7 +263,7 @@ export default function MemberSidebar({ memberId, onClose, onRefresh }: MemberSi
                       >
                         <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: '#2d0d3d' }}>
                           {fav.establishments?.logo_url ? (
-                            <img src={fav.establishments.logo_url} alt="" className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={fav.establishments.logo_url} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-[#c084f5] text-xs font-bold">
                               {fav.establishments?.name?.charAt(0).toUpperCase() || '?'}

@@ -182,7 +182,7 @@ export default function Messages() {
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                 {conv.avatar_url ? (
-                  <img src={conv.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={conv.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-primary text-sm font-medium">
                     {conv.username.charAt(0).toUpperCase()}

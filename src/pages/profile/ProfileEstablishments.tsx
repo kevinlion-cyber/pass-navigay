@@ -61,7 +61,7 @@ export default function ProfileEstablishments({ userId }: ProfileEstablishmentsP
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-11 h-11 rounded-card bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
                   {est.logo_url ? (
-                    <img src={est.logo_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={est.logo_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-primary font-semibold text-sm">
                       {est.name.charAt(0)}

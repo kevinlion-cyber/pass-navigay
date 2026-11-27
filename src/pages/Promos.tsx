@@ -258,7 +258,7 @@ export default function Promos() {
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     {est?.logo_url ? (
-                      <img src={est.logo_url} alt="" className="w-full h-full object-cover rounded-lg" />
+                      <img loading="lazy" decoding="async" src={est.logo_url} alt="" className="w-full h-full object-cover rounded-lg" />
                     ) : (
                       <Tag size={24} className="text-primary/50" />
                     )}

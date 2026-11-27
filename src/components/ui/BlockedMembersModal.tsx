@@ -47,7 +47,7 @@ export default function BlockedMembersModal({ open, onClose }: { open: boolean; 
               <li key={m.blocked_id} className="flex items-center gap-3 py-3">
                 <div className="w-9 h-9 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0">
                   {m.avatar_url
-                    ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ? <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" />
                     : <span className="text-primary text-sm font-medium">{(m.prenom || m.username || '?').charAt(0).toUpperCase()}</span>}
                 </div>
                 <span className="flex-1 text-sm text-gray-900 dark:text-white truncate">{m.prenom || m.username}</span>

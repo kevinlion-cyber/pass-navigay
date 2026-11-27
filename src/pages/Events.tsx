@@ -321,7 +321,7 @@ export default function Events() {
               >
                 <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center">
                   {event.image_url ? (
-                    <img src={event.image_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={event.image_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <Calendar size={28} className="text-primary/40" />
                   )}

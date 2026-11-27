@@ -143,7 +143,7 @@ export default function AdminEvents() {
                     <tr key={ev.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                       <td className="py-2.5 px-3">
                         <div className="w-10 h-10 rounded bg-dark-border overflow-hidden">
-                          {ev.image_url ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
+                          {ev.image_url ? <img loading="lazy" decoding="async" src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{ev.title}</td>
@@ -175,7 +175,7 @@ export default function AdminEvents() {
                 <div key={ev.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded bg-dark-border overflow-hidden shrink-0">
-                      {ev.image_url ? <img src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
+                      {ev.image_url ? <img loading="lazy" decoding="async" src={ev.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ev.title}</p>

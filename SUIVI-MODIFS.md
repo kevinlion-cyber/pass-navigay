@@ -169,3 +169,10 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Fonction `retractation-premium` (autonome, JWT activé) : `statut` (éligible ? jusqu'à quand ?) / `confirmer` (preuve enregistrée, abonnement Stripe arrêté immédiatement, Premium coupé, accusé au membre, alerte à l'équipe avec le montant au prorata — art. L221-25). Remboursement manuel dans Stripe.
 - `src/components/ui/RetractationPremium.tsx` dans Profil → Paramètres, sous « Gérer ou résilier ».
 - Tests : SQL local (droits, doublon refusé, purge) ; fonction avec faux Stripe / Resend (5 jours : 69 € payés, 0,95 € dus, 68,05 € à rembourser ; 20 jours : refus, rien arrêté) ; écran (bouton, fenêtre, confirmation) ; typecheck, lint, build.
+
+### R12 — Police hébergée sur le site, images différées, cache long (27/11/2026)
+- Police Inter : `public/fonts/` (fichier variable latin 48 Ko + latin-ext chargé seulement si besoin, licence OFL jointe), `@font-face` dans `src/index.css`, préchargement dans `index.html`. Supprime les DEUX appels à Google Fonts (index.html + @import CSS bloquant) : l'IP des visiteurs ne part plus chez Google, et les gras (700-900) sont de vrais gras.
+- Images : `loading="lazy" decoding="async"` sur 42 images de listes et de bas de page. Restent immédiates : logo, bandeaux et visuels principaux en haut de page, aperçus de téléversement, bandeau d'événements.
+- `netlify.toml` : cache d'un an pour `/assets/*` (noms à empreinte) et `/fonts/*`.
+- Tests : police chargée (Inter 100-900, 0 appel Google), rendu vérifié, typecheck, lint, build, netlify.toml valide.
+- Retour arrière : annuler le commit.

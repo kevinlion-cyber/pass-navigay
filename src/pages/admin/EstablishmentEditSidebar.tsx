@@ -506,7 +506,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
           <div className="grid grid-cols-3 gap-2 mb-3">
             {galleryPhotos.map((photo) => (
               <div key={photo.id} className="relative group">
-                <img src={photo.url} alt="" className="w-full rounded-md object-cover" style={{ aspectRatio: '4/3' }} />
+                <img loading="lazy" decoding="async" src={photo.url} alt="" className="w-full rounded-md object-cover" style={{ aspectRatio: '4/3' }} />
                 <div
                   onClick={() => { setDeletePhotoId(photo.id); setDeletePhotoUrl(photo.url); }}
                   className="absolute inset-0 rounded-md bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
@@ -524,7 +524,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             <div className="grid grid-cols-3 gap-2">
               {pendingPhotos.map((p, i) => (
                 <div key={i} className="relative">
-                  <img src={p.preview} alt="" className="w-full rounded-md object-cover" style={{ aspectRatio: '4/3' }} />
+                  <img loading="lazy" decoding="async" src={p.preview} alt="" className="w-full rounded-md object-cover" style={{ aspectRatio: '4/3' }} />
                   <button
                     type="button"
                     onClick={() => removePending(i)}

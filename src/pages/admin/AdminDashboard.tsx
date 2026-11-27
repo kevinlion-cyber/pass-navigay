@@ -189,7 +189,7 @@ export default function AdminDashboard() {
               <div key={m.id} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
                   {m.avatar_url ? (
-                    <img src={m.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-primary text-xs font-medium">{m.username?.charAt(0).toUpperCase()}</span>
                   )}

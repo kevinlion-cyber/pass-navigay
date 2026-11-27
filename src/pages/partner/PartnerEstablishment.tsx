@@ -305,7 +305,7 @@ export default function PartnerEstablishment() {
               {logoDisplay ? (
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-gray-200 dark:bg-dark-border">
-                    <img src={logoDisplay} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={logoDisplay} alt="" className="w-full h-full object-cover" />
                   </div>
                   <label className="text-sm px-4 py-2 rounded-[8px] cursor-pointer transition-colors hover:opacity-80"
                     style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
@@ -330,7 +330,7 @@ export default function PartnerEstablishment() {
               <p className="text-[11px] text-gray-600 mb-3">Image principale affichée en haut de votre fiche établissement.</p>
               {bannerDisplay ? (
                 <div>
-                  <img src={bannerDisplay} alt="" className="w-full rounded-[8px] object-cover mb-2" style={{ aspectRatio: '16/9' }} />
+                  <img loading="lazy" decoding="async" src={bannerDisplay} alt="" className="w-full rounded-[8px] object-cover mb-2" style={{ aspectRatio: '16/9' }} />
                   <label className="text-sm px-4 py-2 rounded-[8px] cursor-pointer transition-colors hover:opacity-80 inline-block"
                     style={{ background: 'transparent', border: '1px solid var(--pn-border2)', color: '#a0a0b0' }}>
                     Changer la bannière
