@@ -573,11 +573,14 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
   (`comptes-inactifs`, JWT désactivé, appelée chaque nuit par `pn-comptes-inactifs` avec le secret Vault
   `pn_comptes_inactifs`). Exclus : admins, Premium en cours, propriétaires d'une fiche Pro, abonnement Stripe
   actif. Fiches gardées sans propriétaire. Repère privé de visite `activite_comptes` (`pn_marquer_visite`).
+* **Avis** (migration 80, 27/11/2026) : un admin peut supprimer un avis ou tous les avis d'une fiche
+  (`admin_supprimer_avis`, `admin_reinitialiser_avis`, depuis la fiche dans Admin → Établissements). Copie
+  gardée un an dans `avis_supprimes`. Ne jamais supprimer d'avis directement dans la table.
 * **Prix Stripe fixes** (27/11/2026) : mensuels repérés par `lookup_key` (`pn_premium_mensuel`,
   `pn_pro_mensuel`), annuels par identifiant ; montant vérifié avant chaque paiement (refus si différent).
 * **Recherche** : `src/lib/recherche.ts` (`motifRecherche`) pour tout filtre `or(...)` construit avec un texte tapé.
 
-Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC).
+Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC), `pn-purge-avis-supprimes` (3 h 50 UTC).
 
 Restent à traiter : relecture juridique de la politique de confidentialité et des conditions de vente,
 analyse d'impact (AIPD) et registre des traitements, médiateur de la consommation,
