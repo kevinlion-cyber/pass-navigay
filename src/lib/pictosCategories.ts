@@ -33,6 +33,29 @@ const PICTOS: Record<string, string> = {
 const PICTO_DEFAUT = '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>';
 
 export const COULEUR_LIEU = '#7B2D8B';
+
+/**
+ * Une couleur par catégorie (palette validée par Kévin le 27/11/2026). L'icône reste dans
+ * chaque pastille : la couleur aide à repérer, l'icône confirme (utile aussi aux personnes
+ * daltoniennes). Couleurs évitées : turquoise (groupes numérotés) et doré (sponsors).
+ * Catégorie ajoutée plus tard dans l'admin : violet PassNavigay par défaut.
+ */
+export const COULEURS_CATEGORIES: Record<string, string> = {
+  se_loger: '#2563EB',   // bleu
+  manger: '#EA580C',     // orange
+  soiree: '#7B2D8B',     // violet PassNavigay
+  shopping: '#DB2777',   // rose
+  bien_etre: '#0D9488',  // vert d'eau
+  culture: '#B45309',    // ocre
+  communaute: '#DC2626', // rouge
+  services: '#475569',   // ardoise
+  sport: '#65A30D',      // vert pomme
+  adulte: '#18181B',     // noir
+};
+
+export function couleurCategorie(category: string | null | undefined): string {
+  return (category && COULEURS_CATEGORIES[category]) || COULEUR_LIEU;
+}
 export const COULEUR_SPONSOR = '#d4a017';
 
 export function svgPictoCategorie(category: string | null | undefined, taille = 16): string {
@@ -50,7 +73,7 @@ export function creerPastilleLieu(category: string | null | undefined, sponsor: 
     height: '30px',
     borderRadius: '9999px',
     border: '2px solid #fff',
-    backgroundColor: sponsor ? COULEUR_SPONSOR : COULEUR_LIEU,
+    backgroundColor: sponsor ? COULEUR_SPONSOR : couleurCategorie(category),
     boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
     display: 'flex',
     alignItems: 'center',
