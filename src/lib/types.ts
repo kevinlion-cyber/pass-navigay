@@ -190,7 +190,7 @@ export interface Review {
 
 // Cles « historiques » conservees pour l'autocompletion ; (string & {}) autorise
 // les categories ajoutees dynamiquement par l'admin (A1).
-export type CategoryKey = 'se_loger' | 'shopping' | 'manger' | 'soiree' | 'bien_etre' | 'culture' | (string & {});
+export type CategoryKey = 'se_loger' | 'shopping' | 'manger' | 'soiree' | 'bien_etre' | 'culture' | 'communaute' | 'services' | 'sport' | 'adulte' | (string & {});
 
 export interface ConversationPreview {
   userId: string;

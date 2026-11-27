@@ -361,16 +361,23 @@ Ordre vertical des éléments (IMPORTANT) :
 
 Carte : centre par défaut Montpellier `[3.8767, 43.6119]` zoom 13. Markers violets (normaux) et dorés (sponsors). Sur mobile : carte hauteur 40dvh + liste scrollable dessous (les deux visibles). Au clic sur un pin : popup riche (photo, nom, badges, note, promo active, événement à venir, bouton "Voir la fiche"). Les markers NE DOIVENT PAS bouger au survol (anchor center, pas de transition CSS).
 
-Sous-catégories par catégorie :
+Catégories (refonte du 27/11/2026, migration 79 — clés inchangées, noms à touche LGBT ; la liste en ligne
+est modifiable dans Admin → Catégories, `app_settings.categories_config`) :
 
 ```
-Se loger : Maison d'hôtes, Hôtel, Location particulière
-Shopping : Vêtements, Déco, Art, Chaussures, Sex-shop, Jeux
-Manger : Restaurant, Fast-food, Brunch, Salon de thé, Bar à vins
-Soirée : Bar tranquille, Bar musical, Boîte de nuit
-Bien-être : Sauna, Massage, Esthétique
-Culture : Musée, Visite guidée, Concert, Cinéma, Autres
+se_loger   Dormir safe            : Maison d'hôtes, Hôtel, Location entre particuliers, Gîte, Camping, Auberge de jeunesse
+manger     Se régaler             : Restaurant, Brunch, Café, Salon de thé, Fast-food, Boulangerie & pâtisserie, Traiteur
+soiree     Sortir & faire la fête : Bar gay, Bar lesbien, Bar queer & inclusif, Bar chill, Bar musical, Bar à cocktails, Bar à vins, Club & boîte de nuit, Cabaret & drag, Karaoké
+shopping   Shopping & pépites     : Mode & vêtements, Friperie & seconde main, Chaussures, Bijoux & accessoires, Déco & maison, Art & créateurs, Librairie, Fleuriste, Jeux
+bien_etre  Prendre soin de soi    : Spa & hammam, Sauna, Massage, Esthétique, Coiffure & barbier
+culture    Culture & spectacles   : Musée, Galerie d'art, Théâtre, Cinéma, Concert & spectacle, Visite guidée, Festival, Autres
+communaute Communauté & santé     : Centre LGBT, Association, Santé sexuelle & dépistage, Écoute & soutien
+services   Pros safe              : Tatouage & piercing, Photographe, Avocat & juriste, Psy & thérapeute, Agence voyage & mariage, Autres services
+sport      Sport & plein air      : Club sportif LGBT, Salle de sport, Danse, Yoga, Escalade, Plage, Plage naturiste, Rando & nature
+adulte     Coquin 18+             : Sauna gay, Sex-shop & lingerie, Bar cruising & fetish, Club sexe & backroom, Club libertin, Cinéma adulte
 ```
+Ne jamais renommer une sous-catégorie dans l'admin sans reclasser les fiches (le nom est stocké tel quel sur
+chaque fiche). Coquin 18+ : aucune image explicite (art. 227-24 du Code pénal).
 
 ### Fiche établissement
 

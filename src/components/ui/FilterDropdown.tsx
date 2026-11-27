@@ -49,7 +49,12 @@ export default function FilterDropdown<T extends string>({
                    hover:border-primary transition-colors whitespace-nowrap`}
       >
         <span className={`text-gray-400 dark:text-gray-500 ${compactMobile ? 'hidden sm:inline' : ''}`}>{label}:</span>
-        <span className={pleineLargeur ? 'flex-1 min-w-0 truncate text-left' : ''}>{selected?.label ?? label}</span>
+        {/* Sur téléphone, les noms longs (« Sortir & faire la fête ») sont abrégés pour que la
+            rangée de filtres tienne dans l'écran ; le nom complet reste dans le menu. */}
+        <span
+          className={pleineLargeur ? 'flex-1 min-w-0 truncate text-left' : compactMobile ? 'max-w-[5rem] sm:max-w-none truncate' : ''}
+          title={selected?.label ?? label}
+        >{selected?.label ?? label}</span>
         <ChevronDown
           size={14}
           className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
