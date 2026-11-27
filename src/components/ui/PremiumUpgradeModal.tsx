@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useUserPlans } from '../../lib/userPlans';
 import toast from 'react-hot-toast';
+import CaseConsentement from './CaseConsentement';
 import { ouvrirGestionAbonnementPremium } from '../../lib/abonnementPremium';
 
 interface PremiumUpgradeModalProps {
@@ -19,6 +20,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('yearly');
+  const [demarrageImmediat, setDemarrageImmediat] = useState(false);
   // Même liste que la page Tarifs, modifiable dans Admin → Tarifs (avant : une liste
   // figée ici, sans accents, qui mélangeait des avantages gratuits).
   const { premiumFeatures } = useUserPlans();
@@ -40,6 +42,10 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
       if (!(await ouvrirGestionAbonnementPremium())) setLoading(false);
       return;
     }
+    if (!demarrageImmediat) {
+      toast.error('Coche la case pour démarrer ton Premium tout de suite.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -52,7 +58,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ billingInterval }),
+        body: JSON.stringify({ billingInterval, executionImmediate: true }),
       });
       const data = await res.json();
       if (data?.url) {
@@ -139,7 +145,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           {billingInterval === 'yearly' ? (
             <>
               <span className="text-[36px] font-bold text-white">{yearlyPrice}&euro;</span>
-              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an TTC</span>
               <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
                 soit {(yearlyPrice / 12).toFixed(2).replace('.', ',')}&euro;/mois
               </p>
@@ -147,7 +153,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           ) : (
             <>
               <span className="text-[36px] font-bold text-white">{monthlyPrice.toFixed(2).replace('.', ',')}&euro;</span>
-              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+              <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois TTC</span>
               <p className="text-[12px] mt-1" style={{ color: '#808090' }}>
                 Sans engagement
               </p>
@@ -172,14 +178,20 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
           })}
         </ul>
 
+        {/* Membre connecté et pas encore Premium : le paiement suit directement. Pour
+            un visiteur, la même case est demandée dans le tunnel d'inscription. */}
+        {user && !profile?.is_premium && (
+          <CaseConsentement type="paiement_premium" sombre coche={demarrageImmediat} onChange={setDemarrageImmediat} className="mb-3" />
+        )}
+
         <button
           onClick={handleUpgrade}
-          disabled={loading}
-          className="w-full py-3.5 rounded-[10px] text-[15px] font-semibold text-white transition-all flex items-center justify-center gap-2"
+          disabled={loading || (!!user && !profile?.is_premium && !demarrageImmediat)}
+          className="w-full py-3.5 rounded-[10px] text-[15px] font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: '#7B2D8B' }}
         >
           {loading && <Loader2 size={16} className="animate-spin" />}
-          Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC/an` : `${monthlyPrice.toFixed(2).replace('.', ',')}\u20AC/mois`}
+          Passer Premium &mdash; {billingInterval === 'yearly' ? `${yearlyPrice}\u20AC TTC/an` : `${monthlyPrice.toFixed(2).replace('.', ',')}\u20AC TTC/mois`}
         </button>
 
         {!user && (

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useUserPlans } from '../lib/userPlans';
+import CaseConsentement from '../components/ui/CaseConsentement';
 import { ouvrirGestionAbonnementPremium, dateFinPremium } from '../lib/abonnementPremium';
 
 const PRO_FEATURES = [
@@ -24,6 +25,7 @@ export default function Pricing() {
   const { user, profile } = useAuth();
   const dejaPremium = profile?.is_premium === true;
   const [gestionBusy, setGestionBusy] = useState(false);
+  const [demarrageImmediat, setDemarrageImmediat] = useState(false);
   const { premiumFeatures } = useUserPlans();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<'pro' | 'premium' | null>(null);
@@ -44,6 +46,10 @@ export default function Pricing() {
       toast('Tu es déjà Premium.');
       return;
     }
+    if (!demarrageImmediat) {
+      toast.error('Coche la case pour démarrer ton Premium tout de suite.');
+      return;
+    }
 
     setLoading(type);
     try {
@@ -56,7 +62,7 @@ export default function Pricing() {
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ billingInterval: premiumInterval }),
+        body: JSON.stringify({ billingInterval: premiumInterval, executionImmediate: true }),
       });
       const data = await res.json();
       if (data?.url) {
@@ -84,7 +90,7 @@ export default function Pricing() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profil Pro Établissement</h2>
             <div className="mt-2">
               <span className="text-3xl font-semibold text-gray-900 dark:text-white">690</span>
-              <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
+              <span className="text-gray-500 dark:text-gray-400"> € TTC/an</span>
             </div>
           </div>
 
@@ -134,13 +140,13 @@ export default function Pricing() {
               {premiumInterval === 'yearly' ? (
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">{PREMIUM_YEARLY}</span>
-                  <span className="text-gray-500 dark:text-gray-400"> EUR/an</span>
-                  <p className="text-xs mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">soit 5,75€/mois — vous économisez 11,28€/an</p>
+                  <span className="text-gray-500 dark:text-gray-400"> € TTC/an</span>
+                  <p className="text-xs mt-0.5 font-medium text-emerald-600 dark:text-emerald-400">soit 5,75 €/mois — tu économises 11,28 €/an</p>
                 </>
               ) : (
                 <>
                   <span className="text-3xl font-semibold text-gray-900 dark:text-white">6,69</span>
-                  <span className="text-gray-500 dark:text-gray-400"> EUR/mois</span>
+                  <span className="text-gray-500 dark:text-gray-400"> € TTC/mois</span>
                   <p className="text-xs text-gray-400 mt-0.5">Sans engagement · Résiliation à tout moment</p>
                 </>
               )}
@@ -173,10 +179,13 @@ export default function Pricing() {
               </button>
             </div>
           ) : (
-            <button onClick={() => handleSubscribe('premium')} disabled={loading === 'premium'} className="btn-primary w-full flex items-center justify-center gap-2">
-              {loading === 'premium' && <Loader2 size={16} className="animate-spin" />}
-              Souscrire Premium
-            </button>
+            <div className="space-y-3">
+              {user && <CaseConsentement type="paiement_premium" coche={demarrageImmediat} onChange={setDemarrageImmediat} />}
+              <button onClick={() => handleSubscribe('premium')} disabled={loading === 'premium' || (!!user && !demarrageImmediat)} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50">
+                {loading === 'premium' && <Loader2 size={16} className="animate-spin" />}
+                Souscrire Premium
+              </button>
+            </div>
           )}
         </div>
       </div>

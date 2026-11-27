@@ -303,9 +303,10 @@ RLS activé sur toutes les tables. La table `profiles` n'est lisible que par son
 ## 5. MODÈLE ÉCONOMIQUE
 
 * Utilisateur Gratuit : profil basique, consultation annuaire et événements. Pas d'accès aux promos, pas de messagerie.
-* Utilisateur Premium — 6,69 €/mois : accès aux promotions, messagerie entre membres Premium, profil enrichi avec questionnaire, filtres avancés.
+* Utilisateur Premium — 6,69 € TTC/mois ou 69 € TTC/an : accès aux promotions, messagerie entre membres Premium, profil enrichi avec questionnaire, filtres avancés.
 * Établissement Gratuit : fiche basique (nom, adresse, type) dans l'annuaire.
-* Établissement Pro — 69 €/mois : bannière, galerie, événements, promotions, visibilité renforcée.
+* Établissement Pro — 69 € TTC/mois ou 690 € TTC/an : bannière, galerie, événements, promotions, visibilité renforcée.
+* Cases légales (27/11/2026) : âge 18+ et CGU à l'inscription (preuve dans les métadonnées du compte), demande d'exécution immédiate avant paiement Premium, acceptation des conditions de vente avant paiement Pro (preuve dans les métadonnées de l'abonnement Stripe). Composant `CaseConsentement`.
 * Sponsors : établissements mis en avant et intercalés dans les résultats (géré côté admin).
 
 ## 6. APPLICATION UTILISATEUR (`/`)

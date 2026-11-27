@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const { establishmentId, billingInterval } = await req.json().catch(() => ({}));
+    const { establishmentId, billingInterval, cgvAcceptees } = await req.json().catch(() => ({}));
     if (!establishmentId) {
       return jsonResponse({ error: "establishmentId is required" }, 400);
     }
@@ -117,6 +117,15 @@ Deno.serve(async (req: Request) => {
       success_url: `${appUrl}/pros/abonnement?status=success`,
       cancel_url: `${appUrl}/pros/abonnement?status=cancelled`,
       metadata: { establishmentId, billingInterval: billingInterval || "yearly" },
+      // Preuve (27/11/2026) : le partenaire a accepté les conditions de vente.
+      subscription_data: {
+        metadata: {
+          establishmentId,
+          cgv_acceptees: cgvAcceptees === true ? "oui" : "non",
+          conditions_version: "2026-11-27",
+          accord_le: new Date().toISOString(),
+        },
+      },
     });
 
     return jsonResponse({ url: session.url });

@@ -49,7 +49,7 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
           </span>
           <div className="mt-3">
             <span className="text-[36px] font-bold text-white leading-none">0&euro;</span>
-            <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+            <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois TTC</span>
           </div>
           <ul className="mt-4 space-y-2">
             {freeFeatures.map((f) => (
@@ -114,12 +114,12 @@ export default function PlanSelection({ selectedPlan, onSelect, onContinue, onSw
             {billingInterval === 'yearly' ? (
               <>
                 <span className="text-[36px] font-bold text-white leading-none">69&euro;</span>
-                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an</span>
+                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/an TTC</span>
               </>
             ) : (
               <>
                 <span className="text-[36px] font-bold text-white leading-none">6,69&euro;</span>
-                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois</span>
+                <span className="text-[14px] ml-1" style={{ color: '#606070' }}>/mois TTC</span>
               </>
             )}
           </div>

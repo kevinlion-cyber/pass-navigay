@@ -63,7 +63,7 @@ export default function ProsPricing({ content, onRegister }: ProsPricingProps) {
             </span>
             <div className="mt-5">
               <span className="text-[56px] font-bold text-white leading-none">0&euro;</span>
-              <span className="text-[18px] text-[#606070] ml-1">/mois</span>
+              <span className="text-[18px] text-[#606070] ml-1">/mois TTC</span>
             </div>
             <p className="text-[14px] text-[#a0a0b0] mt-2">Pour démarrer et être visible sur l&rsquo;annuaire.</p>
 
@@ -105,12 +105,12 @@ export default function ProsPricing({ content, onRegister }: ProsPricingProps) {
               {billingInterval === 'yearly' ? (
                 <>
                   <span className="text-[56px] font-bold text-white leading-none">{fmtEur(proYearly)}</span>
-                  <span className="text-[18px] text-[#606070] ml-1">/an</span>
+                  <span className="text-[18px] text-[#606070] ml-1">/an TTC</span>
                 </>
               ) : (
                 <>
                   <span className="text-[56px] font-bold text-white leading-none">{fmtEur(proMonthly)}</span>
-                  <span className="text-[18px] text-[#606070] ml-1">/mois</span>
+                  <span className="text-[18px] text-[#606070] ml-1">/mois TTC</span>
                 </>
               )}
             </div>
