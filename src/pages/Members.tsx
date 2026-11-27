@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { motifRecherche } from '../lib/recherche';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Users, Crown, Heart, Clock, Lock, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -29,11 +30,6 @@ function timeAgo(dateStr: string): string {
 
 const PAR_PAGE = 30;
 
-/** Texte de recherche nettoyé pour le filtre « or » de la base (virgules, parenthèses… retirées). */
-function nettoyerRecherche(q: string): string {
-  return q.replace(/[,()*%\\"'.:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
-}
-
 export default function Members() {
   const [members, setMembers] = useState<MemberWithMeta[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -53,7 +49,7 @@ export default function Members() {
 
   // Recherche envoyée à la base 300 ms après la dernière frappe.
   useEffect(() => {
-    const t = setTimeout(() => setRechercheEnvoyee(nettoyerRecherche(search)), 300);
+    const t = setTimeout(() => setRechercheEnvoyee(search.trim()), 300);
     return () => clearTimeout(t);
   }, [search]);
 
@@ -71,8 +67,8 @@ export default function Members() {
       .range(depart, depart + PAR_PAGE - 1);
     if (pronounsFilter !== 'all') q = q.eq('pronouns', pronounsFilter);
     if (cityFilter !== 'all') q = q.eq('city', cityFilter);
-    if (rechercheEnvoyee) {
-      const m = `%${rechercheEnvoyee}%`;
+    const m = motifRecherche(rechercheEnvoyee);
+    if (m) {
       q = q.or(`prenom.ilike.${m},username.ilike.${m},bio.ilike.${m},city.ilike.${m}`);
     }
     const { data, count, error } = await q;
