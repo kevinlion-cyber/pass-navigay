@@ -19,6 +19,8 @@ export default function LegalContact() {
   const [subject, setSubject] = useState(SUBJECTS[0]);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  // Champ piège invisible (anti-robots) : un humain ne le voit pas et le laisse vide.
+  const [piege, setPiege] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -27,27 +29,55 @@ export default function LegalContact() {
         .select('value')
         .eq('key', 'legal_contact_text')
         .maybeSingle();
-      setContent(data?.value || '');
+      // L'adresse email n'est plus affichée sur la page (demande de Kévin, 27/11/2026) :
+      // on retire les lignes qui ne contiennent qu'une adresse, et on remplace une
+      // adresse citée dans une phrase par « le formulaire ci-dessous ».
+      const EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
+      const texte = (data?.value || '')
+        .split('\n')
+        .filter((l: string) => !(l.match(EMAIL) && l.replace(EMAIL, '').replace(/e-?mail|courriel|contact|adresse/gi, '').replace(/[\s*_:–—-]/g, '') === ''))
+        .map((l: string) => l.replace(EMAIL, 'le formulaire ci-dessous'))
+        .join('\n')
+        .replace(/ ?ou directement par (e-?mail|le formulaire ci-dessous)/gi, '')
+        .replace(/via le formulaire ci-dessous ou le formulaire ci-dessous/g, 'via le formulaire ci-dessous');
+      setContent(texte);
       setLoading(false);
     };
     load();
   }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  // Envoi réel (avant : le formulaire affichait « Message envoyé » sans rien envoyer).
+  // La fonction contact-message transmet le message par email à l'équipe, sans jamais
+  // exposer l'adresse de réception.
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (message.length < 20) {
+    if (message.trim().length < 20) {
       toast.error('Ton message doit contenir au moins 20 caractères.');
       return;
     }
     setSending(true);
-    setTimeout(() => {
-      setSending(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('contact-message', {
+        body: { name, email, subject, message, site_web: piege },
+      });
+      if (error) {
+        let msg = 'Envoi impossible pour le moment. Réessaie un peu plus tard.';
+        try {
+          const corps = await (error as { context?: Response }).context?.json();
+          if (corps?.error) msg = corps.error;
+        } catch { /* réponse illisible */ }
+        throw new Error(msg);
+      }
+      if (!data?.ok) throw new Error('Envoi impossible pour le moment. Réessaie un peu plus tard.');
       toast.success('Message envoyé ! On te répondra dans les plus brefs délais.');
       setName('');
       setEmail('');
       setSubject(SUBJECTS[0]);
       setMessage('');
-    }, 800);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Envoi impossible.');
+    }
+    setSending(false);
   };
 
   if (loading) {
@@ -88,6 +118,11 @@ export default function LegalContact() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 max-w-lg">
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+          <label>Site web (laisser vide)
+            <input type="text" tabIndex={-1} autoComplete="off" value={piege} onChange={(e) => setPiege(e.target.value)} />
+          </label>
+        </div>
         <div>
           <label className="block text-[13px] font-medium text-[#a0a0b0] mb-1.5">Ton prénom</label>
           <input
@@ -144,8 +179,12 @@ export default function LegalContact() {
           className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#7B2D8B] text-white text-[14px] font-semibold transition-all hover:bg-[#9b3dab] disabled:opacity-50"
         >
           <Send size={16} />
-          {sending ? 'Envoi en cours...' : 'Envoyer'}
+          {sending ? 'Envoi en cours…' : 'Envoyer'}
         </button>
+        <p className="text-[12px] text-[#808090] leading-relaxed">
+          Tes informations servent uniquement à te répondre. Elles sont conservées 12 mois au plus,
+          puis supprimées. Voir notre politique de confidentialité.
+        </p>
       </form>
     </div>
   );
