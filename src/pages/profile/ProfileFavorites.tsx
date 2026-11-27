@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, HeartOff, MapPin, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,7 +17,7 @@ export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const { data } = await supabase
       .from('favorites')
       .select('*, establishment:establishments(*)')
@@ -25,11 +25,11 @@ export default function ProfileFavorites({ userId }: ProfileFavoritesProps) {
       .order('created_at', { ascending: false });
     setFavorites((data as Favorite[]) || []);
     setLoading(false);
-  };
+  }, [userId]);
 
   useEffect(() => {
     load();
-  }, [userId]);
+  }, [load, userId]);
 
   const removeFavorite = async (e: React.MouseEvent, favId: string) => {
     e.stopPropagation();

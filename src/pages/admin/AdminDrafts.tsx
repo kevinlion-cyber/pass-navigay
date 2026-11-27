@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, Search, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { draftIdsToPublish, publishDraftIds } from '../../lib/publishDrafts';
@@ -77,7 +77,7 @@ export default function AdminDrafts() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkRun, setBulkRun] = useState<{ done: number; total: number; failed: number } | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let q = supabase.from('establishment_drafts').select('*', { count: 'exact' });
@@ -92,7 +92,7 @@ export default function AdminDrafts() {
       setTotal(count ?? 0);
     } catch { /* handled */ }
     setLoading(false);
-  };
+  }, [catFilter, cityFilter, page, pageSize, search, statusFilter]);
 
   const loadMeta = async () => {
     const { data } = await supabase.from('establishment_drafts').select('city,status');
@@ -101,7 +101,7 @@ export default function AdminDrafts() {
     setCounts(rows.reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>));
   };
 
-  useEffect(() => { load(); }, [statusFilter, cityFilter, catFilter, search, page, pageSize]);
+  useEffect(() => { load(); }, [statusFilter, cityFilter, catFilter, search, page, pageSize, load]);
   useEffect(() => { loadMeta(); }, []);
   useEffect(() => { setPage(0); }, [statusFilter, cityFilter, catFilter, search, pageSize]);
 

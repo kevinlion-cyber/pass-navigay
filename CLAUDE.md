@@ -573,6 +573,6 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
 Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC).
 
 Restent à traiter : relecture juridique de la politique de confidentialité et des conditions de vente,
-analyse d'impact (AIPD) et registre des traitements, médiateur de la consommation, avertissements ESLint,
+analyse d'impact (AIPD) et registre des traitements, médiateur de la consommation,
 tests automatiques des parcours clés. (Double authentification des admins : en place, `is_admin()` exige aal2.)
 

@@ -233,6 +233,8 @@ export default function Explore() {
       searchParams.delete('premium');
       setSearchParams(searchParams, { replace: true });
     }
+    // Volontaire : lu une seule fois, au retour de la page de paiement Stripe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -359,6 +361,9 @@ export default function Explore() {
     setLieuEpingle(null);
     setSelectedPinId(null);
     fetchEstablishments(true);
+    // Volontaire : on recharge quand l'INTENTION change (catégorie, recherche, ville),
+    // pas à chaque mouvement de carte (fetchEstablishments dépend du cadrage).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, selectedSubcategories, debouncedSearch, citySlug, aroundInfo]);
 
   // Les valeurs courantes, lues au moment où la carte s'arrête de bouger.
@@ -401,6 +406,10 @@ export default function Explore() {
     if (bounds && !debouncedSearch.trim() && !citySlug) {
       fetchEstablishments(true);
     }
+    // Volontaire (optimisation du 26/11/2026) : seul le cadrage déclenche ce rechargement,
+    // et seulement sans ville ni recherche ; sinon la même liste était redemandée à chaque
+    // mouvement de carte.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bounds]);
 
   const handleCategoryChange = (category: CategoryKey | null) => {

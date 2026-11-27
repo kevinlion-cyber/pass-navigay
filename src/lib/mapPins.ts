@@ -85,6 +85,9 @@ export function useMapPins(
     }, 250);
 
     return () => clearTimeout(timer.current);
+    // Volontaire : boundsKey et filterKey sont la version texte du cadrage et des filtres ;
+    // ils évitent de relancer la demande quand les objets changent sans changer de valeur.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boundsKey, filterKey]);
 
   return { pins, loading, truncated };

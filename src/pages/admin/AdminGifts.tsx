@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Gift, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -41,7 +41,7 @@ export default function AdminGifts() {
   const [deleteTarget, setDeleteTarget] = useState<GiftRow | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -94,11 +94,11 @@ export default function AdminGifts() {
       setGifts([]);
     }
     setLoading(false);
-  };
+  }, [filter]);
 
   useEffect(() => {
     load();
-  }, [filter]);
+  }, [filter, load]);
 
   // Supprimer un cadeau = retirer la ligne ET l'accès offert. On retranche les
   // jours offerts de la date d'expiration en cours (on ne touche donc pas à une

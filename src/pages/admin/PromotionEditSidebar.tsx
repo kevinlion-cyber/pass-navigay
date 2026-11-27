@@ -107,7 +107,7 @@ export default function PromotionEditSidebar({ promoId, onClose, onRefresh }: Pr
       toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
-  }, [promoId]);
+  }, [promoId, isNew]);
 
   useEffect(() => {
     if (promoId) loadData();

@@ -23,7 +23,10 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        // Les fichiers de contexte exportent aussi leur crochet (useAuth…) : motif standard,
+        // sans incidence sur le site (cet avertissement ne concerne que le rechargement à
+        // chaud en développement).
+        { allowConstantExport: true, allowExportNames: ['useAuth', 'useTheme', 'useCategories'] },
       ],
     },
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, X, Eye, Trash2, ShieldCheck, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -20,7 +20,7 @@ export default function AdminMembers() {
   const [deleting, setDeleting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase.from('profiles').select('*', { count: 'exact' }).order('created_at', { ascending: false });
@@ -37,9 +37,9 @@ export default function AdminMembers() {
       setPremiumCount(pc ?? 0);
     } catch { /* handled */ }
     setLoading(false);
-  };
+  }, [cityFilter, premiumFilter, search]);
 
-  useEffect(() => { load(); }, [premiumFilter, cityFilter, search]);
+  useEffect(() => { load(); }, [premiumFilter, cityFilter, search, load]);
 
   useEffect(() => {
     supabase.from('profiles').select('city').then(({ data }) => {

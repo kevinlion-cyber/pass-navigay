@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Crown, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -21,16 +21,7 @@ export default function Messages() {
   // Un visiteur n'a pas d'onglet Messages ; c'est le membre gratuit qui est concerné.
   useOuvertureAutoPremium('messages', !!user, () => setUpgradeOpen(true));
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      setAuthGateOpen(true);
-      return;
-    }
-    loadConversations();
-  }, [user]);
-
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     const { data: messages } = await supabase
       .from('messages')
       .select('*')
@@ -85,7 +76,16 @@ export default function Messages() {
     result.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
     setConversations(result);
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      setAuthGateOpen(true);
+      return;
+    }
+    loadConversations();
+  }, [loadConversations, user]);
 
   if (loading) {
     return (

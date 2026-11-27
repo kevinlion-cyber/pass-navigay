@@ -190,3 +190,11 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Recherche : `src/lib/recherche.ts` — valeurs entre guillemets (règle PostgREST pour virgules, points, parenthèses) sur Lieux et Membres. Conversation : identifiant de l'adresse vérifié avant usage.
 - Tests : SQL local (8 comptes fictifs : prévenus, protégés, supprimables, retour qui annule ; droits) ; fonction de nuit avec faux Supabase/Resend (secret refusé/accepté, avertissement, suppression, bilan) ; prix avec faux Stripe (première fois → clé posée, ensuite → clé, annuel correct, annuel faux → refus) ; requête de recherche générée vérifiée ; typecheck, lint, build.
 - Retour arrière : `audit/correctifs/78_retour_arriere.sql` ; recoller les versions précédentes des fonctions.
+
+### R15 — Code sans avertissement ESLint (27/11/2026)
+- 32 avertissements → 0. Aucun changement visible.
+- Corrigés (22) : fonctions de chargement passées en `useCallback` avec leurs vraies dépendances (15 pages, dont 8 de l'admin) et effets placés après elles ; `isNew` ajouté (3 fenêtres d'édition admin) ; `catLabel` stable (Admin → Référencement) ; questionnaire Premium ; `fetchProfile` / `refreshProfile` stables dans `AuthContext` ; carte : gestionnaire de clic lu via une référence (version toujours à jour sans recréer les repères).
+- Choix volontaires documentés dans le code (7) : rechargements de l'annuaire liés à l'intention et non au cadrage (optimisation du 26/11), retour de paiement lu une fois, sélection sur la carte, clés texte de la carte, vérification unique de l'espace pro (« navigate » change à chaque page).
+- `eslint.config.js` : crochets `useAuth`, `useTheme`, `useCategories` autorisés à côté de leur fournisseur (motif standard).
+- Contrôle GitHub : désormais tout nouvel avertissement se voit (0 au départ).
+- Tests : 22 pages parcourues (membre Premium + administrateur) — aucune requête en boucle, aucune erreur JS ; recherche Admin → Établissements comparée à la version en ligne : identique ; typecheck, lint, build.

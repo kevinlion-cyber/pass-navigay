@@ -101,7 +101,7 @@ export default function EventEditSidebar({ eventId, onClose, onRefresh }: Props)
       toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
-  }, [eventId]);
+  }, [eventId, isNew]);
 
   useEffect(() => {
     if (eventId) loadData();

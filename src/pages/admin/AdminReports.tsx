@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Flag, RefreshCw, Check, X, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -42,7 +42,7 @@ export default function AdminReports() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('user_reports')
@@ -52,13 +52,13 @@ export default function AdminReports() {
     if (error) toast.error('Les signalements n’ont pas pu être chargés.');
     setReports((data as Report[]) || []);
     setLoading(false);
-  };
+  }, [tab]);
   const loadCount = async () => {
     const { count } = await supabase.from('user_reports').select('id', { count: 'exact', head: true }).eq('status', 'open');
     setOpenCount(count || 0);
   };
 
-  useEffect(() => { load(); }, [tab]);
+  useEffect(() => { load(); }, [load, tab]);
   useEffect(() => { loadCount(); }, []);
 
   const handle = async (r: Report, status: 'resolved' | 'dismissed') => {
