@@ -78,6 +78,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Repère privé de dernière visite (migration 78) : sert uniquement à ne pas supprimer
+  // comme « inactif » un membre qui reste connecté sans jamais se reconnecter. Une fois
+  // par chargement de page ; la base ne l'enregistre qu'au plus toutes les 12 h.
+  // Invisible des autres membres. Sans effet si la migration n'est pas encore appliquée.
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.rpc('pn_marquer_visite').then(() => undefined, () => undefined);
+  }, [user?.id]);
+
   // Relie la session analytics au membre connecté (attribution des actions).
   useEffect(() => { setAnalyticsUser(user?.id ?? null); }, [user]);
 

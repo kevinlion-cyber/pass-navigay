@@ -63,6 +63,12 @@ export default function Conversation() {
   }, [messages]);
 
   const loadConversation = async () => {
+    // L'identifiant vient de l'adresse de la page : on vérifie que c'en est bien un
+    // avant de l'insérer dans un filtre (27/11/2026).
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      navigate('/messages', { replace: true });
+      return;
+    }
     const [profileRes, messagesRes] = await Promise.all([
       supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
       supabase

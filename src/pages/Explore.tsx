@@ -19,6 +19,7 @@ import MapView from '../components/explore/MapView';
 import DisclaimerModal from '../components/ui/DisclaimerModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { lazyAvecRelance } from '../lib/lazyAvecRelance';
+import { motifRecherche } from '../lib/recherche';
 // Questionnaire Premium : ouvert rarement, chargé seulement quand il s'affiche.
 const PremiumQuestionnaireModal = lazyAvecRelance(() => import('../components/ui/PremiumQuestionnaireModal'));
 import { trackSearch } from '../lib/analytics';
@@ -281,8 +282,9 @@ export default function Explore() {
       query = query.in('subcategory', selectedSubcategories);
     }
     if (debouncedSearch.trim()) {
+      const m = motifRecherche(debouncedSearch) ?? '"%%"';
       query = query.or(
-        `name.ilike.%${debouncedSearch.trim()}%,city.ilike.%${debouncedSearch.trim()}%,address.ilike.%${debouncedSearch.trim()}%,description.ilike.%${debouncedSearch.trim()}%`
+        `name.ilike.${m},city.ilike.${m},address.ilike.${m},description.ilike.${m}`
       );
     }
     // Une ville choisie prime sur le cadrage de la carte : on veut TOUS ses
