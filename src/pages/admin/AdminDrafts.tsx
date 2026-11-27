@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, Search } from 'lucide-react';
+import { Sparkles, Check, X, ExternalLink, Star, Pencil, RefreshCw, Plus, Eye, Search, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { draftIdsToPublish, publishDraftIds } from '../../lib/publishDrafts';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +9,7 @@ import type { CategoryKey } from '../../lib/types';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import EstablishmentEditSidebar from './EstablishmentEditSidebar';
 import AddPlacesModal from './AddPlacesModal';
+import ImportFicheModal from './ImportFicheModal';
 import FichePreviewModal from './FichePreviewModal';
 
 interface Draft {
@@ -69,6 +70,8 @@ export default function AdminDrafts() {
   const [busy, setBusy] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  // Fiche préparée avec l'assistant « Créateur de fiches » (rendez-vous avec le gérant).
+  const [ficheOpen, setFicheOpen] = useState(false);
   const [previewDraft, setPreviewDraft] = useState<Draft | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -227,6 +230,7 @@ export default function AdminDrafts() {
             </button>
           )}
           <button onClick={() => setAddOpen(true)} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4"><Plus size={16} /> Ajouter des lieux</button>
+          <button onClick={() => setFicheOpen(true)} className="text-sm flex items-center gap-1.5 py-2 px-4 rounded-input border border-primary/40 text-primary hover:bg-primary/10 transition-colors"><Upload size={16} /> Importer une fiche (entretien)</button>
           <button onClick={() => { load(); loadMeta(); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><RefreshCw size={15} /> Rafraîchir</button>
         </div>
       </div>
@@ -362,6 +366,7 @@ export default function AdminDrafts() {
       <ConfirmModal open={!!publishTarget} title="Publier cette fiche" message={`Créer l'établissement public "${publishTarget?.name}" ? Les photos seront récupérées automatiquement.`} confirmLabel="Publier" onCancel={() => setPublishTarget(null)} onConfirm={publish} loading={busy} />
       <ConfirmModal open={!!rejectTarget} title="Rejeter ce brouillon" message={`Rejeter "${rejectTarget?.name}" ? Il reste en base (non public).`} confirmLabel="Rejeter" onCancel={() => setRejectTarget(null)} onConfirm={reject} loading={busy} />
       <EstablishmentEditSidebar establishmentId={editId} onClose={() => setEditId(null)} onRefresh={() => { load(); loadMeta(); }} />
+      <ImportFicheModal open={ficheOpen} onClose={() => setFicheOpen(false)} onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }} />
       <AddPlacesModal open={addOpen} onClose={() => setAddOpen(false)} onDone={() => { setStatusFilter('enriched'); load(); loadMeta(); }} />
       <FichePreviewModal open={!!previewDraft} onClose={() => setPreviewDraft(null)} data={previewDraft} />
     </div>
