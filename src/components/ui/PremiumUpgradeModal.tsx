@@ -4,6 +4,8 @@ import { X, Check, Loader2, Crown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useUserPlans } from '../../lib/userPlans';
+import toast from 'react-hot-toast';
+import { ouvrirGestionAbonnementPremium } from '../../lib/abonnementPremium';
 
 interface PremiumUpgradeModalProps {
   open: boolean;
@@ -12,7 +14,7 @@ interface PremiumUpgradeModalProps {
 
 
 export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeModalProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,12 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
     if (!user) {
       onClose();
       navigate(`/inscription?plan=premium&billing=${billingInterval}&redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+    // Déjà Premium : jamais de second abonnement, on ouvre la gestion à la place.
+    if (profile?.is_premium) {
+      setLoading(true);
+      if (!(await ouvrirGestionAbonnementPremium())) setLoading(false);
       return;
     }
     setLoading(true);
@@ -51,6 +59,7 @@ export default function PremiumUpgradeModal({ open, onClose }: PremiumUpgradeMod
         window.open(data.url, '_blank');
         return;
       }
+      if (data?.error) toast.error(data.error);
     } catch {
       // Stripe not configured yet
     }

@@ -9,6 +9,7 @@ import { enablePush, disablePush } from '../../lib/push';
 import type { Profile } from '../../lib/types';
 import DeleteAccountModal from '../../components/ui/DeleteAccountModal';
 import BlockedMembersModal from '../../components/ui/BlockedMembersModal';
+import { ouvrirGestionAbonnementPremium, dateFinPremium } from '../../lib/abonnementPremium';
 
 interface ProfileAccountSettingsProps {
   profile: Profile;
@@ -22,6 +23,17 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
   const [notifyBusy, setNotifyBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [blockedOpen, setBlockedOpen] = useState(false);
+  const [gestionBusy, setGestionBusy] = useState(false);
+
+  // Membre Premium : espace Stripe (résiliation en ligne). Sinon : page des tarifs.
+  const gererAbonnement = async () => {
+    if (!profile.is_premium) { navigate('/tarifs'); return; }
+    if (gestionBusy) return;
+    setGestionBusy(true);
+    const ouvert = await ouvrirGestionAbonnementPremium();
+    if (!ouvert) setGestionBusy(false);
+  };
+  const finPremium = dateFinPremium(profile.premium_expires_at);
 
   const toggleNotify = async () => {
     if (!user || notifyBusy) return;
@@ -95,12 +107,16 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         <div className="border-t border-light-border dark:border-dark-border" />
 
         <button
-          onClick={() => navigate('/tarifs')}
-          className="flex items-center gap-3 w-full text-left py-1"
+          onClick={gererAbonnement}
+          disabled={gestionBusy}
+          className="flex items-center gap-3 w-full text-left py-1 disabled:opacity-60"
         >
           <Crown size={16} className={profile.is_premium ? 'text-amber-500' : 'text-gray-400'} />
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            {profile.is_premium ? "Gerer mon abonnement Premium" : "Passer Premium"}
+            {profile.is_premium ? 'Gérer ou résilier mon abonnement Premium' : 'Passer Premium'}
+            {profile.is_premium && finPremium && (
+              <span className="block text-xs text-gray-500 dark:text-gray-400">Accès Premium jusqu'au {finPremium}</span>
+            )}
           </span>
         </button>
 
@@ -112,7 +128,7 @@ export default function ProfileAccountSettings({ profile }: ProfileAccountSettin
         >
           <Building2 size={16} className="text-gray-400" />
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            Tu as un etablissement ? Espace partenaire
+            Tu as un établissement ? Espace partenaire
           </span>
         </button>
 

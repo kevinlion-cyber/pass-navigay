@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { useUserPlans } from '../lib/userPlans';
+import { ouvrirGestionAbonnementPremium, dateFinPremium } from '../lib/abonnementPremium';
 
 const PRO_FEATURES = [
   'Bandeau personnalisé dans l\'annuaire',
@@ -20,7 +21,9 @@ const PRO_FEATURES = [
 const PREMIUM_YEARLY = 69;
 
 export default function Pricing() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const dejaPremium = profile?.is_premium === true;
+  const [gestionBusy, setGestionBusy] = useState(false);
   const { premiumFeatures } = useUserPlans();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<'pro' | 'premium' | null>(null);
@@ -34,6 +37,11 @@ export default function Pricing() {
 
     if (type === 'pro') {
       navigate('/pros');
+      return;
+    }
+
+    if (dejaPremium) {
+      toast('Tu es déjà Premium.');
       return;
     }
 
@@ -55,7 +63,7 @@ export default function Pricing() {
         window.open(data.url, '_blank');
         return;
       }
-      toast.error(data?.error || 'Erreur lors de la creation du paiement');
+      toast.error(data?.error || 'Erreur lors de la création du paiement');
     } catch {
       toast.error('Erreur de connexion');
     } finally {
@@ -148,10 +156,28 @@ export default function Pricing() {
             ))}
           </ul>
 
-          <button onClick={() => handleSubscribe('premium')} disabled={loading === 'premium'} className="btn-primary w-full flex items-center justify-center gap-2">
-            {loading === 'premium' && <Loader2 size={16} className="animate-spin" />}
-            Souscrire Premium
-          </button>
+          {dejaPremium ? (
+            // Déjà Premium : pas de second abonnement possible, accès direct à la gestion
+            // et à la résiliation (avant : « Souscrire Premium » ouvrait un 2e paiement).
+            <div className="space-y-2">
+              <p className="text-sm text-center text-gray-600 dark:text-gray-300">
+                Tu es déjà Premium{dateFinPremium(profile?.premium_expires_at) ? ` jusqu'au ${dateFinPremium(profile?.premium_expires_at)}` : ''}.
+              </p>
+              <button
+                onClick={async () => { setGestionBusy(true); if (!(await ouvrirGestionAbonnementPremium())) setGestionBusy(false); }}
+                disabled={gestionBusy}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                {gestionBusy && <Loader2 size={16} className="animate-spin" />}
+                Gérer ou résilier mon abonnement
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => handleSubscribe('premium')} disabled={loading === 'premium'} className="btn-primary w-full flex items-center justify-center gap-2">
+              {loading === 'premium' && <Loader2 size={16} className="animate-spin" />}
+              Souscrire Premium
+            </button>
+          )}
         </div>
       </div>
     </div>
