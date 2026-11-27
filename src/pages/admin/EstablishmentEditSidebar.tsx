@@ -189,7 +189,7 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
       toast.error(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
     setLoading(false);
-  }, [establishmentId]);
+  }, [establishmentId, isNew]);
 
   useEffect(() => {
     if (establishmentId) loadData();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, X, Trash2, ExternalLink, Download, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -26,7 +26,7 @@ export default function AdminEstablishments() {
   const [deleting, setDeleting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase.from('establishments').select('*', { count: 'exact' });
@@ -44,9 +44,9 @@ export default function AdminEstablishments() {
       setTotal(count ?? 0);
     } catch { /* handled */ }
     setLoading(false);
-  };
+  }, [catFilter, cityFilter, page, search, statusFilter]);
 
-  useEffect(() => { load(); }, [catFilter, cityFilter, statusFilter, search, page]);
+  useEffect(() => { load(); }, [catFilter, cityFilter, statusFilter, search, page, load]);
 
   useEffect(() => {
     supabase.from('establishments').select('city').then(({ data }) => {

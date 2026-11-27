@@ -44,7 +44,7 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, typing, awaitingInput]);
+  }, [messages, typing, awaitingInput, scrollToBottom]);
 
   const addBot = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
@@ -148,7 +148,7 @@ export default function PremiumQuestionnaireModal({ onClose }: Props) {
       setAwaitingInput(true);
     };
     initChat();
-  }, []);
+  }, [addBot]); // addBot est stable : le message d'accueil n'est envoyé qu'une fois
 
   const handleSingleSelect = async (option: string) => {
     setAwaitingInput(false);

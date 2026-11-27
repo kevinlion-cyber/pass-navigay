@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode, useCallback } from 'react';
 import { Network, ExternalLink, RefreshCw, CheckCircle2, Clock, Building2, MapPin, Layers, FileText, Target, Sparkles, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useCategories } from '../../contexts/CategoriesContext';
@@ -56,7 +56,7 @@ export default function AdminSeo() {
   };
   useEffect(() => { load(); }, []);
 
-  const catLabel = (k: string) => categories[k as CategoryKey]?.label || k;
+  const catLabel = useCallback((k: string) => categories[k as CategoryKey]?.label || k, [categories]);
 
   const model = useMemo(() => {
     const cities = new Map<string, { name: string; n: number; cats: Map<string, number> }>();
@@ -81,7 +81,7 @@ export default function AdminSeo() {
     const allPages = 1 /* index annuaire */ + catPillars.length + cityPillars.length + spokes.length + rows.length + guidesN;
     const indexablePages = 1 + catPillars.filter((p) => p.indexable).length + cityPillars.filter((p) => p.indexable).length + spokes.filter((p) => p.indexable).length + rows.length + guidesN;
     return { cityPillars, catPillars, spokes, allPages, indexablePages, thin: allPages - indexablePages, fiches: rows.length };
-  }, [rows, articles]);
+  }, [rows, articles, catLabel]);
 
   return (
     <div className="space-y-5">

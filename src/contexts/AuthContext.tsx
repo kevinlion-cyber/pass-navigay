@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { VERSION_CONDITIONS } from '../lib/conditions';
 import { supabase } from '../lib/supabase';
@@ -26,7 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (u: User) => {
+  // Stables (useCallback) : les pages peuvent les mettre dans leurs dépendances sans
+  // provoquer de rechargements en boucle.
+  const fetchProfile = useCallback(async (u: User) => {
     const { data } = await supabase
       .from('profiles')
       .select('*')
@@ -45,13 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('*')
       .maybeSingle();
     setProfile(created);
-  };
+  }, []);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user);
     }
-  };
+  }, [user, fetchProfile]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -76,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]); // fetchProfile est stable : l'abonnement à la session n'est créé qu'une fois
 
   // Repère privé de dernière visite (migration 78) : sert uniquement à ne pas supprimer
   // comme « inactif » un membre qui reste connecté sans jamais se reconnecter. Une fois

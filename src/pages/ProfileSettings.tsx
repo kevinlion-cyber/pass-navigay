@@ -27,7 +27,7 @@ export default function ProfileSettings() {
       const timer = setTimeout(() => setProfileTimeout(true), 5000);
       return () => clearTimeout(timer);
     }
-  }, [user, profile, loading]);
+  }, [user, profile, loading, refreshProfile]);
 
   if (loading) {
     return (

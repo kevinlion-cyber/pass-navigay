@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Search, X, Trash2, Pencil, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -24,7 +24,7 @@ export default function AdminPromotions() {
   const [editId, setEditId] = useState<string | null>(null);
   const { categories } = useCategories();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase.from('promotions').select('*, establishment:establishments(id, name)').order('valid_until', { ascending: false });
@@ -45,7 +45,7 @@ export default function AdminPromotions() {
       setPromos((data as unknown as Promotion[]) || []);
     } catch { /* handled */ }
     setLoading(false);
-  };
+  }, [catFilter, cityFilter, estFilter, establishments, search, subcatFilter, typeFilter]);
 
   useEffect(() => {
     supabase.from('establishments').select('id, name, city, category, subcategory').order('name').then(({ data }) => {
@@ -53,7 +53,7 @@ export default function AdminPromotions() {
     });
   }, []);
 
-  useEffect(() => { load(); }, [typeFilter, estFilter, cityFilter, catFilter, subcatFilter, search, establishments]);
+  useEffect(() => { load(); }, [typeFilter, estFilter, cityFilter, catFilter, subcatFilter, search, establishments, load]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;

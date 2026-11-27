@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Phone, Globe, Heart, Share2, Calendar, Tag, CreditCard as Edit, ChevronLeft, X, Clock, Map,
   Sun, Coffee, Leaf, Beer, Wine, Music, Baby, Users, Dog, CalendarCheck, Truck, ShoppingBag, Utensils, Accessibility, Car, Wallet, Martini, Check, BadgeCheck, type LucideIcon } from 'lucide-react';
@@ -91,11 +91,6 @@ export default function EstablishmentDetail() {
   const [newComment, setNewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  useEffect(() => {
-    if (!id && !slug) return;
-    loadAll();
-  }, [id, slug, user, isPremium]);
-
   // Analytics : une vue de fiche par identifiant, MAIS on exclut les auto-vues
   // (propriétaire qui regarde sa propre fiche, admin) pour ne pas fausser le
   // compteur « votre page a été vue X fois » côté Pro ni le top des fiches.
@@ -123,7 +118,7 @@ export default function EstablishmentDetail() {
       .then(({ data }) => setRelated((data as Establishment[]) || []));
   }, [establishment?.city, establishment?.city_slug, establishment?.id]);
 
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     setLoading(true);
     // 1) Résoudre la fiche par slug (URL propre) ou par id (ancienne URL).
     const estRes = await supabase.from('establishments').select('*')
@@ -183,7 +178,12 @@ export default function EstablishmentDetail() {
     }
 
     setLoading(false);
-  };
+  }, [id, isPremium, navigate, slug, user]);
+
+  useEffect(() => {
+    if (!id && !slug) return;
+    loadAll();
+  }, [id, slug, user, isPremium, loadAll]);
 
   const showAuthGate = (message: string) => {
     setAuthGateMessage(message);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { BadgeCheck, Check, X, ExternalLink, MapPin, RefreshCw, Loader2, Search, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -48,7 +48,7 @@ export default function AdminClaims() {
     setOutreachBusy('');
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from('establishment_claims')
@@ -57,13 +57,13 @@ export default function AdminClaims() {
       .order('created_at', { ascending: false });
     setClaims((data as Claim[]) || []);
     setLoading(false);
-  };
+  }, [tab]);
   const loadCounts = async () => {
     const { data } = await supabase.from('establishment_claims').select('status');
     setCounts(((data as { status: string }[]) || []).reduce((a, r) => { a[r.status] = (a[r.status] || 0) + 1; return a; }, {} as Record<string, number>));
   };
 
-  useEffect(() => { load(); }, [tab]);
+  useEffect(() => { load(); }, [load, tab]);
   useEffect(() => { loadCounts(); loadStats(); }, []);
 
   const approve = async (c: Claim) => {

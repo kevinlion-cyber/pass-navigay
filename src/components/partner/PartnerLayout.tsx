@@ -75,6 +75,10 @@ export default function PartnerLayout() {
       setLoading(false);
     };
     check();
+    // Volontaire : vérification faite une fois à l'arrivée dans l'espace pro. « navigate »
+    // change à chaque page : l'ajouter relancerait la vérification et remettrait le premier
+    // établissement à chaque clic dans le menu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ⚠️ Le navigateur PARTAGE la session entre tous les onglets d'un même site.

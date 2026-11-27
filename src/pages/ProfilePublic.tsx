@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MessageCircle, Crown, Clock, Calendar, Sparkles, Heart, Star, MapPin, Zap, Music, Quote, ShieldCheck, Images } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -68,12 +68,7 @@ export default function ProfilePublic() {
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [premiumGateOpen, setPremiumGateOpen] = useState(false);
 
-  useEffect(() => {
-    if (!userId) return;
-    loadData();
-  }, [userId, user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const [profileRes, favRes, reviewsRes] = await Promise.all([
       supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
@@ -101,7 +96,12 @@ export default function ProfilePublic() {
       setReviews(reviewsRes.data as unknown as ProfileReview[]);
     }
     setLoading(false);
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    loadData();
+  }, [userId, user, loadData]);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('fr-FR', {

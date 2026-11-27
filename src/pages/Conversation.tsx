@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -23,6 +23,40 @@ export default function Conversation() {
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [premiumGateOpen, setPremiumGateOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const loadConversation = useCallback(async () => {
+    // L'identifiant vient de l'adresse de la page : on vérifie que c'en est bien un
+    // avant de l'insérer dans un filtre (27/11/2026).
+    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      navigate('/messages', { replace: true });
+      return;
+    }
+    const [profileRes, messagesRes] = await Promise.all([
+      supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
+      supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${user!.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user!.id})`)
+        .order('created_at'),
+    ]);
+
+    if (profileRes.data) setOtherUser(profileRes.data as Profile);
+    if (messagesRes.data) setMessages(messagesRes.data as Message[]);
+    setLoading(false);
+  }, [navigate, user, userId]);
+
+  const markAsRead = useCallback(async () => {
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('sender_id', userId!)
+      .eq('receiver_id', user!.id)
+      .eq('is_read', false);
+  }, [user, userId]);
 
   useEffect(() => {
     if (!user) {
@@ -56,41 +90,7 @@ export default function Conversation() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, user]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const loadConversation = async () => {
-    // L'identifiant vient de l'adresse de la page : on vérifie que c'en est bien un
-    // avant de l'insérer dans un filtre (27/11/2026).
-    if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
-      navigate('/messages', { replace: true });
-      return;
-    }
-    const [profileRes, messagesRes] = await Promise.all([
-      supabase.from('public_profiles').select('*').eq('id', userId!).maybeSingle(),
-      supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${user!.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${user!.id})`)
-        .order('created_at'),
-    ]);
-
-    if (profileRes.data) setOtherUser(profileRes.data as Profile);
-    if (messagesRes.data) setMessages(messagesRes.data as Message[]);
-    setLoading(false);
-  };
-
-  const markAsRead = async () => {
-    await supabase
-      .from('messages')
-      .update({ is_read: true })
-      .eq('sender_id', userId!)
-      .eq('receiver_id', user!.id)
-      .eq('is_read', false);
-  };
+  }, [userId, user, loadConversation, markAsRead]);
 
   const sendMessage = async () => {
     if (!newMessage.trim() || sending) return;

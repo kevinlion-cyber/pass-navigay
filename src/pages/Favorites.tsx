@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -15,16 +15,7 @@ export default function Favorites() {
   const [loading, setLoading] = useState(true);
   const [authGateOpen, setAuthGateOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      setAuthGateOpen(true);
-      return;
-    }
-    loadFavorites();
-  }, [user]);
-
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     const { data } = await supabase
       .from('favorites')
       .select('*, establishment:establishments(*)')
@@ -33,7 +24,16 @@ export default function Favorites() {
 
     if (data) setFavorites(data as unknown as Favorite[]);
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      setAuthGateOpen(true);
+      return;
+    }
+    loadFavorites();
+  }, [loadFavorites, user]);
 
   if (loading) {
     return (

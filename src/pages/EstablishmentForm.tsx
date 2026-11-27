@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -32,17 +32,7 @@ export default function EstablishmentForm() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [authGateOpen, setAuthGateOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      setAuthGateOpen(true);
-      return;
-    }
-    if (isEdit) {
-      loadEstablishment();
-    }
-  }, [id, user]);
-
-  const loadEstablishment = async () => {
+  const loadEstablishment = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from('establishments')
@@ -70,7 +60,17 @@ export default function EstablishmentForm() {
       setWebsite(est.website);
     }
     setLoading(false);
-  };
+  }, [id, navigate, user?.id]);
+
+  useEffect(() => {
+    if (!user) {
+      setAuthGateOpen(true);
+      return;
+    }
+    if (isEdit) {
+      loadEstablishment();
+    }
+  }, [id, isEdit, loadEstablishment, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

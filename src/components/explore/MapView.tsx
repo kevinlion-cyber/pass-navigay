@@ -164,8 +164,11 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     if (est) {
       map.panTo({ lat: est.latitude, lng: est.longitude });
       if ((map.getZoom() || 13) < 14) map.setZoom(14);
-      handleMarkerClick(est);
+      clicRepereRef.current(est);
     }
+    // Volontaire : on centre et on ouvre la fiche quand la SÉLECTION change, pas à chaque
+    // rechargement de la liste (sinon la fenêtre se rouvrirait toute seule).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   const handleMarkerClick = async (est: Establishment | MapPin) => {
@@ -177,6 +180,10 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
     setPopupData(extras);
     setPopupLoading(false);
   };
+  // Toujours la version à jour du gestionnaire, sans recréer tous les repères de la
+  // carte à chaque affichage (27/11/2026).
+  const clicRepereRef = useRef(handleMarkerClick);
+  clicRepereRef.current = handleMarkerClick;
 
   const handleMapClick = () => {
     setActiveMarker(null);
@@ -228,7 +235,7 @@ function MapInner({ establishments, userLocation, onBoundsChange, onEstablishmen
           content: dot,
           gmpClickable: true,
         });
-        marker.addEventListener('gmp-click', () => handleMarkerClick(p));
+        marker.addEventListener('gmp-click', () => clicRepereRef.current(p));
         return marker;
       });
 
