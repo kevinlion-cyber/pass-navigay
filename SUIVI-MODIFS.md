@@ -220,3 +220,9 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 ### R19 — Boutons de la carte réduits sur téléphone (27/11/2026)
 - `MapView.tsx` : sur écran < 1024 px, boutons Google à 28 px (au lieu de 40), sans Plan/Satellite, Street View ni boutons de zoom (pincement) ; plein écran conservé. Ordinateur inchangé.
 - Tests : typecheck (options reconnues par la bibliothèque), lint, build. Rendu non visible en test (pas de clé Google Maps) : à vérifier sur téléphone après fusion.
+
+### R20 — Admin : supprimer ou réinitialiser les avis d'une fiche (27/11/2026)
+- Admin → Établissements → ✏️ : nouvelle section « Avis » (auteur, notes, date, commentaire). Corbeille sur chaque avis + bouton « Réinitialiser les avis » (il faut taper EFFACER). Fenêtre de confirmation dans les deux cas.
+- Migration `80_admin_avis.sql` : fonctions `admin_supprimer_avis(id)` et `admin_reinitialiser_avis(fiche)` réservées aux admins (double authentification, refus strict si le contrôle ne répond pas). Chaque avis est d'abord copié dans `avis_supprimes` (lisible par les admins seulement, purgé après 1 an par la tâche `pn-purge-avis-supprimes`, 3 h 50 UTC). Retour arrière (et remise en ligne d'avis) : `audit/correctifs/80_retour_arriere.sql`.
+- Composant `src/components/admin/AdminReviewsSection.tsx`, branché dans `EstablishmentEditSidebar.tsx`.
+- Tests : migration sur base locale (non-admin refusé, suppression d'un avis, réinitialisation, copies gardées avec le motif) ; écran admin sur serveur simulé (liste, suppression d'un avis, bouton bloqué tant qu'EFFACER n'est pas tapé, réinitialisation, aucun message d'erreur) ; typecheck, lint.

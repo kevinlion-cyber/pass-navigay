@@ -16,6 +16,7 @@ import AdminEditSidebar, {
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import GiftPeriodModal from '../../components/admin/GiftPeriodModal';
+import AdminReviewsSection from '../../components/admin/AdminReviewsSection';
 
 const DAYS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const DAYS_LABELS: Record<string, string> = {
@@ -615,6 +616,10 @@ export default function EstablishmentEditSidebar({ establishmentId, onClose, onR
             );
           })}
         </div>
+
+        {!isNew && establishmentId && (
+          <AdminReviewsSection establishmentId={establishmentId} establishmentName={form.name || 'cette fiche'} />
+        )}
 
         <div className="mb-2 mt-6">
           <p className="text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium">Cadeau Pro</p>
