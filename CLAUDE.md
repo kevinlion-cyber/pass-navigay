@@ -550,6 +550,11 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
 * **Connexion Meta** : jeton `state` à usage unique (`oauth_states`, migration 68).
 * **En-têtes** : `netlify.toml` (anti-iframe, nosniff, HSTS, Referrer-Policy, Permissions-Policy, CSP minimale).
 
+* **Rétractation Premium** (migration 76, 27/11/2026) : « Renoncer au contrat ici » dans le profil pendant
+  14 jours (art. L221-21). Fonction `retractation-premium` (JWT activé) : arrête l'abonnement Stripe, garde la
+  preuve dans `retractations`, accusé de réception au membre, alerte à `ADMIN_ALERT_EMAIL` avec le montant
+  au prorata. Remboursement fait à la main dans Stripe, puis statut `rembourse`. Purge à 5 ans.
+
 Tâches planifiées (pg_cron) : `pn-expire-offres` (3 h 15 UTC), `pn-purge-rgpd` (3 h 45 UTC).
 
 Restent à traiter : double authentification des admins, relecture juridique de la politique de
