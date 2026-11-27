@@ -92,7 +92,7 @@ L'app utilisateur propose deux thèmes : sombre (défaut) et clair. Le choix est
 
 ### Typographie
 
-Police Inter (Google Fonts), poids 400/500/600/700/800/900. Design plat, pas de gradients lourds.
+Police Inter hébergée sur le site (`public/fonts`, fichier variable 100–900, licence OFL ; plus de Google Fonts depuis le 27/11/2026). Design plat, pas de gradients lourds.
 
 ### Composants UI
 

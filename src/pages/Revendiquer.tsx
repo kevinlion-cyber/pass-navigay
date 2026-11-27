@@ -63,7 +63,7 @@ export default function Revendiquer() {
     <div className="max-w-md mx-auto p-4 py-8">
       <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card overflow-hidden">
         <div className="h-32 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg overflow-hidden">
-          {estab.banner_url && <img src={estab.banner_url} alt="" className="w-full h-full object-cover" />}
+          {estab.banner_url && <img loading="lazy" decoding="async" src={estab.banner_url} alt="" className="w-full h-full object-cover" />}
         </div>
         <div className="p-6 space-y-4">
           <div>

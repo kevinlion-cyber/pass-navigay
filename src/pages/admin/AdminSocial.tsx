@@ -203,7 +203,7 @@ export default function AdminSocial() {
             return (
               <div key={p.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 flex gap-4">
                 {p.image_url && (
-                  <img src={p.image_url} alt="" className="w-24 h-24 object-cover rounded-input shrink-0 hidden sm:block" />
+                  <img loading="lazy" decoding="async" src={p.image_url} alt="" className="w-24 h-24 object-cover rounded-input shrink-0 hidden sm:block" />
                 )}
                 <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">

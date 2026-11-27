@@ -89,7 +89,7 @@ export default function PartnerReviews() {
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-medium text-white overflow-hidden shrink-0">
                   {r.user?.avatar_url ? (
-                    <img src={r.user.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={r.user.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     (r.user?.username?.charAt(0).toUpperCase()) || '?'
                   )}

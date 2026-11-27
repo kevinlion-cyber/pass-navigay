@@ -253,7 +253,7 @@ export default function ProfilePublic() {
             <div className="grid grid-cols-3 gap-2">
               {profile.gallery_urls.map((url) => (
                 <a key={url} href={url} target="_blank" rel="noreferrer" className="block aspect-square rounded-lg overflow-hidden">
-                  <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                  <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
                 </a>
               ))}
             </div>
@@ -384,7 +384,7 @@ export default function ProfilePublic() {
                   className="flex items-center gap-2.5 p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.05] hover:border-[#7B2D8B]/40 transition-all text-left group"
                 >
                   {est.logo_url ? (
-                    <img src={est.logo_url} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    <img loading="lazy" decoding="async" src={est.logo_url} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
                   ) : (
                     <div className="w-9 h-9 rounded-lg bg-[#7B2D8B]/15 flex items-center justify-center shrink-0">
                       <MapPin size={14} className="text-[#a855f7]" />

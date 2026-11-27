@@ -150,7 +150,7 @@ export default function AdminPopups() {
                   <div>
                     <label className="block text-[12px] uppercase tracking-[0.5px] text-[#606070] font-medium mb-1.5">Logo</label>
                     <div className="flex items-center gap-4">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={t.logo_url || '/logo.png?v=2'}
                         alt=""
                         className="w-16 h-16 object-contain rounded-lg bg-light-bg dark:bg-dark-bg p-1"

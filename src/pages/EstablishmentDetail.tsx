@@ -468,7 +468,7 @@ export default function EstablishmentDetail() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Galerie</h2>
             <div className="grid grid-cols-3 gap-2">
               {photos.map((photo) => (
-                <img
+                <img loading="lazy" decoding="async"
                   key={photo.id}
                   src={photo.url}
                   alt={photo.caption}
@@ -626,7 +626,7 @@ export default function EstablishmentDetail() {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary overflow-hidden">
                       {u?.avatar_url ? (
-                        <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         u?.username?.charAt(0).toUpperCase() || '?'
                       )}

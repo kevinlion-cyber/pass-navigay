@@ -183,7 +183,7 @@ export default function AdminDrafts() {
     return (
       <button onClick={() => setLightbox(big)} className="relative w-11 h-11 rounded-lg overflow-hidden bg-primary/10 shrink-0" title="Agrandir la photo">
         <span className="absolute inset-0 flex items-center justify-center text-primary text-sm font-semibold">{d.name.charAt(0)}</span>
-        <img src={small} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+        <img loading="lazy" decoding="async" src={small} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
       </button>
     );
   };
@@ -350,7 +350,7 @@ export default function AdminDrafts() {
 
       {lightbox && (
         <div className="fixed inset-0 z-[70] bg-black/85 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+          <img loading="lazy" decoding="async" src={lightbox} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
         </div>
       )}
 

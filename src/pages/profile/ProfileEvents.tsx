@@ -80,7 +80,7 @@ export default function ProfileEvents({ userId }: ProfileEventsProps) {
             >
               <div className="w-12 h-12 rounded-card bg-gray-100 dark:bg-dark-border flex items-center justify-center shrink-0 overflow-hidden">
                 {evt.image_url ? (
-                  <img src={evt.image_url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={evt.image_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <Calendar size={18} className="text-primary" />
                 )}

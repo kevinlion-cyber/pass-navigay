@@ -144,7 +144,7 @@ export default function Conversation() {
         </button>
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
           {otherUser?.avatar_url ? (
-            <img src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="text-primary text-sm font-medium">
               {otherUser?.username?.charAt(0).toUpperCase() || '?'}

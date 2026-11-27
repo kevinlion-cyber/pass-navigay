@@ -229,7 +229,7 @@ export default function Members() {
                             ${!member.avatar_url ? 'bg-primary/10' : ''}`}
               >
                 {member.avatar_url ? (
-                  <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={member.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-primary text-xl font-semibold">
                     {displayName(member).charAt(0).toUpperCase()}

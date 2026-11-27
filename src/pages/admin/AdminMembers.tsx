@@ -135,7 +135,7 @@ export default function AdminMembers() {
                   <tr key={m.id} className="border-b border-light-border dark:border-dark-border/50 hover:bg-light-surface dark:bg-dark-surface/50">
                     <td className="py-2.5 px-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center">
-                        {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
+                        {m.avatar_url ? <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xs font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">{m.prenom || '-'}</td>
@@ -172,7 +172,7 @@ export default function AdminMembers() {
               <div key={m.id} className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 overflow-hidden flex items-center justify-center shrink-0">
-                    {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
+                    {m.avatar_url ? <img loading="lazy" decoding="async" src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-sm font-medium">{(m.prenom || m.username)?.charAt(0).toUpperCase()}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.prenom || ''} {m.nom || ''}</p>

@@ -152,7 +152,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
               <div key={u.id} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden shrink-0">
                   {u.avatar_url ? (
-                    <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 font-medium">
                       {u.username?.charAt(0).toUpperCase()}
@@ -203,7 +203,7 @@ export default function PromoUsesSection({ promoId, maxUses, currentUses }: Prop
                   <div key={u.id} className="flex items-center gap-3 py-1.5">
                     <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-dark-border overflow-hidden shrink-0">
                       {u.avatar_url ? (
-                        <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={u.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 font-medium">
                           {u.username?.charAt(0).toUpperCase()}

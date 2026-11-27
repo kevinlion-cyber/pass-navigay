@@ -69,7 +69,7 @@ export default function ProfileGallery({ profile }: { profile: Profile }) {
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {gallery.map((url) => (
           <div key={url} className="relative aspect-square rounded-lg overflow-hidden group">
-            <img src={url} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={url} alt="" className="w-full h-full object-cover" />
             <button
               onClick={() => removePhoto(url)}
               className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"

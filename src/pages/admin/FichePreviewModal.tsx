@@ -73,7 +73,7 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
         {/* Hero immersif */}
         <div className="relative w-full h-52 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-border dark:to-dark-bg">
           {photoList[0] ? (
-            <img src={photoList[0]} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={photoList[0]} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <MapPin size={40} className="text-gray-300 dark:text-gray-600" />
@@ -87,7 +87,7 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
           <div className="absolute inset-x-0 bottom-0 p-4">
             <div className="flex items-end gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white/95 dark:bg-dark-surface shadow-lg flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/25">
-                {photoList[0] ? <img src={photoList[0]} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xl font-bold">{data.name.charAt(0)}</span>}
+                {photoList[0] ? <img loading="lazy" decoding="async" src={photoList[0]} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-xl font-bold">{data.name.charAt(0)}</span>}
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl font-bold text-white leading-tight" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.55)' }}>{data.name}</h1>
@@ -174,7 +174,7 @@ export default function FichePreviewModal({ data, open, onClose }: { data: Fiche
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Galerie</h2>
               <div className="grid grid-cols-3 gap-2">
                 {gallery.map((url) => (
-                  <img key={url} src={url} alt="" className="w-full h-20 object-cover rounded-input" />
+                  <img loading="lazy" decoding="async" key={url} src={url} alt="" className="w-full h-20 object-cover rounded-input" />
                 ))}
               </div>
             </div>

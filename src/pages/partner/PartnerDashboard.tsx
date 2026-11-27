@@ -389,7 +389,7 @@ export default function PartnerDashboard() {
                     style={{ background: 'var(--pn-surface)', border: '1px solid var(--pn-border2)' }}>
                     <div className="w-12 h-12 rounded-input overflow-hidden shrink-0 bg-gray-200 dark:bg-dark-border">
                       {ev.image_url ? (
-                        <img src={ev.image_url} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={ev.image_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <CalendarDays size={18} className="text-gray-600" />
