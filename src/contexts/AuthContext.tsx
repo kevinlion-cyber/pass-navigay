@@ -4,7 +4,7 @@ import { VERSION_CONDITIONS } from '../lib/conditions';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 import { translateAuthError } from '../lib/authErrors';
-import { setAnalyticsUser } from '../lib/analytics';
+import { setAnalyticsUser, marquerAppareilAdmin, libererAnalytics } from '../lib/analytics';
 
 interface AuthState {
   user: User | null;
@@ -91,6 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Relie la session analytics au membre connecté (attribution des actions).
   useEffect(() => { setAnalyticsUser(user?.id ?? null); }, [user]);
+
+  // Un admin connecté ne compte pas dans l'audience, et son appareil non plus ensuite.
+  useEffect(() => {
+    if (profile?.is_admin) marquerAppareilAdmin();
+    if (!loading && (!user || profile)) libererAnalytics();
+  }, [profile, user, loading]);
 
   const signUp = async (email: string, password: string, username: string) => {
     const { data: existing } = await supabase

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Users, Eye, Building2, Search, TrendingUp, Globe, BadgeCheck, ArrowRight, UserPlus, Heart, Star, MessageCircle, Ticket, Phone, type LucideIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { appareilNonCompte, setAppareilNonCompte } from '../../lib/analytics';
 
 interface Overview {
   days: number;
@@ -40,6 +41,9 @@ export default function AdminAnalytics() {
     return () => { cancelled = true; };
   }, [days]);
 
+  const [nonCompte, setNonCompte] = useState(appareilNonCompte());
+  const basculerComptage = () => { setAppareilNonCompte(!nonCompte); setNonCompte(!nonCompte); };
+
   const sourceLabel = (s: string) => (s.startsWith('utm:') ? s.slice(4) : s);
   const maxSource = useMemo(() => Math.max(1, ...(data?.topSources || []).map((s) => s.count)), [data]);
 
@@ -49,6 +53,12 @@ export default function AdminAnalytics() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Analytics</h1>
           <p className="text-sm text-gray-500 mt-0.5">Audience et conversion du site, mesurées en direct (sans cookie ni outil externe).</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {nonCompte ? 'Vos visites sur cet appareil ne sont pas comptées.' : 'Attention : vos visites sur cet appareil sont comptées.'}{' '}
+            <button onClick={basculerComptage} className="underline hover:text-gray-900 dark:hover:text-white">
+              {nonCompte ? 'Les compter à nouveau' : 'Ne plus les compter'}
+            </button>
+          </p>
         </div>
         <div className="flex gap-1 bg-light-surface dark:bg-dark-surface p-1 rounded-input border border-light-border dark:border-dark-border">
           {RANGES.map((r) => (
