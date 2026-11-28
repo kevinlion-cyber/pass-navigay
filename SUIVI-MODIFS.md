@@ -233,3 +233,9 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Fiches Coquin 18+ (catégorie `adulte`) jamais proposées, ni leurs événements. Légendes au tutoiement (comme l'appli).
 - Admin → Réseaux sociaux : bloc « À valider » (visuel, texte modifiable 2 000 caractères max, « Publier » avec confirmation, « Ne pas publier »), puis historique. Nouveaux statuts : `brouillon`, `publication`, `annule`.
 - Tests : fonction sur serveurs simulés (préparation, événement 18+ écarté, publication avec texte modifié vers Facebook + Instagram, double publication refusée, annulation, texte vide refusé, non-admin et tâche planifiée refusés pour publier) ; écran admin (préparer, modifier, confirmer, publier) ; typecheck, lint.
+
+### R22 — Réseaux sociaux : consignes pour l'IA (28/11/2026)
+- Champ « Consignes pour l'IA » (500 caractères max) utilisé au prochain « Préparer le post du jour ».
+- Sur chaque brouillon : champ de consignes + bouton « Régénérer le texte » (action `regenerer` de `social-daily`, admin seulement, brouillon uniquement).
+- Les consignes sont transmises à l'IA comme « consignes de l'admin » ; elle ne doit ni inventer de faits ni retirer #PassNavigay. La tâche planifiée ne peut pas en donner.
+- Tests : fonction sur serveurs simulés (consignes bien transmises à l'IA, régénération, refus pour non-admin et tâche planifiée) ; écran ordinateur et téléphone ; typecheck, lint.
