@@ -239,3 +239,10 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Sur chaque brouillon : champ de consignes + bouton « Régénérer le texte » (action `regenerer` de `social-daily`, admin seulement, brouillon uniquement).
 - Les consignes sont transmises à l'IA comme « consignes de l'admin » ; elle ne doit ni inventer de faits ni retirer #PassNavigay. La tâche planifiée ne peut pas en donner.
 - Tests : fonction sur serveurs simulés (consignes bien transmises à l'IA, régénération, refus pour non-admin et tâche planifiée) ; écran ordinateur et téléphone ; typecheck, lint.
+
+### R23 — Statistiques : les visites de l'équipe ne sont plus comptées (28/11/2026)
+- Dès qu'un compte admin se connecte sur un appareil, cet appareil n'envoie plus aucune mesure d'audience, y compris sur le site public et après déconnexion (repère `pn_ne_pas_compter` dans le navigateur).
+- Les mesures attendent de savoir si la personne connectée est admin (4 s au plus) : même la toute première visite d'un admin n'est pas comptée.
+- Admin → Statistiques : ligne « Vos visites sur cet appareil ne sont pas comptées · Les compter à nouveau » (choix gardé).
+- Les statistiques déjà enregistrées ne sont pas modifiées. Aucune migration, aucune fonction à redéployer.
+- Tests (serveur simulé) : visiteur compté, membre gratuit compté, admin non compté dès la première page, même appareil après déconnexion non compté, bascule « compter à nouveau » gardée après rechargement ; typecheck, lint.

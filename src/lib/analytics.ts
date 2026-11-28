@@ -11,6 +11,9 @@
 const SESSION_KEY = 'pn_session_id';
 const ATTR_KEY = 'pn_attr';
 const CONSENT_KEY = 'pn_analytics_consent';
+// Appareil de l'équipe : plus aucune mesure d'audience envoyée (posé à la connexion d'un admin,
+// gardé après déconnexion pour que les visites « en visiteur » de Kévin ne gonflent pas les chiffres).
+const NE_PAS_COMPTER_KEY = 'pn_ne_pas_compter';
 export const CONSENT_CHANGE_EVENT = 'pn-analytics-consent-change';
 export const CONSENT_OPEN_EVENT = 'pn-analytics-consent-open';
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track`;
@@ -98,13 +101,37 @@ function getAttribution(): Attribution {
 // Relie la session au membre connecté (appelé depuis l'AuthContext).
 export function setAnalyticsUser(id: string | null): void { currentUserId = id; }
 
+// Les mesures attendent de savoir si la personne connectée est admin (ou 4 s au plus),
+// pour qu'aucune visite d'admin ne parte avant que l'appareil soit marqué.
+let pret = false;
+const enAttente: (() => void)[] = [];
+export function libererAnalytics(): void {
+  if (pret) return;
+  pret = true;
+  enAttente.splice(0).forEach((f) => f());
+}
+setTimeout(libererAnalytics, 4000);
+
+export function appareilNonCompte(): boolean { return safeGet(NE_PAS_COMPTER_KEY) === '1'; }
+// Choix explicite fait dans Admin → Statistiques ('1' ne pas compter, '0' compter) : il est gardé.
+export function setAppareilNonCompte(v: boolean): void { safeSet(NE_PAS_COMPTER_KEY, v ? '1' : '0'); }
+// À la connexion d'un admin : on marque l'appareil, sauf s'il a choisi d'être compté.
+export function marquerAppareilAdmin(): void { if (safeGet(NE_PAS_COMPTER_KEY) === null) safeSet(NE_PAS_COMPTER_KEY, '1'); }
+
 export function track(name: AnalyticsEvent, payload?: Record<string, unknown>, establishmentId?: string | null): void {
+  const path = location.pathname; // page au moment de l'action, même si l'envoi attend
+  if (!pret) { enAttente.push(() => envoyer(name, path, payload, establishmentId)); return; }
+  envoyer(name, path, payload, establishmentId);
+}
+
+function envoyer(name: AnalyticsEvent, path: string, payload?: Record<string, unknown>, establishmentId?: string | null): void {
+  if (appareilNonCompte()) return;
   try {
     const attr = getAttribution();
     const body = JSON.stringify({
       session_id: getSessionId(),
       name,
-      path: location.pathname,
+      path,
       establishment_id: establishmentId ?? null,
       user_id: granted() ? currentUserId : null,
       payload: payload ?? {},

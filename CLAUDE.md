@@ -549,6 +549,8 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
   `withdraw_sensitive_consent` = effacement) ; purge nocturne `purge_old_data` (statistiques 13 mois,
   questionnaire public 2 ans, signalements clos 1 an). Bandeau de consentement aux statistiques : sans
   accord, statistiques anonymes (identifiant limité à l'onglet, jamais relié au compte).
+  Appareils de l'équipe : aucune mesure dès qu'un admin s'y est connecté (`pn_ne_pas_compter`, réglable
+  dans Admin → Statistiques).
 * **Pages SEO** (`netlify/edge-functions/seo.ts`) : JSON-LD échappé avec `jsonForScript` (ne jamais
   réinsérer `JSON.stringify` brut dans une balise `<script>`).
 * **Adresses** : `geocode` interroge d'abord la Géoplateforme IGN (Base Adresse Nationale, gratuite) ;
