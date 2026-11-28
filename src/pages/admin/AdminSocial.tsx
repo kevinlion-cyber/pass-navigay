@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Megaphone, Instagram, Facebook, RefreshCw, Loader2, ExternalLink, Clock, CheckCircle2, AlertTriangle, Send, X, PenLine } from 'lucide-react';
+import { Megaphone, Instagram, Facebook, RefreshCw, Loader2, ExternalLink, Clock, CheckCircle2, AlertTriangle, Send, X, PenLine, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -75,6 +75,8 @@ export default function AdminSocial() {
   const [textes, setTextes] = useState<Record<string, string>>({});
   const [aPublier, setAPublier] = useState<SocialPost | null>(null);
   const [enCours, setEnCours] = useState<string | null>(null);
+  const [consignes, setConsignes] = useState('');
+  const [consignesPost, setConsignesPost] = useState<Record<string, string>>({});
 
   const load = async () => {
     setLoading(true);
@@ -115,7 +117,7 @@ export default function AdminSocial() {
   const runNow = async () => {
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('social-daily', { body: {} });
+      const { data, error } = await supabase.functions.invoke('social-daily', { body: { consignes: consignes.trim() } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const n = data.posts?.length || 0;
@@ -146,6 +148,22 @@ export default function AdminSocial() {
     }
     setEnCours(null);
     load();
+  };
+
+  const regenerer = async (post: SocialPost) => {
+    setEnCours(post.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('social-daily', {
+        body: { action: 'regenerer', post_id: post.id, consignes: (consignesPost[post.id] ?? '').trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setTextes((prev) => ({ ...prev, [post.id]: data.caption }));
+      toast.success('Nouveau texte proposé');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setEnCours(null);
   };
 
   const annuler = async (post: SocialPost) => {
@@ -181,6 +199,18 @@ export default function AdminSocial() {
       <p className="text-sm text-gray-500 -mt-2">
         Un établissement (et un événement à venir s'il y en a) est préparé avec un texte écrit par l'IA. Rien n'est publié tant que vous n'avez pas relu et cliqué « Publier ». Les fiches Coquin 18+ ne sont jamais proposées.
       </p>
+      <div>
+        <label htmlFor="consignes-ia" className="text-xs font-medium text-gray-600 dark:text-gray-400">Consignes pour l'IA (facultatif, utilisées au prochain « Préparer »)</label>
+        <textarea
+          id="consignes-ia"
+          value={consignes}
+          onChange={(e) => setConsignes(e.target.value)}
+          rows={2}
+          maxLength={500}
+          placeholder="Ex. : ton humoristique, parler du brunch du dimanche, texte très court, mentionner la Pride…"
+          className="input-field w-full text-sm mt-1"
+        />
+      </div>
 
       {/* Connexion Meta en 1 clic */}
       <div className="bg-light-surface dark:bg-dark-surface border border-light-border dark:border-dark-border rounded-card p-4 flex items-center justify-between flex-wrap gap-3">
@@ -267,6 +297,24 @@ export default function AdminSocial() {
                     aria-label="Texte du post"
                   />
                   <p className="text-xs text-gray-500">{texte.length} / 2000 caractères · le lien vers la fiche est ajouté automatiquement à la fin.</p>
+                  <div className="flex gap-2 flex-col sm:flex-row">
+                    <input
+                      type="text"
+                      value={consignesPost[p.id] ?? ''}
+                      onChange={(e) => setConsignesPost((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      maxLength={500}
+                      placeholder="Consignes pour un autre texte (ex. : plus court, plus drôle, citer la terrasse)"
+                      className="input-field flex-1 text-sm"
+                      aria-label="Consignes pour régénérer le texte"
+                    />
+                    <button
+                      onClick={() => regenerer(p)}
+                      disabled={!!enCours}
+                      className="text-sm flex items-center justify-center gap-1.5 py-2 px-4 rounded-input border border-light-border dark:border-dark-border text-gray-700 dark:text-gray-200 hover:opacity-80 disabled:opacity-60 shrink-0"
+                    >
+                      {enCours === p.id ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} Régénérer le texte
+                    </button>
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setAPublier(p)}

@@ -11,6 +11,8 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.5
 //   action "publier"  { post_id, caption } (admin seulement)
 //       → publie le brouillon sur Facebook + Instagram avec le texte relu/modifié.
 //   action "annuler"  { post_id } (admin seulement) → brouillon écarté.
+//   action "regenerer" { post_id, consignes } (admin seulement) → nouveau texte pour un brouillon.
+// Les consignes facultatives de l'admin (ton, angle, promo à citer…) sont transmises à l'IA.
 // Les fiches « Coquin 18+ » (catégorie adulte) ne sont jamais proposées.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -20,6 +22,8 @@ const SITE = Deno.env.get("PUBLIC_SITE_URL") || "https://passnavigay.com";
 const MODEL = Deno.env.get("FICHES_MODEL") || "claude-sonnet-5";
 const CATEGORIES_EXCLUES = ["adulte"];
 const LONGUEUR_MAX = 2000; // Instagram accepte 2 200 caractères, lien compris.
+const CONSIGNES_MAX = 500;
+const nettoyer = (c: unknown) => (typeof c === "string" ? c.trim().slice(0, CONSIGNES_MAX) : "");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,14 +56,16 @@ async function estAdmin(req: Request): Promise<boolean> {
   return !!me?.is_admin && aal2(auth);
 }
 
-async function legende(anthropicKey: string, kind: string, ctx: Record<string, unknown>): Promise<string> {
+async function legende(anthropicKey: string, kind: string, ctx: Record<string, unknown>, consignes = ""): Promise<string> {
   const sys = `Tu es le community manager de Pass Navigay, l'annuaire des lieux LGBT-friendly en France.
 Écris une légende Instagram/Facebook courte, chaleureuse et vivante (tutoiement inclusif, ton fun), qui donne envie.
 Termine TOUJOURS par un appel à avis ("Tu connais ? Laisse ton avis 👉") et 4-6 hashtags pertinents (dont #PassNavigay).
-2-4 phrases max avant les hashtags. 1-2 emojis bien choisis. N'invente aucun fait. Réponds UNIQUEMENT par la légende, sans guillemets.`;
-  const user = kind === "event"
-    ? `ÉVÉNEMENT à annoncer :\n${JSON.stringify(ctx)}\nÉcris la légende (le lien sera ajouté séparément).`
-    : `LIEU à mettre en avant :\n${JSON.stringify(ctx)}\nÉcris la légende (le lien sera ajouté séparément).`;
+2-4 phrases max avant les hashtags. 1-2 emojis bien choisis. N'invente aucun fait. Réponds UNIQUEMENT par la légende, sans guillemets.
+Si l'admin donne des consignes, suis-les (ton, angle, informations à citer, longueur), sauf si elles demandent d'inventer des faits ou de supprimer #PassNavigay.`;
+  const base = kind === "event"
+    ? `ÉVÉNEMENT à annoncer :\n${JSON.stringify(ctx)}`
+    : `LIEU à mettre en avant :\n${JSON.stringify(ctx)}`;
+  const user = `${base}${consignes ? `\n\nCONSIGNES DE L'ADMIN :\n${consignes}` : ""}\nÉcris la légende (le lien sera ajouté séparément).`;
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": anthropicKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -104,7 +110,35 @@ async function publierMeta(acces: Acces, image: string, texte: string, lien: str
   return out;
 }
 
-async function preparer(svc: SupabaseClient) {
+// deno-lint-ignore no-explicit-any
+const contexteLieu = (e: Record<string, any>) => ({
+  nom: e.name, categorie: e.category, sous_categorie: e.subcategory, ville: e.city, description: (e.description || "").slice(0, 400),
+});
+// deno-lint-ignore no-explicit-any
+const contexteEvenement = (v: Record<string, any>) => ({
+  titre: v.title, description: (v.description || "").slice(0, 400), date: v.event_date, lieu: v.address,
+});
+
+async function regenerer(svc: SupabaseClient, postId: string, consignes: string) {
+  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!anthropicKey) throw new Error("ANTHROPIC_API_KEY manquante");
+  const { data: post } = await svc.from("social_posts").select("id,kind,establishment_id,event_id,status").eq("id", postId).maybeSingle();
+  if (!post || post.status !== "brouillon") return json({ error: "Ce brouillon n'est plus disponible." }, 409);
+  let texte = "";
+  if (post.kind === "event" && post.event_id) {
+    const { data: v } = await svc.from("events").select("title,description,event_date,address").eq("id", post.event_id).maybeSingle();
+    if (!v) return json({ error: "Événement introuvable." }, 404);
+    texte = await legende(anthropicKey, "event", contexteEvenement(v), consignes);
+  } else if (post.establishment_id) {
+    const { data: e } = await svc.from("establishments").select("name,category,subcategory,city,description").eq("id", post.establishment_id).maybeSingle();
+    if (!e) return json({ error: "Établissement introuvable." }, 404);
+    texte = await legende(anthropicKey, "establishment", contexteLieu(e), consignes);
+  } else return json({ error: "Brouillon sans fiche." }, 400);
+  const { data: maj } = await svc.from("social_posts").update({ caption: texte }).eq("id", postId).eq("status", "brouillon").select("id").maybeSingle();
+  return maj ? json({ caption: texte }) : json({ error: "Ce brouillon n'est plus disponible." }, 409);
+}
+
+async function preparer(svc: SupabaseClient, consignes = "") {
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!anthropicKey) throw new Error("ANTHROPIC_API_KEY manquante");
   const brouillons: unknown[] = [];
@@ -118,9 +152,7 @@ async function preparer(svc: SupabaseClient) {
     .limit(1);
   if (est?.[0]) {
     const e = est[0];
-    const texte = await legende(anthropicKey, "establishment", {
-      nom: e.name, categorie: e.category, sous_categorie: e.subcategory, ville: e.city, description: (e.description || "").slice(0, 400),
-    });
+    const texte = await legende(anthropicKey, "establishment", contexteLieu(e), consignes);
     const { data } = await svc.from("social_posts").insert({
       kind: "establishment", establishment_id: e.id, caption: texte, image_url: e.banner_url,
       link_url: `${SITE}/establishment/${e.id}?src=social`, status: "brouillon",
@@ -139,9 +171,7 @@ async function preparer(svc: SupabaseClient) {
     .limit(10);
   const v = (evs || []).find((x: Record<string, any>) => !CATEGORIES_EXCLUES.includes(x.establishments?.category));
   if (v) {
-    const texte = await legende(anthropicKey, "event", {
-      titre: v.title, description: (v.description || "").slice(0, 400), date: v.event_date, lieu: v.address,
-    });
+    const texte = await legende(anthropicKey, "event", contexteEvenement(v), consignes);
     const { data } = await svc.from("social_posts").insert({
       kind: "event", establishment_id: v.establishment_id ?? null, event_id: v.id, caption: texte, image_url: v.image_url,
       link_url: `${SITE}/agenda/${v.id}?src=social`, status: "brouillon",
@@ -197,7 +227,11 @@ Deno.serve(async (req: Request) => {
     if (!admin && !(cronOk && action === "preparer")) return json({ error: "Accès refusé" }, 403);
     const svc = service();
 
-    if (action === "preparer") return json({ ran: true, posts: await preparer(svc) });
+    if (action === "preparer") return json({ ran: true, posts: await preparer(svc, admin ? nettoyer(body.consignes) : "") });
+    if (action === "regenerer") {
+      if (typeof body.post_id !== "string") return json({ error: "post_id manquant" }, 400);
+      return await regenerer(svc, body.post_id, nettoyer(body.consignes));
+    }
     if (action === "publier") {
       if (typeof body.post_id !== "string") return json({ error: "post_id manquant" }, 400);
       return await publier(svc, body.post_id, body.caption);
