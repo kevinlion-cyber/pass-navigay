@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import HubspotSyncCard from '../../components/admin/HubspotSyncCard';
 
 interface SettingsMap {
   disclaimer_text: string;
@@ -70,6 +71,8 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-xl font-bold text-gray-900 dark:text-white">Parametres</h1>
+
+      <HubspotSyncCard />
 
       <div className="space-y-5">
         <div>

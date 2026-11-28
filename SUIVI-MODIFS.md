@@ -246,3 +246,12 @@ Leçon R5 : toujours `git add -A` et vérifier la construction depuis une copie 
 - Admin → Statistiques : ligne « Vos visites sur cet appareil ne sont pas comptées · Les compter à nouveau » (choix gardé).
 - Les statistiques déjà enregistrées ne sont pas modifiées. Aucune migration, aucune fonction à redéployer.
 - Tests (serveur simulé) : visiteur compté, membre gratuit compté, admin non compté dès la première page, même appareil après déconnexion non compté, bascule « compter à nouveau » gardée après rechargement ; typecheck, lint.
+
+### R24 — Lien automatique avec HubSpot (28/11/2026)
+- Décisions de Kévin : seulement les **payants** (Premium et Pro), e-mails marketing autorisés avec désinscription (clients, offres similaires), pas de montants ni de transactions dans HubSpot.
+- Migration `81_hubspot.sql` : file `hubspot_sync` alimentée par des déclencheurs sur `profiles` (Premium : statut, fin, formule, client Stripe) et `establishments` (Pro : statut, fin, formule, abonnement Stripe) ; les périodes offertes seules ne partent pas. Suppression d'un compte déjà envoyé → demande d'effacement HubSpot (RGPD). `admin_hubspot_rattrapage()` (admin). Tâche `pn-hubspot` toutes les 10 min, seulement s'il y a quelque chose à envoyer (secret Vault `pn_hubspot`). Retour arrière : `audit/correctifs/81_retour_arriere.sql`.
+- Fonction `hubspot-sync` (autonome, JWT désactivé, secret `HUBSPOT_TOKEN`) : crée le groupe et les champs « PassNavigay – … » au besoin, contact par e-mail (sans doublon), entreprise par identifiant de fiche, lien gérant ↔ entreprise, statut Actif / Ancien client, formule, date de fin, base marketing. Valeurs vides jamais envoyées. 10 essais au plus, erreur gardée.
+- Admin → Paramètres : carte HubSpot (envoyés / en attente / en erreur, dernière erreur, « Envoyer tous les payants actuels », « Envoyer les mises à jour maintenant »).
+- Information sous les cases de paiement Premium (« tu ») et Pro (« vous ») : bons plans / actualités par e-mail, désinscription en un clic.
+- Jamais envoyé : orientation, identité de genre, questionnaire, messages, montants.
+- Tests : migration sur base locale (payant en file, période offerte ignorée, résiliation remise en file, changement sans rapport ignoré, rattrapage réservé aux admins, effacement à la suppression d'un compte payant seulement, tâche créée) ; fonction avec HubSpot simulé (contact, entreprise, lien, effacement, accès refusé sans secret, panne HubSpot notée et réessayée, jeton manquant) ; écrans admin et tarifs ; typecheck, lint.

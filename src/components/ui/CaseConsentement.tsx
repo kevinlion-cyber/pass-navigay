@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
  *   donc pas « renoncer » à ce droit (formulation corrigée le 27/11/2026).
  * - Paiement Pro (professionnels) : acceptation des conditions de vente.
  * Les liens s'ouvrent dans un nouvel onglet pour ne pas perdre la saisie en cours.
+ * Paiements : information sous la case (28/11/2026) sur les e-mails de bons plans envoyés aux
+ * clients (offres similaires, art. L34-5 du CPCE), avec désinscription possible à tout moment.
  */
 
 export type TypeConsentement = 'inscription' | 'paiement_premium' | 'paiement_pro';
@@ -66,8 +68,8 @@ export default function CaseConsentement({
     );
   }
 
-  return (
-    <label className={`flex items-start gap-2.5 text-left text-[12.5px] leading-snug cursor-pointer ${texte} ${className}`}>
+  const case_ = (
+    <label className={`flex items-start gap-2.5 text-left text-[12.5px] leading-snug cursor-pointer ${texte} ${type === 'inscription' ? className : ''}`}>
       <input
         type="checkbox"
         checked={coche}
@@ -76,5 +78,16 @@ export default function CaseConsentement({
       />
       <span>{contenu}</span>
     </label>
+  );
+  if (type === 'inscription') return case_;
+  return (
+    <div className={className}>
+      {case_}
+      <p className={`mt-1.5 pl-[26px] text-left text-[11px] leading-snug ${sombre ? 'text-[#808090]' : 'text-gray-500'}`}>
+        {type === 'paiement_pro'
+          ? 'En tant que client, vous pourrez recevoir nos actualités et offres par e-mail. Désinscription en un clic dans chaque e-mail.'
+          : 'En tant que client, tu pourras recevoir nos bons plans par e-mail. Désinscription en un clic dans chaque e-mail.'}
+      </p>
+    </div>
   );
 }
