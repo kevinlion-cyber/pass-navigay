@@ -555,6 +555,9 @@ Rapport d'audit complet : document « Audit initial PassNavigay » (Claude Docs)
   les champs d'adresse utilisent `geocodeSuggest` (une requête après la frappe).
 * **Proxys Google** : `fiches-photo` réservé aux admins (jeton dans l'adresse).
 * **Connexion Meta** : jeton `state` à usage unique (`oauth_states`, migration 68).
+* **Réseaux sociaux** (28/11/2026) : app Meta de Kévin « PassNavigay Publication » (configuration Facebook
+  Login for Business). `social-daily` (autonome) prépare des **brouillons** ; seule une action d'admin
+  (aal2) publie, après relecture dans Admin → Réseaux sociaux. Fiches `adulte` jamais proposées.
 * **En-têtes** : `netlify.toml` (anti-iframe, nosniff, HSTS, Referrer-Policy, Permissions-Policy, CSP minimale).
 
 * **Rétractation Premium** (migration 76, 27/11/2026) : « Renoncer au contrat ici » dans le profil pendant
