@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Megaphone, Instagram, Facebook, RefreshCw, Loader2, ExternalLink, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Megaphone, Instagram, Facebook, RefreshCw, Loader2, ExternalLink, Clock, CheckCircle2, AlertTriangle, Send, X, PenLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import ConfirmModal from '../../components/admin/ConfirmModal';
 
 interface SocialPost {
   id: string;
@@ -13,7 +14,7 @@ interface SocialPost {
   image_url: string | null;
   link_url: string | null;
   platforms: string[] | null;
-  status: 'generated' | 'posted' | 'partial' | 'failed';
+  status: 'brouillon' | 'publication' | 'annule' | 'generated' | 'posted' | 'partial' | 'failed';
   error: string | null;
   created_at: string;
   posted_at: string | null;
@@ -22,7 +23,10 @@ interface SocialPost {
 }
 
 const STATUS: Record<string, { label: string; icon: typeof Clock; color: string; bg: string }> = {
-  generated: { label: 'Généré (en attente Meta)', icon: Clock, color: '#808090', bg: 'rgba(255,255,255,0.05)' },
+  brouillon: { label: 'À valider', icon: PenLine, color: '#c084f5', bg: 'rgba(123,45,139,0.15)' },
+  publication: { label: 'Publication en cours', icon: Loader2, color: '#808090', bg: 'rgba(255,255,255,0.05)' },
+  annule: { label: 'Annulé', icon: X, color: '#808090', bg: 'rgba(255,255,255,0.05)' },
+  generated: { label: 'Généré (non publié)', icon: Clock, color: '#808090', bg: 'rgba(255,255,255,0.05)' },
   posted: { label: 'Publié', icon: CheckCircle2, color: '#3fb950', bg: 'rgba(46,160,67,0.12)' },
   partial: { label: 'Partiel', icon: AlertTriangle, color: '#e3b341', bg: 'rgba(210,153,34,0.12)' },
   failed: { label: 'Échec', icon: AlertTriangle, color: '#c0392b', bg: 'rgba(192,57,43,0.12)' },
@@ -68,6 +72,9 @@ export default function AdminSocial() {
   const [integ, setInteg] = useState<Integration | null>(null);
   const [comments, setComments] = useState<Cmt[]>([]);
   const [fetchingC, setFetchingC] = useState(false);
+  const [textes, setTextes] = useState<Record<string, string>>({});
+  const [aPublier, setAPublier] = useState<SocialPost | null>(null);
+  const [enCours, setEnCours] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -112,13 +119,51 @@ export default function AdminSocial() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const n = data.posts?.length || 0;
-      toast.success(n ? `${n} post(s) généré(s)` : 'Rien à publier aujourd’hui');
+      toast.success(n ? `${n} brouillon${n > 1 ? 's' : ''} prêt${n > 1 ? 's' : ''} à relire` : 'Aucun lieu ni événement à proposer aujourd’hui');
       load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur');
     }
     setRunning(false);
   };
+
+  const publier = async () => {
+    if (!aPublier) return;
+    const post = aPublier;
+    setAPublier(null);
+    setEnCours(post.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('social-daily', {
+        body: { action: 'publier', post_id: post.id, caption: textes[post.id] ?? post.caption },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data.status === 'posted') toast.success('Publié sur Facebook et Instagram');
+      else if (data.status === 'partial') toast.error('Publié en partie : ' + (data.errors || []).join(' | '));
+      else toast.error('Échec de la publication : ' + (data.errors || []).join(' | '));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setEnCours(null);
+    load();
+  };
+
+  const annuler = async (post: SocialPost) => {
+    setEnCours(post.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('social-daily', { body: { action: 'annuler', post_id: post.id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success('Brouillon écarté');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur');
+    }
+    setEnCours(null);
+    load();
+  };
+
+  const brouillons = posts.filter((p) => p.status === 'brouillon');
+  const historique = posts.filter((p) => p.status !== 'brouillon');
 
   return (
     <div className="space-y-4">
@@ -129,12 +174,12 @@ export default function AdminSocial() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={runNow} disabled={running} className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4 disabled:opacity-60">
-            {running ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} Générer le post du jour
+            {running ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} Préparer le post du jour
           </button>
         </div>
       </div>
       <p className="text-sm text-gray-500 -mt-2">
-        Chaque jour, un établissement (et un événement à venir s'il y en a) est publié automatiquement sur Instagram + Facebook, avec un appel à avis.
+        Un établissement (et un événement à venir s'il y en a) est préparé avec un texte écrit par l'IA. Rien n'est publié tant que vous n'avez pas relu et cliqué « Publier ». Les fiches Coquin 18+ ne sont jamais proposées.
       </p>
 
       {/* Connexion Meta en 1 clic */}
@@ -190,13 +235,69 @@ export default function AdminSocial() {
         )}
       </div>
 
+      {brouillons.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">À valider ({brouillons.length})</h2>
+          {brouillons.map((p) => {
+            const name = p.establishments?.name || p.events?.title || (p.kind === 'event' ? 'Événement' : 'Établissement');
+            const texte = textes[p.id] ?? p.caption;
+            return (
+              <div key={p.id} className="bg-light-surface dark:bg-dark-surface border-2 rounded-card p-4 flex flex-col sm:flex-row gap-4" style={{ borderColor: 'rgba(123,45,139,0.5)' }}>
+                {p.image_url && (
+                  <img loading="lazy" decoding="async" src={p.image_url} alt="" className="w-full sm:w-48 h-48 object-cover rounded-input shrink-0" />
+                )}
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(123,45,139,0.15)', color: '#c084f5' }}>
+                      {p.kind === 'event' ? 'Événement' : 'Établissement'}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{name}</span>
+                    {p.link_url && (
+                      <a href={p.link_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                        <ExternalLink size={12} /> Voir la fiche
+                      </a>
+                    )}
+                  </div>
+                  <textarea
+                    value={texte}
+                    onChange={(e) => setTextes((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                    rows={7}
+                    maxLength={2000}
+                    className="input-field w-full text-sm leading-relaxed"
+                    aria-label="Texte du post"
+                  />
+                  <p className="text-xs text-gray-500">{texte.length} / 2000 caractères · le lien vers la fiche est ajouté automatiquement à la fin.</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => setAPublier(p)}
+                      disabled={!!enCours || !texte.trim()}
+                      className="btn-primary text-sm flex items-center gap-1.5 py-2 px-4 disabled:opacity-60"
+                    >
+                      {enCours === p.id ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Publier
+                    </button>
+                    <button
+                      onClick={() => annuler(p)}
+                      disabled={!!enCours}
+                      className="text-sm flex items-center gap-1.5 py-2 px-4 rounded-input border border-light-border dark:border-dark-border text-gray-600 dark:text-gray-300 hover:opacity-80 disabled:opacity-60"
+                    >
+                      <X size={15} /> Ne pas publier
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {historique.length > 0 && !loading && <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Historique</h2>}
       {loading ? (
         <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-24 rounded-card" />)}</div>
       ) : posts.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">Aucun post encore. Cliquez « Générer le post du jour ».</p>
+        <p className="text-center text-gray-500 py-12">Aucun post encore. Cliquez « Préparer le post du jour ».</p>
       ) : (
         <div className="space-y-3">
-          {posts.map((p) => {
+          {historique.map((p) => {
             const st = STATUS[p.status] || STATUS.generated;
             const StIcon = st.icon;
             const name = p.establishments?.name || p.events?.title || (p.kind === 'event' ? 'Événement' : 'Établissement');
@@ -233,6 +334,15 @@ export default function AdminSocial() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        open={!!aPublier}
+        title="Publier ce post ?"
+        message={`Il sera publié tout de suite sur ${[integ?.page_name ? 'la page Facebook ' + integ.page_name : null, integ?.ig_username ? 'Instagram @' + integ.ig_username : null].filter(Boolean).join(' et ') || 'Facebook et Instagram'}. Une fois publié, il faudra le supprimer à la main sur Facebook / Instagram.`}
+        confirmLabel="Publier"
+        onCancel={() => setAPublier(null)}
+        onConfirm={publier}
+      />
     </div>
   );
 }
